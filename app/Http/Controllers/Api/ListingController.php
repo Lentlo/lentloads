@@ -97,8 +97,11 @@ class ListingController extends Controller
             'images',
         ])
             ->where(function($q) use ($slugOrId) {
-                $q->where('slug', $slugOrId)
-                  ->orWhere('id', $slugOrId);
+                $q->where('slug', $slugOrId);
+                // Only check ID if the value is purely numeric
+                if (is_numeric($slugOrId)) {
+                    $q->orWhere('id', $slugOrId);
+                }
             })
             ->firstOrFail();
 
