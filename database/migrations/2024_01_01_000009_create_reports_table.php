@@ -30,7 +30,6 @@ return new class extends Migration
             $table->timestamp('reviewed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['reportable_type', 'reportable_id']);
             $table->index('status');
         });
     }
