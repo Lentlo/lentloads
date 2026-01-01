@@ -8,6 +8,7 @@ use App\Models\Banner;
 use App\Models\Setting;
 use App\Models\Category;
 use App\Models\Listing;
+use Illuminate\Support\Facades\DB;
 
 class PageController extends Controller
 {
@@ -21,6 +22,15 @@ class PageController extends Controller
             ->withCount('activeListings')
             ->limit(8)
             ->get();
+
+        // Calculate total listings count including children
+        $categories->each(function ($category) {
+            $childIds = $category->children->pluck('id')->toArray();
+            $allIds = array_merge([$category->id], $childIds);
+            $category->total_active_listings_count = Listing::whereIn('category_id', $allIds)
+                ->where('status', 'active')
+                ->count();
+        });
 
         // Featured listings
         $featuredListings = Listing::with(['primaryImage', 'category:id,name', 'user:id,name,city'])
