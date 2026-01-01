@@ -17,7 +17,8 @@
       "Bash(npm outdated:*)",
       "Bash(composer show:*)",
       "Bash(cat:*)",
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "WebFetch(domain:lentloweb.com)"
     ]
   }
 }
