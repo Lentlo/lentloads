@@ -154,7 +154,11 @@ const locationData = reactive({
 })
 
 const hasLocation = computed(() => {
-  return locationData.latitude && locationData.longitude
+  // Show form fields if we have coordinates OR any location text data
+  return (locationData.latitude && locationData.longitude) ||
+         locationData.city ||
+         locationData.state ||
+         locationData.locality
 })
 
 // Initialize map
