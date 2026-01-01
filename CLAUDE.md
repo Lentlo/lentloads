@@ -288,10 +288,23 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
 8. **Accessibility** - Added aria-labels to icon buttons
 
 ### Remaining Issues (Lower Priority):
-- N+1 queries in category controllers (optimization, not security)
 - Payment gateway is simulated (PackageController.php:53) - needs real implementation
 - localStorage token storage - consider httpOnly cookies for production
 - Some npm dependencies are outdated (run `npm outdated` to check)
+
+### N+1 Query Fixes (January 1, 2026):
+Optimized PageController and CategoryController to use batch queries instead of per-category queries:
+```php
+// Old: N+1 queries (one per category)
+foreach ($categories as $category) {
+    $category->total_active_listings_count = Listing::whereIn('category_id', $allIds)->count();
+}
+
+// New: 2 batch queries total
+$childrenByParent = Category::whereIn('parent_id', $parentIds)->get(['id', 'parent_id'])->groupBy('parent_id');
+$listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('category_id, COUNT(*) as count')->groupBy('category_id')->pluck('count', 'category_id');
+// Then calculate in PHP without database queries
+```
 
 ### Security Best Practices Applied:
 - Sanitized HTML content before v-html rendering
