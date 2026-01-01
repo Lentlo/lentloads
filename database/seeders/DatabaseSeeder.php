@@ -86,7 +86,7 @@ class DatabaseSeeder extends Seeder
             foreach ($categoryData['children'] as $childIndex => $childName) {
                 Category::create([
                     'name' => $childName,
-                    'slug' => \Str::slug($childName),
+                    'slug' => $categoryData['slug'] . '-' . \Str::slug($childName),
                     'parent_id' => $parent->id,
                     'order' => $childIndex,
                     'is_active' => true,
