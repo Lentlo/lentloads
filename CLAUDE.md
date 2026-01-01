@@ -390,6 +390,12 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 
 ## Session Notes
 
+### Session: January 1, 2026 (Phone Login & Auth Enhancements)
+- Added phone+password login support (toggle between email/phone on login page)
+- Made phone number required during registration
+- Added unique constraint on phone in users table
+- Login now accepts either email or phone number
+
 ### Session: January 1, 2026 (Conversation Monitoring & Contact Tracking)
 - Added Admin Conversations page to monitor all user chats
 - Added Admin Contact Views page to track who viewed whose phone
