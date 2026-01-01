@@ -345,7 +345,7 @@ Route::post('/listings/{id}/track-contact', [ListingController::class, 'trackCon
 - [ ] Implement payment gateway (currently simulated)
 - [ ] Mobile responsive testing
 - [ ] PWA testing on mobile devices
-- [ ] **Location & Map Feature** (see plan below)
+- [x] **Location & Map Feature** - Implemented with Leaflet + OpenStreetMap (January 2, 2026)
 
 ---
 
@@ -494,16 +494,16 @@ Response includes: road, suburb (locality), city, state, postcode
    - Static map with marker
    - Get directions link
 
-### Implementation Order
-1. ✅ Create migration for locality field
-2. ✅ Install Leaflet packages
-3. ✅ Create LocationPicker.vue component
-4. ✅ Integrate into CreateListing.vue
-5. ✅ Integrate into EditListing.vue
-6. ✅ Update ListingController to save new fields
-7. ✅ Create LocationDisplay.vue
-8. ✅ Add map to ListingDetail.vue
-9. ✅ Test and deploy
+### Implementation Order - COMPLETED (January 2, 2026)
+1. ✅ Create migration for locality field - `2024_01_01_000018_add_locality_to_listings_table.php`
+2. ✅ Install Leaflet packages - `npm install leaflet @vue-leaflet/vue-leaflet`
+3. ✅ Create LocationPicker.vue component - `resources/js/components/common/LocationPicker.vue`
+4. ✅ Integrate into CreateListing.vue - Map picker with GPS and reverse geocoding
+5. ✅ Integrate into EditListing.vue - Pre-fills existing coordinates
+6. ✅ Update ListingController to save new fields - Added `locality` validation
+7. ✅ Create LocationDisplay.vue - `resources/js/components/common/LocationDisplay.vue`
+8. ✅ Add map to ListingDetail.vue - Shows location with privacy circle
+9. ✅ Test and deploy - LIVE
 
 ### Alternative: Keep it Simple (Dropdowns Only)
 If map is too complex, simpler option:
@@ -556,6 +556,41 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 ---
 
 ## Session Notes
+
+### Session: January 2, 2026 (Location Pin & Map Feature)
+
+**Implemented:** Leaflet + OpenStreetMap location picker for listings
+
+**New Files Created:**
+- `database/migrations/2024_01_01_000018_add_locality_to_listings_table.php`
+- `resources/js/components/common/LocationPicker.vue` (~200 lines)
+- `resources/js/components/common/LocationDisplay.vue` (~150 lines)
+
+**Files Modified:**
+- `resources/js/views/dashboard/CreateListing.vue` - Added LocationPicker
+- `resources/js/views/dashboard/EditListing.vue` - Added LocationPicker
+- `resources/js/views/ListingDetail.vue` - Added LocationDisplay map
+- `app/Http/Controllers/Api/ListingController.php` - Added locality validation
+- `app/Models/Listing.php` - Added locality to fillable
+
+**Features:**
+1. **Create/Edit Listing:**
+   - Interactive map with click-to-pin
+   - "Use My Current Location" GPS button
+   - Auto-fills: Locality, City, State, PIN Code
+   - Uses Nominatim reverse geocoding (free)
+
+2. **Listing Detail Page:**
+   - Static map showing approximate location
+   - 500m privacy radius circle
+   - "Get Directions" link to Google Maps
+   - Shows: Locality, City, State, PIN Code
+
+**NPM Packages Added:**
+- `leaflet` - Map rendering
+- `@vue-leaflet/vue-leaflet` - Vue integration
+
+---
 
 ### Session: January 1, 2026 (Phone Login & Auth Enhancements - Full Details)
 
