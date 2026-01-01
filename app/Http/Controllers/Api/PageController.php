@@ -22,16 +22,38 @@ class PageController extends Controller
             ->limit(8)
             ->get();
 
-        // Load children first
+        // Load children for display (limited to 5)
         $categories->load(['children' => fn($q) => $q->active()->limit(5)]);
 
-        // Calculate total listings count including ALL children (must be AFTER load)
+        // Optimized: Get all listing counts in 2 queries instead of N+1
+        $parentIds = $categories->pluck('id')->toArray();
+
+        // Get ALL child category IDs grouped by parent (one query)
+        $childrenByParent = Category::whereIn('parent_id', $parentIds)
+            ->get(['id', 'parent_id'])
+            ->groupBy('parent_id');
+
+        // Get all category IDs (parents + children)
+        $allCategoryIds = $parentIds;
+        foreach ($childrenByParent as $children) {
+            $allCategoryIds = array_merge($allCategoryIds, $children->pluck('id')->toArray());
+        }
+
+        // Get listing counts grouped by category_id (one query)
+        $listingCounts = Listing::whereIn('category_id', $allCategoryIds)
+            ->where('status', 'active')
+            ->selectRaw('category_id, COUNT(*) as count')
+            ->groupBy('category_id')
+            ->pluck('count', 'category_id');
+
+        // Calculate totals in PHP (no more queries)
         foreach ($categories as $category) {
-            $allChildIds = Category::where('parent_id', $category->id)->pluck('id')->toArray();
-            $allIds = array_merge([$category->id], $allChildIds);
-            $category->total_active_listings_count = Listing::whereIn('category_id', $allIds)
-                ->where('status', 'active')
-                ->count();
+            $childIds = isset($childrenByParent[$category->id])
+                ? $childrenByParent[$category->id]->pluck('id')->toArray()
+                : [];
+            $allIds = array_merge([$category->id], $childIds);
+            $category->total_active_listings_count = collect($allIds)
+                ->sum(fn($id) => $listingCounts[$id] ?? 0);
         }
 
         // Featured listings
