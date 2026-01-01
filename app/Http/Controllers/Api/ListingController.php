@@ -83,7 +83,9 @@ class ListingController extends Controller
                     ->orderBy('published_at', 'desc');
         }
 
-        $listings = $query->paginate($request->input('per_page', 20));
+        // Limit pagination to prevent DoS
+        $perPage = min((int) $request->input('per_page', 20), 50);
+        $listings = $query->paginate($perPage);
 
         return $this->paginatedResponse($listings);
     }

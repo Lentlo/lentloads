@@ -175,9 +175,13 @@ const handleSubmit = async () => {
     await authStore.login(form)
     toast.success('Welcome back!')
 
-    // Redirect
-    const redirect = route.query.redirect || '/dashboard'
-    router.push(redirect)
+    // Redirect - validate to prevent open redirect attacks
+    const redirect = route.query.redirect
+    // Only allow internal paths (starting with /) and not protocol-relative URLs (//)
+    const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+      ? redirect
+      : '/dashboard'
+    router.push(safeRedirect)
   } catch (error) {
     if (error.response?.status === 401) {
       errors.password = 'Invalid email or password'

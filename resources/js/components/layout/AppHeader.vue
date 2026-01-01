@@ -29,6 +29,7 @@
               <button
                 v-if="searchQuery"
                 @click="searchQuery = ''"
+                aria-label="Clear search"
                 class="p-2 mr-1 text-slate-400 hover:text-slate-600"
               >
                 <XMarkIcon class="w-5 h-5" />
@@ -43,6 +44,7 @@
           <button
             v-if="isAuthenticated"
             @click="$router.push('/notifications')"
+            aria-label="View notifications"
             class="relative p-2.5 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all duration-300"
           >
             <BellIcon class="w-6 h-6" />
@@ -58,6 +60,7 @@
           <router-link
             v-if="isAuthenticated"
             to="/messages"
+            aria-label="View messages"
             class="relative p-2.5 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all duration-300"
           >
             <ChatBubbleLeftRightIcon class="w-6 h-6" />
@@ -73,6 +76,8 @@
           <div v-if="isAuthenticated" class="relative">
             <button
               @click="showUserMenu = !showUserMenu"
+              aria-label="Open user menu"
+              aria-expanded="showUserMenu"
               class="flex items-center space-x-2 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
             >
               <div class="w-9 h-9 rounded-full bg-gradient-primary flex items-center justify-center text-white font-semibold shadow-soft">

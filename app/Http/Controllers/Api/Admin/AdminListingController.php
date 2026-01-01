@@ -39,12 +39,19 @@ class AdminListingController extends Controller
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
-        // Sorting
-        $sortBy = $request->input('sort', 'created_at');
-        $sortOrder = $request->input('order', 'desc');
+        // Sorting - validate against allowed columns to prevent SQL injection
+        $allowedSortColumns = ['created_at', 'updated_at', 'title', 'price', 'views_count', 'status'];
+        $sortBy = in_array($request->input('sort'), $allowedSortColumns)
+            ? $request->input('sort')
+            : 'created_at';
+        $sortOrder = in_array(strtolower($request->input('order')), ['asc', 'desc'])
+            ? $request->input('order')
+            : 'desc';
         $query->orderBy($sortBy, $sortOrder);
 
-        $listings = $query->paginate($request->input('per_page', 20));
+        // Limit pagination to prevent DoS
+        $perPage = min((int) $request->input('per_page', 20), 100);
+        $listings = $query->paginate($perPage);
 
         return $this->paginatedResponse($listings);
     }

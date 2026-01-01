@@ -38,7 +38,7 @@
             </p>
           </header>
 
-          <div class="prose prose-lg max-w-none" v-html="page.content"></div>
+          <div class="prose prose-lg max-w-none" v-html="sanitizedContent"></div>
         </article>
 
         <!-- Related Pages (if applicable) -->
@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/services/api'
 import dayjs from 'dayjs'
@@ -72,6 +72,39 @@ const route = useRoute()
 const loading = ref(true)
 const page = ref(null)
 const relatedPages = ref([])
+
+// Sanitize HTML to prevent XSS attacks
+// Note: For production, install and use DOMPurify: npm install dompurify
+const sanitizeHtml = (html) => {
+  if (!html) return ''
+
+  // Create a temporary element
+  const temp = document.createElement('div')
+  temp.innerHTML = html
+
+  // Remove dangerous elements
+  const dangerousTags = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button']
+  dangerousTags.forEach(tag => {
+    const elements = temp.querySelectorAll(tag)
+    elements.forEach(el => el.remove())
+  })
+
+  // Remove dangerous attributes from all elements
+  const allElements = temp.querySelectorAll('*')
+  allElements.forEach(el => {
+    // Remove event handlers
+    const attrs = Array.from(el.attributes)
+    attrs.forEach(attr => {
+      if (attr.name.startsWith('on') || attr.name === 'href' && attr.value.startsWith('javascript:')) {
+        el.removeAttribute(attr.name)
+      }
+    })
+  })
+
+  return temp.innerHTML
+}
+
+const sanitizedContent = computed(() => sanitizeHtml(page.value?.content))
 
 const formatDate = (date) => dayjs(date).format('MMMM D, YYYY')
 

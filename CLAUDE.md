@@ -275,6 +275,33 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
 
 ---
 
+## Security Audit Findings (January 1, 2026)
+
+### Fixed Issues:
+1. **CORS Configuration** - Restricted allowed origins (was `*` with credentials)
+2. **Rate Limiting** - Added to auth routes (5 attempts/min, 3 for password reset)
+3. **XSS Prevention** - Added HTML sanitization in StaticPage.vue
+4. **Open Redirect** - Validated redirect URLs in Login.vue
+5. **SQL Injection Prevention** - Validated sort columns in admin controllers
+6. **Pagination DoS** - Limited max per_page to 50-100
+7. **Database Indexes** - Created migration for 6 missing indexes
+8. **Accessibility** - Added aria-labels to icon buttons
+
+### Remaining Issues (Lower Priority):
+- N+1 queries in category controllers (optimization, not security)
+- Payment gateway is simulated (PackageController.php:53) - needs real implementation
+- localStorage token storage - consider httpOnly cookies for production
+- Some npm dependencies are outdated (run `npm outdated` to check)
+
+### Security Best Practices Applied:
+- Sanitized HTML content before v-html rendering
+- Whitelisted sort columns for orderBy queries
+- Limited pagination to prevent memory exhaustion
+- Added database indexes for common queries
+- Restricted CORS to specific domains
+
+---
+
 ## Session Notes
 
 ### Session: January 1, 2026 (Continued)

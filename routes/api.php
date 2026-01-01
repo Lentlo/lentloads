@@ -30,11 +30,11 @@ use App\Http\Controllers\Api\Admin\AdminSettingController;
 // Public routes
 Route::prefix('v1')->group(function () {
 
-    // Auth routes
-    Route::prefix('auth')->group(function () {
+    // Auth routes - with rate limiting to prevent brute force attacks
+    Route::prefix('auth')->middleware('throttle:5,1')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
         Route::post('login', [AuthController::class, 'login']);
-        Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
         Route::post('reset-password', [AuthController::class, 'resetPassword']);
         Route::get('verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
     });

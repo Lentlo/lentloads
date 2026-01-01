@@ -13,7 +13,10 @@
       "Bash(ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no lentlo@139.59.24.36:*)",
       "Bash(ssh:*)",
       "Bash(curl:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(npm outdated:*)",
+      "Bash(composer show:*)",
+      "Bash(cat:*)"
     ]
   }
 }
