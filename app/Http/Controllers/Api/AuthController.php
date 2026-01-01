@@ -19,7 +19,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', PasswordRule::min(8)],
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20|unique:users,phone',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
         ]);
@@ -45,16 +45,27 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validated = $request->validate([
-            'email' => 'required|email',
+            'login' => 'required|string', // Can be email or phone
             'password' => 'required',
             'remember' => 'boolean',
         ]);
 
-        if (!Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
+        $login = $validated['login'];
+        $password = $validated['password'];
+
+        // Determine if login is email or phone
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+        // Clean phone number (remove spaces, dashes)
+        if ($field === 'phone') {
+            $login = preg_replace('/[\s\-\(\)]/', '', $login);
+        }
+
+        if (!Auth::attempt([$field => $login, 'password' => $password])) {
             return $this->errorResponse('Invalid credentials', 401);
         }
 
-        $user = User::where('email', $validated['email'])->first();
+        $user = User::where($field, $login)->first();
 
         if ($user->status !== 'active') {
             return $this->errorResponse('Your account has been suspended', 403);

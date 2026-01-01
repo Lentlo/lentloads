@@ -48,15 +48,19 @@
 
           <!-- Phone -->
           <div>
-            <label for="phone" class="label">Phone Number (Optional)</label>
+            <label for="phone" class="label">Phone Number</label>
             <input
               id="phone"
               v-model="form.phone"
               type="tel"
               autocomplete="tel"
+              required
               class="input"
+              :class="{ 'input-error': errors.phone }"
               placeholder="+91 XXXXX XXXXX"
             />
+            <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone }}</p>
+            <p class="mt-1 text-sm text-gray-500">You can use this to login</p>
           </div>
 
           <!-- Password -->
@@ -199,6 +203,7 @@ const form = reactive({
 const errors = reactive({
   name: '',
   email: '',
+  phone: '',
   password: '',
   password_confirmation: '',
 })
@@ -214,6 +219,10 @@ const handleSubmit = async () => {
   }
   if (!form.email) {
     errors.email = 'Email is required'
+    return
+  }
+  if (!form.phone) {
+    errors.phone = 'Phone number is required'
     return
   }
   if (!form.password || form.password.length < 8) {

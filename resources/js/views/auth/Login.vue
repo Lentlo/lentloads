@@ -15,9 +15,29 @@
 
       <!-- Form -->
       <div class="card p-8">
+        <!-- Login Method Toggle -->
+        <div class="flex mb-6 bg-gray-100 rounded-lg p-1">
+          <button
+            type="button"
+            @click="loginMethod = 'email'"
+            class="flex-1 py-2 text-sm font-medium rounded-md transition"
+            :class="loginMethod === 'email' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'"
+          >
+            Email
+          </button>
+          <button
+            type="button"
+            @click="loginMethod = 'phone'"
+            class="flex-1 py-2 text-sm font-medium rounded-md transition"
+            :class="loginMethod === 'phone' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'"
+          >
+            Phone
+          </button>
+        </div>
+
         <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Email -->
-          <div>
+          <!-- Email Input -->
+          <div v-if="loginMethod === 'email'">
             <label for="email" class="label">Email address</label>
             <input
               id="email"
@@ -26,9 +46,26 @@
               autocomplete="email"
               required
               class="input"
-              :class="{ 'input-error': errors.email }"
+              :class="{ 'input-error': errors.login }"
+              placeholder="you@example.com"
             />
-            <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
+            <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
+          </div>
+
+          <!-- Phone Input -->
+          <div v-else>
+            <label for="phone" class="label">Phone number</label>
+            <input
+              id="phone"
+              v-model="form.phone"
+              type="tel"
+              autocomplete="tel"
+              required
+              class="input"
+              :class="{ 'input-error': errors.login }"
+              placeholder="+91 XXXXX XXXXX"
+            />
+            <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
           </div>
 
           <!-- Password -->
@@ -142,26 +179,29 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const showPassword = ref(false)
+const loginMethod = ref('email') // 'email' or 'phone'
 
 const form = reactive({
   email: '',
+  phone: '',
   password: '',
   remember: false,
 })
 
 const errors = reactive({
-  email: '',
+  login: '',
   password: '',
 })
 
 const handleSubmit = async () => {
   // Reset errors
-  errors.email = ''
+  errors.login = ''
   errors.password = ''
 
-  // Validate
-  if (!form.email) {
-    errors.email = 'Email is required'
+  // Validate based on login method
+  const loginValue = loginMethod.value === 'email' ? form.email : form.phone
+  if (!loginValue) {
+    errors.login = loginMethod.value === 'email' ? 'Email is required' : 'Phone number is required'
     return
   }
   if (!form.password) {
@@ -172,7 +212,11 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
-    await authStore.login(form)
+    await authStore.login({
+      login: loginValue,
+      password: form.password,
+      remember: form.remember,
+    })
     toast.success('Welcome back!')
 
     // Redirect - validate to prevent open redirect attacks
@@ -184,7 +228,9 @@ const handleSubmit = async () => {
     router.push(safeRedirect)
   } catch (error) {
     if (error.response?.status === 401) {
-      errors.password = 'Invalid email or password'
+      errors.password = loginMethod.value === 'email'
+        ? 'Invalid email or password'
+        : 'Invalid phone number or password'
     }
   } finally {
     loading.value = false
