@@ -1,15 +1,16 @@
 <template>
   <router-link
     :to="`/listing/${listing.slug}`"
-    class="card-hover group"
+    class="card-hover group block"
   >
     <!-- Image -->
-    <div class="relative aspect-[4/3] bg-gray-100">
+    <div class="relative aspect-[4/3] bg-gray-100 img-zoom">
       <img
         :src="listing.primary_image_url"
         :alt="listing.title"
-        class="w-full h-full object-cover"
+        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         loading="lazy"
+        @error="handleImageError"
       />
 
       <!-- Featured badge -->
@@ -103,5 +104,9 @@ const toggleFavorite = async () => {
 
 const formatDate = (date) => {
   return dayjs(date).fromNow()
+}
+
+const handleImageError = (e) => {
+  e.target.src = 'https://placehold.co/400x300/E5E7EB/9CA3AF?text=No+Image'
 }
 </script>

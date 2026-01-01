@@ -137,7 +137,10 @@ class Listing extends Model
         if ($image) {
             return asset('storage/' . $image->path);
         }
-        return asset('images/no-image.png');
+        // Use placeholder with category color
+        $colors = ['3B82F6', '10B981', 'F59E0B', 'EF4444', '8B5CF6', 'EC4899'];
+        $color = $colors[$this->category_id % count($colors)] ?? '6B7280';
+        return "https://placehold.co/400x300/{$color}/FFFFFF?text=" . urlencode(Str::limit($this->title, 15));
     }
 
     public function getLocationAttribute(): string
