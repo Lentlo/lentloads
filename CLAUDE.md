@@ -303,6 +303,20 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
 - **Pages Tab**: Create/edit static pages with HTML support
 - **Banners Tab**: Manage banners by position (home, sidebar, listing page)
 
+### Admin Conversations (`/admin/conversations`)
+- **View All Chats**: See all conversations between buyers and sellers
+- **Search**: By user name, email, or listing title
+- **Filter**: By blocked status, date range
+- **Read Messages**: Click to view full conversation history
+- **Message Details**: Sender name, timestamp, message content
+
+### Admin Contact Views (`/admin/contact-views`)
+- **Track Phone Reveals**: See who clicked "Show Phone Number"
+- **Stats Dashboard**: Total views, today, this week, this month
+- **Top Sellers**: Most viewed contact info
+- **Top Viewers**: Most active contact info viewers
+- **Search & Filter**: By name, email, date range
+
 ### API Routes Added
 ```php
 // Admin Listings
@@ -310,6 +324,16 @@ Route::post('/bulk-approve', [AdminListingController::class, 'bulkApprove']);
 Route::post('/bulk-delete', [AdminListingController::class, 'bulkDelete']);
 Route::put('/{id}', [AdminListingController::class, 'update']);
 Route::post('/{id}/toggle-feature', [AdminListingController::class, 'toggleFeature']);
+
+// Admin Conversations & Contact Views
+Route::get('/conversations', [AdminConversationController::class, 'index']);
+Route::get('/conversations/{id}', [AdminConversationController::class, 'show']);
+Route::get('/conversations/{id}/messages', [AdminConversationController::class, 'messages']);
+Route::get('/contact-views', [AdminConversationController::class, 'contactViews']);
+Route::get('/contact-views/stats', [AdminConversationController::class, 'contactViewStats']);
+
+// User Contact Tracking
+Route::post('/listings/{id}/track-contact', [ListingController::class, 'trackContactView']);
 ```
 
 ---
@@ -365,6 +389,14 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 ---
 
 ## Session Notes
+
+### Session: January 1, 2026 (Conversation Monitoring & Contact Tracking)
+- Added Admin Conversations page to monitor all user chats
+- Added Admin Contact Views page to track who viewed whose phone
+- Added ContactView model and migration for tracking
+- Updated listing detail page with "Show Phone Number" button that tracks views
+- Added navigation links to admin sidebar (Conversations, Contact Views)
+- Fixed auth persistence on page refresh (router now waits for user fetch)
 
 ### Session: January 1, 2026 (Admin Panel Enhancement)
 - Added real images to 12 listings using Unsplash URLs (ListingImageSeeder)
