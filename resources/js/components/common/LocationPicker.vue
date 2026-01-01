@@ -164,6 +164,8 @@ const hasLocation = computed(() => {
 // Initialize map
 onMounted(() => {
   initMap()
+  // Auto-detect user's location
+  autoDetectLocation()
 })
 
 onUnmounted(() => {
@@ -327,6 +329,73 @@ const emitLocation = () => {
     postal_code: locationData.postal_code,
     address: locationData.address
   })
+}
+
+// Auto-detect user's location on mount
+const autoDetectLocation = async () => {
+  // Skip if we already have initial coordinates (edit mode)
+  if (props.initialLatitude && props.initialLongitude) {
+    return
+  }
+
+  // Step 1: Try IP geolocation first (instant, city-level)
+  try {
+    loading.value = true
+    loadingText.value = 'Detecting your city...'
+
+    const response = await fetch('http://ip-api.com/json/?fields=status,city,regionName,lat,lon')
+    const data = await response.json()
+
+    if (data.status === 'success' && data.lat && data.lon) {
+      // Zoom to detected city
+      map.setView([data.lat, data.lon], 12)
+
+      // Pre-fill city and state
+      locationData.city = data.city || ''
+      locationData.state = data.regionName || ''
+
+      loading.value = false
+
+      // Step 2: Try GPS for precise location (optional, better accuracy)
+      tryGPSLocation()
+    } else {
+      loading.value = false
+      // IP detection failed, try GPS directly
+      tryGPSLocation()
+    }
+  } catch (error) {
+    console.error('IP geolocation failed:', error)
+    loading.value = false
+    // Fallback to GPS
+    tryGPSLocation()
+  }
+}
+
+// Try GPS location silently (no alert on failure)
+const tryGPSLocation = () => {
+  if (!navigator.geolocation) return
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords
+
+      // Center map and add marker
+      map.setView([latitude, longitude], 16)
+      addMarker(latitude, longitude)
+
+      // Get full address details
+      reverseGeocode(latitude, longitude)
+    },
+    (error) => {
+      // Silent fail - user can still click on map or use the button
+      console.log('GPS not available or denied:', error.message)
+    },
+    {
+      enableHighAccuracy: false, // Use low accuracy for faster response
+      timeout: 5000,
+      maximumAge: 300000 // Cache for 5 minutes
+    }
+  )
 }
 
 // Watch for prop changes (useful for edit mode)
