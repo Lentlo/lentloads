@@ -88,7 +88,7 @@ class ListingController extends Controller
         return $this->paginatedResponse($listings);
     }
 
-    public function show($slug)
+    public function show($slugOrId)
     {
         $listing = Listing::with([
             'user:id,name,avatar,city,rating,total_reviews,created_at,is_verified_seller',
@@ -96,7 +96,10 @@ class ListingController extends Controller
             'category.parent:id,name,slug',
             'images',
         ])
-            ->where('slug', $slug)
+            ->where(function($q) use ($slugOrId) {
+                $q->where('slug', $slugOrId)
+                  ->orWhere('id', $slugOrId);
+            })
             ->firstOrFail();
 
         // Increment views
