@@ -219,10 +219,14 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'admin'])->group(function
     Route::prefix('listings')->group(function () {
         Route::get('/', [AdminListingController::class, 'index']);
         Route::get('/pending', [AdminListingController::class, 'pending']);
+        Route::post('/bulk-approve', [AdminListingController::class, 'bulkApprove']);
+        Route::post('/bulk-delete', [AdminListingController::class, 'bulkDelete']);
         Route::get('/{id}', [AdminListingController::class, 'show']);
+        Route::put('/{id}', [AdminListingController::class, 'update']);
         Route::post('/{id}/approve', [AdminListingController::class, 'approve']);
         Route::post('/{id}/reject', [AdminListingController::class, 'reject']);
         Route::post('/{id}/feature', [AdminListingController::class, 'feature']);
+        Route::post('/{id}/toggle-feature', [AdminListingController::class, 'toggleFeature']);
         Route::delete('/{id}', [AdminListingController::class, 'destroy']);
     });
 

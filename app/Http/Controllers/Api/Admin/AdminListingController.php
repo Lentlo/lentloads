@@ -130,6 +130,104 @@ class AdminListingController extends Controller
         return $this->successResponse($listing, 'Listing featured');
     }
 
+    public function update(Request $request, $id)
+    {
+        $listing = Listing::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'sometimes|string|max:100',
+            'description' => 'sometimes|string|max:5000',
+            'price' => 'sometimes|numeric|min:0',
+            'price_type' => 'sometimes|in:fixed,negotiable,free,contact',
+            'condition' => 'nullable|in:new,like_new,good,fair,poor',
+            'category_id' => 'sometimes|exists:categories,id',
+            'city' => 'sometimes|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'status' => 'sometimes|in:active,pending,rejected,sold,expired',
+        ]);
+
+        $listing->update($validated);
+
+        return $this->successResponse($listing->load(['user:id,name,email', 'category:id,name']), 'Listing updated');
+    }
+
+    public function toggleFeature(Request $request, $id)
+    {
+        $listing = Listing::findOrFail($id);
+
+        $validated = $request->validate([
+            'is_featured' => 'boolean',
+            'is_urgent' => 'boolean',
+            'is_highlighted' => 'boolean',
+            'featured_days' => 'nullable|integer|min:1|max:365',
+        ]);
+
+        $updates = [];
+
+        if (isset($validated['is_featured'])) {
+            $updates['is_featured'] = $validated['is_featured'];
+            if ($validated['is_featured']) {
+                $days = $validated['featured_days'] ?? 30;
+                $updates['featured_until'] = now()->addDays($days);
+            } else {
+                $updates['featured_until'] = null;
+            }
+        }
+
+        if (isset($validated['is_urgent'])) {
+            $updates['is_urgent'] = $validated['is_urgent'];
+        }
+
+        if (isset($validated['is_highlighted'])) {
+            $updates['is_highlighted'] = $validated['is_highlighted'];
+        }
+
+        $listing->update($updates);
+
+        return $this->successResponse($listing, 'Listing updated');
+    }
+
+    public function bulkApprove(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:listings,id',
+        ]);
+
+        $count = 0;
+        foreach ($validated['ids'] as $id) {
+            $listing = Listing::find($id);
+            if ($listing && $listing->status === 'pending') {
+                $listing->publish();
+                $count++;
+            }
+        }
+
+        return $this->successResponse(['count' => $count], "{$count} listings approved");
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:listings,id',
+        ]);
+
+        $count = 0;
+        foreach ($validated['ids'] as $id) {
+            $listing = Listing::find($id);
+            if ($listing) {
+                foreach ($listing->images as $image) {
+                    $image->deleteFiles();
+                }
+                $listing->forceDelete();
+                $count++;
+            }
+        }
+
+        return $this->successResponse(['count' => $count], "{$count} listings deleted");
+    }
+
     public function destroy($id)
     {
         $listing = Listing::findOrFail($id);

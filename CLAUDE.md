@@ -264,12 +264,61 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
 
 ---
 
+## Admin Panel Features (Added January 2026)
+
+### Admin Access
+- **URL**: `/admin` (accessible via "Admin Panel" link in user menu)
+- **Required Role**: `admin` or `moderator`
+- **Routes**: Protected by `auth:sanctum` and `admin` middleware
+
+### Admin Dashboard (`/admin`)
+- **Stats Cards**: Total users, listings, pending approvals, open reports
+- **Charts**: New listings and users (bar charts for 7/14/30/90 days)
+- **Category Distribution**: Visual breakdown of listings per category
+- **Top Cities**: Most active cities with listing counts
+- **Recent Activity**: Latest listings, users, and pending reports
+- **Quick Actions**: Direct links to common admin tasks
+
+### Admin Listings (`/admin/listings`)
+- **Bulk Actions**: Select multiple listings for bulk approve/delete
+- **Inline Status Change**: Dropdown to change listing status
+- **Badge Toggles**: One-click toggle for Featured/Urgent/Highlighted badges
+- **Edit Modal**: Full listing editor with all fields
+- **Filters**: By status, category, date range, search
+- **Sortable Columns**: By date, title, price, views, status
+
+### Admin Users (`/admin/users`)
+- **Inline Role Change**: Dropdown for user/moderator/admin roles
+- **Inline Status Change**: Dropdown for active/suspended/banned
+- **Verified Seller Toggle**: One-click badge toggle
+- **View Details Modal**: Shows user stats, recent listings, ratings
+- **Filters**: By role, status, search
+
+### Admin Settings (`/admin/settings`)
+- **General Tab**: Site name, tagline, contact info, currency, timezone, maintenance mode
+- **Listings Tab**: Approval settings, image limits, expiry, watermarks
+- **Email Tab**: SMTP configuration, notification preferences
+- **SEO Tab**: Meta tags, OG image, Google Analytics, Facebook Pixel
+- **Social Tab**: Facebook, Instagram, Twitter, YouTube, LinkedIn, WhatsApp links
+- **Pages Tab**: Create/edit static pages with HTML support
+- **Banners Tab**: Manage banners by position (home, sidebar, listing page)
+
+### API Routes Added
+```php
+// Admin Listings
+Route::post('/bulk-approve', [AdminListingController::class, 'bulkApprove']);
+Route::post('/bulk-delete', [AdminListingController::class, 'bulkDelete']);
+Route::put('/{id}', [AdminListingController::class, 'update']);
+Route::post('/{id}/toggle-feature', [AdminListingController::class, 'toggleFeature']);
+```
+
+---
+
 ## Pending/Future Tasks
 
 - [ ] Fix auto-deploy webhook (public/deploy.php)
-- [ ] Add more test listings with real images
-- [ ] Implement user authentication UI improvements
-- [ ] Add image upload functionality testing
+- [x] Add real images to listings (32 Unsplash images seeded)
+- [ ] Implement payment gateway (currently simulated)
 - [ ] Mobile responsive testing
 - [ ] PWA testing on mobile devices
 
@@ -316,6 +365,35 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 ---
 
 ## Session Notes
+
+### Session: January 1, 2026 (Admin Panel Enhancement)
+- Added real images to 12 listings using Unsplash URLs (ListingImageSeeder)
+- Added "Admin Panel" link to header for admin users
+- Fixed admin listings page stuck loading (missing fetchCategories method)
+- Fixed 39 duplicate categories (deleted IDs 34-72, updated 12 listings)
+- **Enhanced Admin Listings**:
+  - Bulk select with approve/delete all selected
+  - Inline status dropdown for each listing
+  - Featured/Urgent/Highlighted badge toggle buttons
+  - Full edit modal with all listing fields
+- **Enhanced Admin Users**:
+  - Inline role dropdown (user/moderator/admin)
+  - Inline status dropdown (active/suspended/banned)
+  - Verified seller badge toggle
+  - View details modal with user's listings
+- **Enhanced Admin Dashboard**:
+  - Added period selector (7/14/30/90 days)
+  - Bar charts for new listings and users over time
+  - Category distribution progress bars
+  - Top cities ranking
+  - Recent users column
+  - Refresh button
+- **Enhanced Admin Settings**:
+  - Added Email tab (SMTP, notifications)
+  - Added SEO tab (meta tags, analytics)
+  - Added Social tab (all social links)
+  - Enhanced Pages with meta fields
+  - Enhanced Banners with position filter
 
 ### Session: January 1, 2026 (Continued)
 - Fixed category counts showing "0 ads" - now includes child category listings

@@ -22,6 +22,7 @@
         <select v-model="filters.role" @change="fetchUsers" class="input w-auto">
           <option value="">All Roles</option>
           <option value="user">User</option>
+          <option value="moderator">Moderator</option>
           <option value="admin">Admin</option>
         </select>
         <select v-model="filters.status" @change="fetchUsers" class="input w-auto">
@@ -42,18 +43,20 @@
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Verified</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Stats</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Joined</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y">
           <tr v-if="loading">
-            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
               Loading...
             </td>
           </tr>
           <tr v-else-if="!users.length">
-            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
               No users found
             </td>
           </tr>
@@ -73,28 +76,52 @@
             </td>
             <td class="px-4 py-3 text-gray-600">{{ user.email }}</td>
             <td class="px-4 py-3">
-              <span
-                class="badge"
-                :class="user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'"
+              <select
+                v-model="user.role"
+                @change="updateRole(user)"
+                class="text-xs border rounded px-2 py-1"
+                :class="getRoleClass(user.role)"
               >
-                {{ user.role }}
-              </span>
+                <option value="user">User</option>
+                <option value="moderator">Moderator</option>
+                <option value="admin">Admin</option>
+              </select>
             </td>
             <td class="px-4 py-3">
-              <span
-                class="badge"
+              <select
+                v-model="user.status"
+                @change="updateStatus(user)"
+                class="text-xs border rounded px-2 py-1"
                 :class="getStatusClass(user.status)"
               >
-                {{ user.status }}
-              </span>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="banned">Banned</option>
+              </select>
             </td>
-            <td class="px-4 py-3 text-gray-600">{{ formatDate(user.created_at) }}</td>
             <td class="px-4 py-3">
-              <div class="flex items-center gap-2">
+              <button
+                @click="toggleVerified(user)"
+                :class="user.is_verified_seller ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'"
+                class="px-2 py-1 rounded text-xs font-medium flex items-center gap-1"
+              >
+                <CheckBadgeIcon class="w-4 h-4" />
+                {{ user.is_verified_seller ? 'Verified' : 'Unverified' }}
+              </button>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-500">
+              <div class="flex flex-col gap-1">
+                <span><TagIcon class="w-3 h-3 inline" /> {{ user.listings_count || 0 }} listings</span>
+                <span><StarIcon class="w-3 h-3 inline" /> {{ user.rating || '0.0' }} rating</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-gray-600 text-sm">{{ formatDate(user.created_at) }}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1">
                 <button
                   @click="viewUser(user)"
                   class="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                  title="View"
+                  title="View Details"
                 >
                   <EyeIcon class="w-5 h-5" />
                 </button>
@@ -106,20 +133,12 @@
                   <PencilIcon class="w-5 h-5" />
                 </button>
                 <button
-                  v-if="user.status !== 'banned'"
-                  @click="banUser(user)"
+                  v-if="user.role !== 'admin'"
+                  @click="deleteUser(user)"
                   class="p-1 text-red-600 hover:bg-red-50 rounded"
-                  title="Ban"
+                  title="Delete"
                 >
-                  <NoSymbolIcon class="w-5 h-5" />
-                </button>
-                <button
-                  v-else
-                  @click="unbanUser(user)"
-                  class="p-1 text-green-600 hover:bg-green-50 rounded"
-                  title="Unban"
-                >
-                  <CheckCircleIcon class="w-5 h-5" />
+                  <TrashIcon class="w-5 h-5" />
                 </button>
               </div>
             </td>
@@ -151,6 +170,109 @@
       </div>
     </div>
 
+    <!-- View User Modal -->
+    <div v-if="viewingUser" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50" @click="viewingUser = null"></div>
+      <div class="relative bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between mb-6">
+          <div class="flex items-center gap-4">
+            <img
+              :src="viewingUser.avatar_url"
+              :alt="viewingUser.name"
+              class="w-16 h-16 rounded-full object-cover"
+            />
+            <div>
+              <h3 class="text-xl font-semibold">{{ viewingUser.name }}</h3>
+              <p class="text-gray-500">{{ viewingUser.email }}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span :class="getStatusClass(viewingUser.status)" class="badge">{{ viewingUser.status }}</span>
+                <span :class="getRoleClass(viewingUser.role)" class="badge">{{ viewingUser.role }}</span>
+                <span v-if="viewingUser.is_verified_seller" class="badge bg-green-100 text-green-700">Verified Seller</span>
+              </div>
+            </div>
+          </div>
+          <button @click="viewingUser = null" class="p-2 text-gray-400 hover:text-gray-600">
+            <XMarkIcon class="w-6 h-6" />
+          </button>
+        </div>
+
+        <!-- User Stats -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <p class="text-2xl font-bold text-gray-900">{{ viewingUser.listings_count || 0 }}</p>
+            <p class="text-sm text-gray-500">Listings</p>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <p class="text-2xl font-bold text-gray-900">{{ viewingUser.successful_sales || 0 }}</p>
+            <p class="text-sm text-gray-500">Sales</p>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <p class="text-2xl font-bold text-gray-900">{{ viewingUser.rating || '0.0' }}</p>
+            <p class="text-sm text-gray-500">Rating</p>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <p class="text-2xl font-bold text-gray-900">{{ viewingUser.reviews_received_count || 0 }}</p>
+            <p class="text-sm text-gray-500">Reviews</p>
+          </div>
+        </div>
+
+        <!-- User Listings -->
+        <div>
+          <h4 class="font-semibold mb-3">Recent Listings</h4>
+          <div v-if="viewingUser.listings?.length" class="space-y-2">
+            <div
+              v-for="listing in viewingUser.listings"
+              :key="listing.id"
+              class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+            >
+              <img
+                :src="listing.primary_image_url"
+                :alt="listing.title"
+                class="w-12 h-12 rounded object-cover"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="font-medium truncate">{{ listing.title }}</p>
+                <p class="text-sm text-gray-500">{{ listing.formatted_price }}</p>
+              </div>
+              <span :class="getListingStatusClass(listing.status)" class="badge text-xs">
+                {{ listing.status }}
+              </span>
+              <a
+                :href="`/listing/${listing.slug}`"
+                target="_blank"
+                class="p-1 text-gray-400 hover:text-gray-600"
+              >
+                <ArrowTopRightOnSquareIcon class="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+          <p v-else class="text-gray-500 text-sm">No listings yet</p>
+        </div>
+
+        <!-- User Info -->
+        <div class="mt-6 pt-6 border-t">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-gray-500">Phone:</span>
+              <span class="ml-2">{{ viewingUser.phone || 'Not provided' }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Location:</span>
+              <span class="ml-2">{{ viewingUser.city || 'Not provided' }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Joined:</span>
+              <span class="ml-2">{{ formatDate(viewingUser.created_at) }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Last Active:</span>
+              <span class="ml-2">{{ viewingUser.last_active_at ? formatDate(viewingUser.last_active_at) : 'Unknown' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Edit User Modal -->
     <div v-if="editingUser" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/50" @click="editingUser = null"></div>
@@ -159,24 +281,39 @@
         <form @submit.prevent="saveUser" class="space-y-4">
           <div>
             <label class="label">Name</label>
-            <input v-model="editingUser.name" type="text" class="input" />
+            <input v-model="editForm.name" type="text" class="input" />
           </div>
           <div>
-            <label class="label">Role</label>
-            <select v-model="editingUser.role" class="input">
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
+            <label class="label">Email</label>
+            <input v-model="editForm.email" type="email" class="input" />
           </div>
           <div>
-            <label class="label">Status</label>
-            <select v-model="editingUser.status" class="input">
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-              <option value="banned">Banned</option>
-            </select>
+            <label class="label">Phone</label>
+            <input v-model="editForm.phone" type="text" class="input" />
           </div>
-          <div class="flex gap-2">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="label">Role</label>
+              <select v-model="editForm.role" class="input">
+                <option value="user">User</option>
+                <option value="moderator">Moderator</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">Status</label>
+              <select v-model="editForm.status" class="input">
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="banned">Banned</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" v-model="editForm.is_verified_seller" id="verified" class="rounded" />
+            <label for="verified" class="text-sm">Verified Seller</label>
+          </div>
+          <div class="flex gap-2 pt-2">
             <button type="button" @click="editingUser = null" class="btn-secondary flex-1">
               Cancel
             </button>
@@ -192,7 +329,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import api from '@/services/api'
 import { toast } from 'vue3-toastify'
 import dayjs from 'dayjs'
@@ -201,21 +338,35 @@ import {
   MagnifyingGlassIcon,
   EyeIcon,
   PencilIcon,
-  NoSymbolIcon,
-  CheckCircleIcon,
+  TrashIcon,
+  CheckBadgeIcon,
+  TagIcon,
+  StarIcon,
+  XMarkIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/vue/24/outline'
 
-const router = useRouter()
+const route = useRoute()
 
 const loading = ref(true)
 const saving = ref(false)
 const users = ref([])
-const search = ref('')
+const search = ref(route.query.search || '')
 const currentPage = ref(1)
 const lastPage = ref(1)
 const perPage = ref(20)
 const total = ref(0)
 const editingUser = ref(null)
+const viewingUser = ref(null)
+
+const editForm = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  role: 'user',
+  status: 'active',
+  is_verified_seller: false,
+})
 
 const filters = reactive({
   role: '',
@@ -229,6 +380,25 @@ const getStatusClass = (status) => {
     active: 'bg-green-100 text-green-800',
     suspended: 'bg-yellow-100 text-yellow-800',
     banned: 'bg-red-100 text-red-800',
+  }
+  return classes[status] || 'bg-gray-100 text-gray-800'
+}
+
+const getRoleClass = (role) => {
+  const classes = {
+    admin: 'bg-purple-100 text-purple-800',
+    moderator: 'bg-blue-100 text-blue-800',
+    user: 'bg-gray-100 text-gray-800',
+  }
+  return classes[role] || 'bg-gray-100 text-gray-800'
+}
+
+const getListingStatusClass = (status) => {
+  const classes = {
+    active: 'bg-green-100 text-green-800',
+    pending: 'bg-yellow-100 text-yellow-800',
+    rejected: 'bg-red-100 text-red-800',
+    sold: 'bg-blue-100 text-blue-800',
   }
   return classes[status] || 'bg-gray-100 text-gray-800'
 }
@@ -266,51 +436,79 @@ const goToPage = (page) => {
   }
 }
 
-const viewUser = (user) => {
-  router.push(`/user/${user.id}`)
+const viewUser = async (user) => {
+  try {
+    const response = await api.get(`/admin/users/${user.id}`)
+    viewingUser.value = response.data.data
+  } catch (error) {
+    toast.error('Failed to load user details')
+  }
 }
 
 const editUser = (user) => {
-  editingUser.value = { ...user }
+  editingUser.value = user
+  editForm.name = user.name
+  editForm.email = user.email
+  editForm.phone = user.phone || ''
+  editForm.role = user.role
+  editForm.status = user.status
+  editForm.is_verified_seller = user.is_verified_seller || false
 }
 
 const saveUser = async () => {
   saving.value = true
   try {
-    await api.put(`/admin/users/${editingUser.value.id}`, {
-      name: editingUser.value.name,
-      role: editingUser.value.role,
-      status: editingUser.value.status,
-    })
+    await api.put(`/admin/users/${editingUser.value.id}`, editForm)
     toast.success('User updated')
     editingUser.value = null
     fetchUsers()
   } catch (error) {
-    toast.error('Failed to update user')
+    toast.error(error.response?.data?.message || 'Failed to update user')
   } finally {
     saving.value = false
   }
 }
 
-const banUser = async (user) => {
-  if (!confirm(`Ban ${user.name}? They will no longer be able to access the platform.`)) return
-
+const updateRole = async (user) => {
   try {
-    await api.post(`/admin/users/${user.id}/ban`)
-    toast.success('User banned')
-    fetchUsers()
+    await api.put(`/admin/users/${user.id}`, { role: user.role })
+    toast.success('Role updated')
   } catch (error) {
-    toast.error('Failed to ban user')
+    toast.error('Failed to update role')
+    fetchUsers()
   }
 }
 
-const unbanUser = async (user) => {
+const updateStatus = async (user) => {
   try {
-    await api.post(`/admin/users/${user.id}/unban`)
-    toast.success('User unbanned')
+    await api.put(`/admin/users/${user.id}`, { status: user.status })
+    toast.success('Status updated')
+  } catch (error) {
+    toast.error('Failed to update status')
+    fetchUsers()
+  }
+}
+
+const toggleVerified = async (user) => {
+  try {
+    const newValue = !user.is_verified_seller
+    await api.put(`/admin/users/${user.id}`, { is_verified_seller: newValue })
+    user.is_verified_seller = newValue
+    toast.success(newValue ? 'Seller verified' : 'Verification removed')
+  } catch (error) {
+    toast.error('Failed to update verification')
+  }
+}
+
+const deleteUser = async (user) => {
+  if (!confirm(`Delete ${user.name}? This action cannot be undone.`)) return
+
+  try {
+    await api.delete(`/admin/users/${user.id}`)
+    toast.success('User deleted')
     fetchUsers()
   } catch (error) {
-    toast.error('Failed to unban user')
+    toast.error(error.response?.data?.message || 'Failed to delete user')
   }
 }
 
