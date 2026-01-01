@@ -21,13 +21,13 @@ class CategoryController extends Controller
             ->get();
 
         // Calculate total listings count including children
-        $categories->each(function ($category) {
-            $childIds = $category->children->pluck('id')->toArray();
-            $allIds = array_merge([$category->id], $childIds);
+        foreach ($categories as $category) {
+            $allChildIds = Category::where('parent_id', $category->id)->pluck('id')->toArray();
+            $allIds = array_merge([$category->id], $allChildIds);
             $category->total_active_listings_count = Listing::whereIn('category_id', $allIds)
                 ->where('status', 'active')
                 ->count();
-        });
+        }
 
         return $this->successResponse($categories);
     }
