@@ -181,7 +181,14 @@ const initMap = () => {
   const defaultLng = props.initialLongitude || 78.9629
   const defaultZoom = props.initialLatitude ? 15 : 5
 
-  map = L.map(mapContainer.value).setView([defaultLat, defaultLng], defaultZoom)
+  map = L.map(mapContainer.value, {
+    // Disable scroll zoom to prevent page scroll hijacking on mobile
+    scrollWheelZoom: false,
+    // Enable touch zoom for pinch gestures
+    touchZoom: true,
+    // Add zoom control
+    zoomControl: true
+  }).setView([defaultLat, defaultLng], defaultZoom)
 
   // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
