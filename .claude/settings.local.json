@@ -5,7 +5,8 @@
       "Bash(git commit:*)",
       "Bash(git push)",
       "Bash(git push:*)",
-      "Bash(openssl rand:*)"
+      "Bash(openssl rand:*)",
+      "WebFetch(domain:phplaravel-1016958-6108537.cloudwaysapps.com)"
     ]
   }
 }
