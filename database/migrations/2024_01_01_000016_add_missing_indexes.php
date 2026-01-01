@@ -3,42 +3,46 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
      * Adds missing indexes for better query performance.
+     * Uses safe approach to avoid duplicate index errors.
      */
     public function up(): void
     {
-        // Add index to listings.slug for faster slug lookups
-        Schema::table('listings', function (Blueprint $table) {
-            $table->index('slug');
-        });
-
-        // Add index to categories.slug for faster slug lookups
-        Schema::table('categories', function (Blueprint $table) {
-            $table->index('slug');
-        });
+        // Helper to check if index exists
+        $hasIndex = function ($table, $indexName) {
+            $indexes = DB::select("SHOW INDEX FROM `$table` WHERE Key_name = ?", [$indexName]);
+            return count($indexes) > 0;
+        };
 
         // Add index to messages.type for filtering by message type
-        Schema::table('messages', function (Blueprint $table) {
-            $table->index('type');
-        });
+        if (!$hasIndex('messages', 'messages_type_index')) {
+            Schema::table('messages', function (Blueprint $table) {
+                $table->index('type');
+            });
+        }
 
         // Add index to conversations.is_blocked for filtering blocked conversations
-        Schema::table('conversations', function (Blueprint $table) {
-            $table->index('is_blocked');
-        });
+        if (!$hasIndex('conversations', 'conversations_is_blocked_index')) {
+            Schema::table('conversations', function (Blueprint $table) {
+                $table->index('is_blocked');
+            });
+        }
 
         // Add index to user_packages.starts_at for date range queries
-        Schema::table('user_packages', function (Blueprint $table) {
-            $table->index('starts_at');
-        });
+        if (!$hasIndex('user_packages', 'user_packages_starts_at_index')) {
+            Schema::table('user_packages', function (Blueprint $table) {
+                $table->index('starts_at');
+            });
+        }
 
-        // Composite index for reports - already exists from morphs() definition
-        // Skipping: $table->index(['reportable_type', 'reportable_id']);
+        // Note: listings.slug and categories.slug already have indexes from unique constraints
+        // Note: reports already has composite index from morphs() definition
     }
 
     /**
@@ -46,26 +50,27 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('listings', function (Blueprint $table) {
-            $table->dropIndex(['slug']);
-        });
+        $hasIndex = function ($table, $indexName) {
+            $indexes = DB::select("SHOW INDEX FROM `$table` WHERE Key_name = ?", [$indexName]);
+            return count($indexes) > 0;
+        };
 
-        Schema::table('categories', function (Blueprint $table) {
-            $table->dropIndex(['slug']);
-        });
+        if ($hasIndex('messages', 'messages_type_index')) {
+            Schema::table('messages', function (Blueprint $table) {
+                $table->dropIndex(['type']);
+            });
+        }
 
-        Schema::table('messages', function (Blueprint $table) {
-            $table->dropIndex(['type']);
-        });
+        if ($hasIndex('conversations', 'conversations_is_blocked_index')) {
+            Schema::table('conversations', function (Blueprint $table) {
+                $table->dropIndex(['is_blocked']);
+            });
+        }
 
-        Schema::table('conversations', function (Blueprint $table) {
-            $table->dropIndex(['is_blocked']);
-        });
-
-        Schema::table('user_packages', function (Blueprint $table) {
-            $table->dropIndex(['starts_at']);
-        });
-
-        // Reports index not added by this migration
+        if ($hasIndex('user_packages', 'user_packages_starts_at_index')) {
+            Schema::table('user_packages', function (Blueprint $table) {
+                $table->dropIndex(['starts_at']);
+            });
+        }
     }
 };
