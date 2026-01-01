@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Listing;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -18,6 +19,15 @@ class CategoryController extends Controller
             ->ordered()
             ->withCount('activeListings')
             ->get();
+
+        // Calculate total listings count including children
+        $categories->each(function ($category) {
+            $childIds = $category->children->pluck('id')->toArray();
+            $allIds = array_merge([$category->id], $childIds);
+            $category->total_active_listings_count = Listing::whereIn('category_id', $allIds)
+                ->where('status', 'active')
+                ->count();
+        });
 
         return $this->successResponse($categories);
     }

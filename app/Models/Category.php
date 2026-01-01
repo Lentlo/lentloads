@@ -32,7 +32,7 @@ class Category extends Model
         'custom_fields' => 'array',
     ];
 
-    protected $appends = ['icon_url', 'image_url', 'full_name', 'total_active_listings_count'];
+    protected $appends = ['icon_url', 'image_url', 'full_name'];
 
     protected static function boot()
     {
