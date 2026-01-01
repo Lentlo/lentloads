@@ -19,41 +19,25 @@
         <div class="flex mb-6 bg-gray-100 rounded-lg p-1">
           <button
             type="button"
-            @click="loginMethod = 'email'"
-            class="flex-1 py-2 text-sm font-medium rounded-md transition"
-            :class="loginMethod === 'email' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'"
-          >
-            Email
-          </button>
-          <button
-            type="button"
             @click="loginMethod = 'phone'"
             class="flex-1 py-2 text-sm font-medium rounded-md transition"
             :class="loginMethod === 'phone' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'"
           >
             Phone
           </button>
+          <button
+            type="button"
+            @click="loginMethod = 'email'"
+            class="flex-1 py-2 text-sm font-medium rounded-md transition"
+            :class="loginMethod === 'email' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'"
+          >
+            Email
+          </button>
         </div>
 
         <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Email Input -->
-          <div v-if="loginMethod === 'email'">
-            <label for="email" class="label">Email address</label>
-            <input
-              id="email"
-              v-model="form.email"
-              type="email"
-              autocomplete="email"
-              required
-              class="input"
-              :class="{ 'input-error': errors.login }"
-              placeholder="you@example.com"
-            />
-            <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
-          </div>
-
           <!-- Phone Input -->
-          <div v-else>
+          <div v-if="loginMethod === 'phone'">
             <label for="phone" class="label">Phone number</label>
             <input
               id="phone"
@@ -64,6 +48,22 @@
               class="input"
               :class="{ 'input-error': errors.login }"
               placeholder="+91 XXXXX XXXXX"
+            />
+            <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
+          </div>
+
+          <!-- Email Input -->
+          <div v-else>
+            <label for="email" class="label">Email address</label>
+            <input
+              id="email"
+              v-model="form.email"
+              type="email"
+              autocomplete="email"
+              required
+              class="input"
+              :class="{ 'input-error': errors.login }"
+              placeholder="you@example.com"
             />
             <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
           </div>
@@ -205,7 +205,7 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const showPassword = ref(false)
-const loginMethod = ref('email') // 'email' or 'phone'
+const loginMethod = ref('phone') // 'phone' or 'email'
 
 const form = reactive({
   email: '',
