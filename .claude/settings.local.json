@@ -8,7 +8,10 @@
       "Bash(openssl rand:*)",
       "WebFetch(domain:phplaravel-1016958-6108537.cloudwaysapps.com)",
       "Bash(npm run build:*)",
-      "WebFetch(domain:www.olx.in)"
+      "WebFetch(domain:www.olx.in)",
+      "Bash(brew install:*)",
+      "Bash(ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no lentlo@139.59.24.36:*)",
+      "Bash(ssh:*)"
     ]
   }
 }
