@@ -249,7 +249,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useListingsStore } from '@/stores/listings'
@@ -356,5 +356,14 @@ const fetchListing = async () => {
 
 onMounted(() => {
   fetchListing()
+})
+
+// Watch for route changes to handle clicking on similar listings
+watch(() => route.params.slug, (newSlug, oldSlug) => {
+  if (newSlug !== oldSlug) {
+    loading.value = true
+    currentImageIndex.value = 0
+    fetchListing()
+  }
 })
 </script>
