@@ -12,7 +12,8 @@
       "Bash(brew install:*)",
       "Bash(ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no lentlo@139.59.24.36:*)",
       "Bash(ssh:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(python3:*)"
     ]
   }
 }

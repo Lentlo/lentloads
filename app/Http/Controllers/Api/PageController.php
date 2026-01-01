@@ -23,10 +23,10 @@ class PageController extends Controller
             ->limit(8)
             ->get();
 
-        // Calculate total listings count including children
+        // Calculate total listings count including ALL children (not just loaded ones)
         $categories->each(function ($category) {
-            $childIds = $category->children->pluck('id')->toArray();
-            $allIds = array_merge([$category->id], $childIds);
+            $allChildIds = Category::where('parent_id', $category->id)->pluck('id')->toArray();
+            $allIds = array_merge([$category->id], $allChildIds);
             $category->total_active_listings_count = Listing::whereIn('category_id', $allIds)
                 ->where('status', 'active')
                 ->count();
