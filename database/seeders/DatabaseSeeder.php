@@ -14,13 +14,15 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create admin user
-        User::create([
-            'name' => 'Admin',
-            'email' => 'admin@lentloads.com',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
-            'email_verified_at' => now(),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@lentloads.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Create categories
         $categories = [
@@ -75,22 +77,26 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($categories as $index => $categoryData) {
-            $parent = Category::create([
-                'name' => $categoryData['name'],
-                'slug' => $categoryData['slug'],
-                'order' => $index,
-                'is_active' => true,
-                'is_featured' => true,
-            ]);
+            $parent = Category::firstOrCreate(
+                ['slug' => $categoryData['slug']],
+                [
+                    'name' => $categoryData['name'],
+                    'order' => $index,
+                    'is_active' => true,
+                    'is_featured' => true,
+                ]
+            );
 
             foreach ($categoryData['children'] as $childIndex => $childName) {
-                Category::create([
-                    'name' => $childName,
-                    'slug' => $categoryData['slug'] . '-' . \Str::slug($childName),
-                    'parent_id' => $parent->id,
-                    'order' => $childIndex,
-                    'is_active' => true,
-                ]);
+                Category::firstOrCreate(
+                    ['slug' => $categoryData['slug'] . '-' . \Str::slug($childName)],
+                    [
+                        'name' => $childName,
+                        'parent_id' => $parent->id,
+                        'order' => $childIndex,
+                        'is_active' => true,
+                    ]
+                );
             }
         }
 
@@ -105,7 +111,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($pages as $page) {
-            Page::create($page);
+            Page::firstOrCreate(['slug' => $page['slug']], $page);
         }
 
         // Create settings
@@ -120,7 +126,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            Setting::create($setting);
+            Setting::firstOrCreate(['key' => $setting['key']], $setting);
         }
 
         $this->command->info('Database seeded successfully!');
