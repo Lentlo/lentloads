@@ -345,6 +345,173 @@ Route::post('/listings/{id}/track-contact', [ListingController::class, 'trackCon
 - [ ] Implement payment gateway (currently simulated)
 - [ ] Mobile responsive testing
 - [ ] PWA testing on mobile devices
+- [ ] **Location & Map Feature** (see plan below)
+
+---
+
+## Plan: Location Pin & Locality Selection Feature
+
+### Current State Analysis
+| Field | In Database | Used in Form | Notes |
+|-------|-------------|--------------|-------|
+| city | ✅ | ✅ (text input) | Required |
+| state | ✅ | ✅ (text input) | Optional |
+| address | ✅ | ❌ | Not used |
+| postal_code | ✅ | ❌ | Not used |
+| latitude | ✅ | ❌ | Not used |
+| longitude | ✅ | ❌ | Not used |
+| country | ✅ | ❌ | Defaults to 'IN' |
+| **locality** | ❌ | ❌ | **MISSING - Need to add** |
+
+### Proposed Solution
+
+#### Option A: Google Maps Integration (Recommended)
+**Pros:** Most accurate, auto-complete, reverse geocoding
+**Cons:** Requires API key, costs money after free tier
+
+#### Option B: Leaflet + OpenStreetMap (Free Alternative)
+**Pros:** Completely free, no API limits
+**Cons:** Slightly less accurate, no Places autocomplete
+
+#### Option C: Simple Dropdown for Localities (Simplest)
+**Pros:** No external dependencies, fast
+**Cons:** Need to maintain locality list, less flexible
+
+### Recommended Implementation: Option B (Leaflet + OpenStreetMap)
+
+#### Phase 1: Database Changes
+```php
+// New migration: add_locality_to_listings_table.php
+Schema::table('listings', function (Blueprint $table) {
+    $table->string('locality')->nullable()->after('address');
+    $table->index('locality');
+});
+```
+
+#### Phase 2: Vue Components to Create
+
+**1. LocationPicker.vue** - Reusable map component
+```
+Features:
+- Interactive Leaflet map
+- Click to place marker
+- Drag marker to adjust
+- "Use My Location" button (GPS)
+- Shows selected coordinates
+- Reverse geocode to get address details
+```
+
+**2. LocationDisplay.vue** - For listing detail page
+```
+Features:
+- Static map showing listing location
+- Approximate area (not exact address for privacy)
+- "Get Directions" link
+```
+
+#### Phase 3: CreateListing.vue Changes
+
+**New Location Section:**
+```
+┌─────────────────────────────────────────────┐
+│  📍 Your Location                           │
+├─────────────────────────────────────────────┤
+│  [Map - Click to pin location]              │
+│  ┌─────────────────────────────────────┐   │
+│  │                                     │   │
+│  │        [Interactive Map]            │   │
+│  │            📍                       │   │
+│  │                                     │   │
+│  └─────────────────────────────────────┘   │
+│                                             │
+│  [📍 Use My Current Location]               │
+│                                             │
+│  ─────────────────────────────────────────  │
+│  Locality/Area: [Auto-filled________]       │
+│  City:          [Auto-filled________]       │
+│  State:         [Auto-filled________]       │
+│  PIN Code:      [Auto-filled________]       │
+│                                             │
+│  (Can edit manually if needed)              │
+└─────────────────────────────────────────────┘
+```
+
+#### Phase 4: Backend Changes
+
+**ListingController.php:**
+- Accept locality, latitude, longitude, postal_code
+- Validate coordinates are within India (optional)
+
+**ListingResource.php:**
+- Include location data in API response
+- Optionally hide exact coordinates (show approximate area only)
+
+#### Phase 5: ListingDetail.vue Changes
+- Show mini-map with approximate location
+- Display: Locality, City, State
+- "Get Directions" button (opens Google Maps)
+
+### Files to Create/Modify
+
+| File | Action | Description |
+|------|--------|-------------|
+| `database/migrations/xxx_add_locality.php` | Create | Add locality field |
+| `resources/js/components/common/LocationPicker.vue` | Create | Map picker component |
+| `resources/js/components/common/LocationDisplay.vue` | Create | Static map display |
+| `resources/js/views/dashboard/CreateListing.vue` | Modify | Add map picker |
+| `resources/js/views/dashboard/EditListing.vue` | Modify | Add map picker |
+| `resources/js/views/ListingDetail.vue` | Modify | Show location map |
+| `app/Http/Controllers/Api/ListingController.php` | Modify | Accept new fields |
+| `package.json` | Modify | Add Leaflet dependency |
+
+### NPM Packages Needed
+```bash
+npm install leaflet vue-leaflet @vue-leaflet/vue-leaflet
+```
+
+### Reverse Geocoding (Free)
+Use Nominatim (OpenStreetMap's free geocoding service):
+```
+https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json
+```
+Response includes: road, suburb (locality), city, state, postcode
+
+### Privacy Considerations
+- Show approximate location on listing (not exact)
+- Option: "Hide exact location" toggle
+- Only show city + locality to buyers, not exact address
+
+### Estimated Components
+
+1. **LocationPicker.vue** (~200 lines)
+   - Leaflet map initialization
+   - Click handler for placing marker
+   - GPS location button
+   - Nominatim reverse geocoding
+   - Emit location data to parent
+
+2. **LocationDisplay.vue** (~100 lines)
+   - Static map with marker
+   - Get directions link
+
+### Implementation Order
+1. ✅ Create migration for locality field
+2. ✅ Install Leaflet packages
+3. ✅ Create LocationPicker.vue component
+4. ✅ Integrate into CreateListing.vue
+5. ✅ Integrate into EditListing.vue
+6. ✅ Update ListingController to save new fields
+7. ✅ Create LocationDisplay.vue
+8. ✅ Add map to ListingDetail.vue
+9. ✅ Test and deploy
+
+### Alternative: Keep it Simple (Dropdowns Only)
+If map is too complex, simpler option:
+- State dropdown (29 Indian states)
+- City dropdown (filtered by state)
+- Locality text input with suggestions
+
+---
 
 ---
 
