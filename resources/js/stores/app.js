@@ -46,6 +46,17 @@ export const useAppStore = defineStore('app', {
       }
     },
 
+    async fetchCategories() {
+      try {
+        const response = await api.get('/categories')
+        this.categories = response.data.data
+        return this.categories
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+        return []
+      }
+    },
+
     async fetchSettings() {
       const response = await api.get('/settings')
       this.settings = response.data.data
