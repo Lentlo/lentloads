@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Listing;
 use App\Models\ListingImage;
 use App\Models\Category;
+use App\Models\ContactView;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -362,6 +363,27 @@ class ListingController extends Controller
         ListingImage::where('listing_id', $id)->where('id', $imageId)->update(['is_primary' => true]);
 
         return $this->successResponse(null, 'Primary image updated');
+    }
+
+    public function trackContactView(Request $request, $id)
+    {
+        $listing = Listing::findOrFail($id);
+
+        // Don't track if viewing own listing
+        if ($listing->user_id === auth()->id()) {
+            return $this->successResponse(['tracked' => false], 'Own listing');
+        }
+
+        // Create contact view record
+        ContactView::create([
+            'viewer_id' => auth()->id(),
+            'listing_id' => $listing->id,
+            'owner_id' => $listing->user_id,
+            'contact_type' => $request->input('type', 'phone'),
+            'ip_address' => $request->ip(),
+        ]);
+
+        return $this->successResponse(['tracked' => true], 'Contact view tracked');
     }
 
     protected function storeImage(Listing $listing, $file, bool $isPrimary = false): ListingImage

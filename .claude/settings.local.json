@@ -16,7 +16,8 @@
       "Bash(python3:*)",
       "Bash(npm outdated:*)",
       "Bash(composer show:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(php artisan:*)"
     ]
   }
 }

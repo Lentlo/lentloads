@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\Admin\AdminReportController;
 use App\Http\Controllers\Api\Admin\AdminSettingController;
+use App\Http\Controllers\Api\Admin\AdminConversationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -195,6 +196,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('/users/{id}/follow', [UserController::class, 'follow']);
     Route::delete('/users/{id}/follow', [UserController::class, 'unfollow']);
     Route::post('/users/{id}/block', [UserController::class, 'block']);
+
+    // Track contact view
+    Route::post('/listings/{id}/track-contact', [ListingController::class, 'trackContactView']);
 });
 
 // Admin routes
@@ -259,5 +263,18 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'admin'])->group(function
         Route::post('/banners', [AdminSettingController::class, 'createBanner']);
         Route::put('/banners/{id}', [AdminSettingController::class, 'updateBanner']);
         Route::delete('/banners/{id}', [AdminSettingController::class, 'deleteBanner']);
+    });
+
+    // Conversations management
+    Route::prefix('conversations')->group(function () {
+        Route::get('/', [AdminConversationController::class, 'index']);
+        Route::get('/{id}', [AdminConversationController::class, 'show']);
+        Route::get('/{id}/messages', [AdminConversationController::class, 'messages']);
+    });
+
+    // Contact views tracking
+    Route::prefix('contact-views')->group(function () {
+        Route::get('/', [AdminConversationController::class, 'contactViews']);
+        Route::get('/stats', [AdminConversationController::class, 'contactViewStats']);
     });
 });

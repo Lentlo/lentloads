@@ -41,6 +41,8 @@ const AdminListings = () => import('@/views/admin/Listings.vue')
 const AdminCategories = () => import('@/views/admin/Categories.vue')
 const AdminReports = () => import('@/views/admin/Reports.vue')
 const AdminSettings = () => import('@/views/admin/Settings.vue')
+const AdminConversations = () => import('@/views/admin/Conversations.vue')
+const AdminContactViews = () => import('@/views/admin/ContactViews.vue')
 
 const routes = [
   // Public routes
@@ -217,6 +219,18 @@ const routes = [
     name: 'admin-settings',
     component: AdminSettings,
     meta: { title: 'Settings', requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/conversations',
+    name: 'admin-conversations',
+    component: AdminConversations,
+    meta: { title: 'Conversations', requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/contact-views',
+    name: 'admin-contact-views',
+    component: AdminContactViews,
+    meta: { title: 'Contact Views', requiresAuth: true, requiresAdmin: true }
   },
 
   // 404

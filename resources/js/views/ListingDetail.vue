@@ -177,13 +177,21 @@
                 Chat with Seller
               </button>
 
-              <a
-                v-if="listing.user.phone && !isOwner"
-                :href="`tel:${listing.user.phone}`"
+              <button
+                v-if="listing.user.phone && !isOwner && !showPhone"
+                @click="revealPhone"
                 class="btn-outline w-full"
               >
                 <PhoneIcon class="w-5 h-5 mr-2" />
-                Call Seller
+                Show Phone Number
+              </button>
+              <a
+                v-if="listing.user.phone && !isOwner && showPhone"
+                :href="`tel:${listing.user.phone}`"
+                class="btn-outline w-full text-green-600 border-green-600"
+              >
+                <PhoneIcon class="w-5 h-5 mr-2" />
+                {{ listing.user.phone }}
               </a>
 
               <router-link
@@ -253,6 +261,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useListingsStore } from '@/stores/listings'
+import api from '@/services/api'
 import ListingCard from '@/components/common/ListingCard.vue'
 import ChatModal from '@/components/modals/ChatModal.vue'
 import ReportModal from '@/components/modals/ReportModal.vue'
@@ -284,6 +293,7 @@ const currentImageIndex = ref(0)
 const isFavorited = ref(false)
 const showChatModal = ref(false)
 const showReportModal = ref(false)
+const showPhone = ref(false)
 
 const currentImage = computed(() => {
   if (!listing.value?.images?.length) return listing.value?.primary_image_url
@@ -339,6 +349,20 @@ const shareList = () => {
   }
 }
 
+const revealPhone = async () => {
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+    return
+  }
+  // Track the contact view
+  try {
+    await api.post(`/listings/${listing.value.id}/track-contact`, { type: 'phone' })
+  } catch (e) {
+    // Tracking failed, but still show the phone
+  }
+  showPhone.value = true
+}
+
 const fetchListing = async () => {
   try {
     const data = await listingsStore.fetchListing(route.params.slug)
@@ -363,6 +387,7 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
   if (newSlug !== oldSlug) {
     loading.value = true
     currentImageIndex.value = 0
+    showPhone.value = false
     fetchListing()
   }
 })

@@ -114,6 +114,8 @@ import {
   BellIcon,
   XMarkIcon,
   ArrowLeftIcon,
+  ChatBubbleLeftRightIcon,
+  PhoneIcon,
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -129,6 +131,8 @@ const menuItems = [
   { path: '/admin/users', label: 'Users', icon: UsersIcon },
   { path: '/admin/listings', label: 'Listings', icon: TagIcon },
   { path: '/admin/categories', label: 'Categories', icon: FolderIcon },
+  { path: '/admin/conversations', label: 'Conversations', icon: ChatBubbleLeftRightIcon },
+  { path: '/admin/contact-views', label: 'Contact Views', icon: PhoneIcon },
   { path: '/admin/reports', label: 'Reports', icon: FlagIcon },
   { path: '/admin/settings', label: 'Settings', icon: Cog6ToothIcon },
 ]
