@@ -11,14 +11,19 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        // Get categories without eager loading first
+        // Get categories
         $categories = Category::parents()
             ->active()
             ->ordered()
             ->withCount('activeListings')
             ->get();
 
-        // Calculate total listings count including children
+        // Load children first
+        $categories->load(['children' => function ($q) {
+            $q->active()->ordered()->withCount('activeListings');
+        }]);
+
+        // Calculate total listings count including children (must be AFTER load)
         foreach ($categories as $category) {
             $allChildIds = Category::where('parent_id', $category->id)->pluck('id')->toArray();
             $allIds = array_merge([$category->id], $allChildIds);
@@ -26,11 +31,6 @@ class CategoryController extends Controller
                 ->where('status', 'active')
                 ->count();
         }
-
-        // Now load children
-        $categories->load(['children' => function ($q) {
-            $q->active()->ordered()->withCount('activeListings');
-        }]);
 
         return $this->successResponse($categories);
     }

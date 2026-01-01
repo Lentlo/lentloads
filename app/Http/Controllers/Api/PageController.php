@@ -14,7 +14,7 @@ class PageController extends Controller
 {
     public function home()
     {
-        // Featured categories - get without children first to avoid query interference
+        // Featured categories with children
         $categories = Category::parents()
             ->active()
             ->featured()
@@ -22,7 +22,10 @@ class PageController extends Controller
             ->limit(8)
             ->get();
 
-        // Calculate total listings count including ALL children
+        // Load children first
+        $categories->load(['children' => fn($q) => $q->active()->limit(5)]);
+
+        // Calculate total listings count including ALL children (must be AFTER load)
         foreach ($categories as $category) {
             $allChildIds = Category::where('parent_id', $category->id)->pluck('id')->toArray();
             $allIds = array_merge([$category->id], $allChildIds);
@@ -30,9 +33,6 @@ class PageController extends Controller
                 ->where('status', 'active')
                 ->count();
         }
-
-        // Now load children for display
-        $categories->load(['children' => fn($q) => $q->active()->limit(5)]);
 
         // Featured listings
         $featuredListings = Listing::with(['primaryImage', 'category:id,name', 'user:id,name,city'])
