@@ -343,16 +343,17 @@ const autoDetectLocation = async () => {
     loading.value = true
     loadingText.value = 'Detecting your city...'
 
-    const response = await fetch('http://ip-api.com/json/?fields=status,city,regionName,lat,lon')
+    // Using ipapi.co for HTTPS support (1000 free requests/day)
+    const response = await fetch('https://ipapi.co/json/')
     const data = await response.json()
 
-    if (data.status === 'success' && data.lat && data.lon) {
+    if (data.latitude && data.longitude) {
       // Zoom to detected city
-      map.setView([data.lat, data.lon], 12)
+      map.setView([data.latitude, data.longitude], 12)
 
       // Pre-fill city and state
       locationData.city = data.city || ''
-      locationData.state = data.regionName || ''
+      locationData.state = data.region || ''
 
       loading.value = false
 

@@ -8,17 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('listings', function (Blueprint $table) {
-            $table->string('locality')->nullable()->after('address');
-            $table->index('locality');
-        });
+        if (!Schema::hasColumn('listings', 'locality')) {
+            Schema::table('listings', function (Blueprint $table) {
+                $table->string('locality')->nullable()->after('address');
+                $table->index('locality');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('listings', function (Blueprint $table) {
-            $table->dropIndex(['locality']);
-            $table->dropColumn('locality');
-        });
+        if (Schema::hasColumn('listings', 'locality')) {
+            Schema::table('listings', function (Blueprint $table) {
+                $table->dropIndex(['locality']);
+                $table->dropColumn('locality');
+            });
+        }
     }
 };

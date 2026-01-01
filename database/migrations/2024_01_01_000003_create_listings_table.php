@@ -25,6 +25,7 @@ return new class extends Migration
 
             // Location
             $table->string('address')->nullable();
+            $table->string('locality')->nullable();
             $table->string('city');
             $table->string('state')->nullable();
             $table->string('country')->default('IN');
@@ -58,6 +59,7 @@ return new class extends Migration
             $table->index(['user_id', 'status']);
             $table->index(['category_id', 'status']);
             $table->index(['city', 'state', 'country']);
+            $table->index('locality');
             $table->index(['latitude', 'longitude']);
             $table->index('status');
             $table->index('price');
