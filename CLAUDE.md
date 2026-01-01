@@ -38,7 +38,7 @@ SSH Key: ~/.ssh/cloudways_rsa
 
 ### SSH Command (use this)
 ```bash
-ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36"
+ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no -l 'lentlo@12' 139.59.24.36
 ```
 
 ### Application Path on Server
@@ -77,12 +77,12 @@ git push origin main
 
 3. **Deploy to server:**
 ```bash
-ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36" "cd /home/master/applications/bpadwztsjg/public_html && git pull origin main"
+ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no -l 'lentlo@12' 139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main"
 ```
 
 4. **Clear caches (if needed):**
 ```bash
-ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36" "cd /home/master/applications/bpadwztsjg/public_html && php artisan optimize:clear"
+ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no -l 'lentlo@12' 139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && php artisan optimize:clear"
 ```
 
 5. **Clear OPcache (if PHP errors persist):**
@@ -172,7 +172,7 @@ The config:cache command causes APP_KEY issues on this server. Leave config unca
 ### 1. 500 Server Error after deployment
 ```bash
 # Clear all caches
-ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36" "cd /home/master/applications/bpadwztsjg/public_html && rm -rf bootstrap/cache/*.php && php artisan optimize:clear"
+ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no -l 'lentlo@12' 139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && rm -rf bootstrap/cache/*.php && php artisan optimize:clear"
 
 # Clear OPcache
 curl -s 'https://phplaravel-1016958-6108537.cloudwaysapps.com/opcache-clear.php'
@@ -181,12 +181,12 @@ curl -s 'https://phplaravel-1016958-6108537.cloudwaysapps.com/opcache-clear.php'
 ### 2. APP_KEY errors
 DO NOT run `php artisan config:cache`. Just delete the cached config:
 ```bash
-ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36" "cd /home/master/applications/bpadwztsjg/public_html && rm -f bootstrap/cache/config.php"
+ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no -l 'lentlo@12' 139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && rm -f bootstrap/cache/config.php"
 ```
 
 ### 3. Git pull conflicts
 ```bash
-ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36" "cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main"
+ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no -l 'lentlo@12' 139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main"
 ```
 
 ### 4. Design not updating
