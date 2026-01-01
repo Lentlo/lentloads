@@ -18,7 +18,7 @@
             </div>
             <div>
               <h2 class="font-semibold text-gray-900">{{ category.name }}</h2>
-              <p class="text-sm text-gray-500">{{ category.active_listings_count || 0 }} ads</p>
+              <p class="text-sm text-gray-500">{{ category.total_active_listings_count || 0 }} ads</p>
             </div>
           </router-link>
 
@@ -29,7 +29,7 @@
                 class="text-gray-600 hover:text-primary-600 text-sm"
               >
                 {{ child.name }}
-                <span class="text-gray-400">({{ child.active_listings_count || 0 }})</span>
+                <span class="text-gray-400">({{ child.total_active_listings_count || 0 }})</span>
               </router-link>
             </li>
           </ul>

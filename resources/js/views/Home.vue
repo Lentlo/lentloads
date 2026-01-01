@@ -103,7 +103,7 @@
               <component :is="getCategoryIcon(category.slug)" class="w-7 h-7 text-primary-600" />
             </div>
             <h3 class="font-semibold text-slate-700 mb-1 group-hover:text-primary-600 transition-colors">{{ category.name }}</h3>
-            <p class="text-sm text-slate-400">{{ category.active_listings_count || 0 }} ads</p>
+            <p class="text-sm text-slate-400">{{ category.total_active_listings_count || 0 }} ads</p>
           </router-link>
         </div>
       </div>

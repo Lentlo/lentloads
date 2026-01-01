@@ -32,7 +32,7 @@ class Category extends Model
         'custom_fields' => 'array',
     ];
 
-    protected $appends = ['icon_url', 'image_url', 'full_name'];
+    protected $appends = ['icon_url', 'image_url', 'full_name', 'total_active_listings_count'];
 
     protected static function boot()
     {
@@ -88,6 +88,14 @@ class Category extends Model
             return $this->parent->name . ' > ' . $this->name;
         }
         return $this->name;
+    }
+
+    public function getTotalActiveListingsCountAttribute(): int
+    {
+        $categoryIds = $this->getAllChildrenIds();
+        return Listing::whereIn('category_id', $categoryIds)
+            ->where('status', 'active')
+            ->count();
     }
 
     // Scopes
