@@ -9,11 +9,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Laravel\Scout\Searchable;
 
 class Listing extends Model
 {
-    use HasFactory, SoftDeletes, Searchable;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -71,29 +70,6 @@ class Listing extends Model
                 $listing->slug = Str::slug($listing->title) . '-' . Str::random(8);
             }
         });
-    }
-
-    // Search configuration for Scout
-    public function toSearchableArray(): array
-    {
-        return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'category_id' => $this->category_id,
-            'city' => $this->city,
-            'state' => $this->state,
-            'price' => (float) $this->price,
-            'condition' => $this->condition,
-            'brand' => $this->brand,
-            'status' => $this->status,
-            'created_at' => $this->created_at->timestamp,
-        ];
-    }
-
-    public function shouldBeSearchable(): bool
-    {
-        return $this->status === 'active';
     }
 
     // Relationships
