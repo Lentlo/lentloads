@@ -1,14 +1,11 @@
 <template>
-  <footer class="bg-gray-900 text-gray-300 mt-auto">
+  <footer class="bg-primary-950 text-gray-300 mt-auto">
     <div class="container-app py-12">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Brand -->
         <div class="col-span-1 md:col-span-1">
           <div class="flex items-center space-x-2 mb-4">
-            <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span class="text-white font-bold text-xl">L</span>
-            </div>
-            <span class="text-xl font-bold text-white">Lentloads</span>
+            <span class="text-2xl font-bold text-white">Lentloads</span>
           </div>
           <p class="text-sm text-gray-400 mb-4">
             The easiest way to buy and sell locally. Find great deals on new and used items near you.
