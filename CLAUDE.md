@@ -151,10 +151,14 @@ The config:cache command causes APP_KEY issues on this server. Leave config unca
 
 ### Bug Fixes
 - `app/Models/Listing.php` - Removed Scout, fixed placeholder images
-- `app/Http/Controllers/Api/ListingController.php` - Accept slug or ID
+- `app/Http/Controllers/Api/ListingController.php` - Accept slug or ID, fixed slug/ID matching bug
 - `bootstrap/app.php` - Laravel 10 compatibility
 - `public/index.php` - Laravel 10 compatibility
 - Created missing models: Banner, City, State, Country, PushSubscription
+- `app/Models/Category.php` - Removed `getTotalActiveListingsCountAttribute` accessor (caused issues)
+- `app/Http/Controllers/Api/PageController.php` - Calculate category listing counts including children
+- `app/Http/Controllers/Api/CategoryController.php` - Calculate category listing counts including children
+- `resources/js/views/ListingDetail.vue` - Added route watcher for similar listings navigation
 
 ### Configuration
 - `.gitignore` - Allow public/build folder
@@ -189,6 +193,39 @@ ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36"
 - Run `npm run build` locally
 - Commit and push the `public/build` folder
 - Hard refresh browser: `Cmd + Shift + R`
+
+### 5. Category counts showing 0 ads
+- Listings are assigned to subcategories, not parent categories
+- Parent category counts must include all children's listings
+- Calculate in controller AFTER `load()` call (not before, or values get overwritten)
+- DO NOT use model accessors for this - they cause N+1 queries and override set values
+```php
+// Correct pattern in controller:
+$categories->load(['children' => fn($q) => $q->active()->limit(5)]);
+foreach ($categories as $category) {
+    $allChildIds = Category::where('parent_id', $category->id)->pluck('id')->toArray();
+    $allIds = array_merge([$category->id], $allChildIds);
+    $category->total_active_listings_count = Listing::whereIn('category_id', $allIds)
+        ->where('status', 'active')->count();
+}
+```
+
+### 6. Listing shows wrong content (slug starting with number)
+- Slugs like "3-bhk-apartment..." were matching listing ID 3
+- MySQL casts "3-bhk..." to integer 3 when comparing to ID column
+- Fix: Only check ID if value is purely numeric (`is_numeric($slugOrId)`)
+
+### 7. Vue component not updating on route param change
+- Vue Router doesn't re-mount components when only params change
+- Add a watcher for route params to trigger re-fetch:
+```javascript
+watch(() => route.params.slug, (newSlug, oldSlug) => {
+  if (newSlug !== oldSlug) {
+    loading.value = true
+    fetchData()
+  }
+})
+```
 
 ---
 
@@ -240,6 +277,13 @@ ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36"
 
 ## Session Notes
 
+### Session: January 1, 2026 (Continued)
+- Fixed category counts showing "0 ads" - now includes child category listings
+- Removed problematic `getTotalActiveListingsCountAttribute` accessor from Category model
+- Fixed listing detail page not updating when clicking similar listings (added route watcher)
+- Fixed slug/ID matching bug - slugs starting with numbers (e.g., "3-bhk...") were matching wrong listing
+- Updated CLAUDE.md with all fixes and common issues
+
 ### Session: January 1, 2026
 - Fixed 500 errors (Laravel 10 compatibility)
 - Created missing models
@@ -253,12 +297,14 @@ ssh -i ~/.ssh/cloudways_rsa -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36"
 
 ## Important Reminders for Claude
 
-1. **Always test the site** after deployment before telling user it's ready
-2. **Never run** `php artisan config:cache` - it breaks the site
-3. **Always run** `npm run build` before committing frontend changes
-4. **Use SSH key** at `~/.ssh/cloudways_rsa` for server access
-5. **User has no coding knowledge** - provide complete solutions
-6. **Commit build files** - `public/build` is tracked in git
+1. **Always update CLAUDE.md** after fixing bugs or making changes
+2. **Always test the site** after deployment before telling user it's ready
+3. **Never run** `php artisan config:cache` - it breaks the site
+4. **Always run** `npm run build` before committing frontend changes
+5. **Use SSH key** at `~/.ssh/cloudways_rsa` for server access
+6. **User has no coding knowledge** - provide complete solutions
+7. **Commit build files** - `public/build` is tracked in git
+8. **Always clear OPcache** after deploying PHP changes: `curl -s 'https://phplaravel-1016958-6108537.cloudwaysapps.com/opcache-clear.php'`
 
 ---
 
