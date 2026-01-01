@@ -390,11 +390,75 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 
 ## Session Notes
 
-### Session: January 1, 2026 (Phone Login & Auth Enhancements)
-- Added phone+password login support (toggle between email/phone on login page)
-- Made phone number required during registration
-- Added unique constraint on phone in users table
-- Login now accepts either email or phone number
+### Session: January 1, 2026 (Phone Login & Auth Enhancements - Full Details)
+
+#### Phone + Password Login Support
+**Files Modified:**
+- `app/Http/Controllers/Api/AuthController.php`
+- `resources/js/views/auth/Login.vue`
+- `resources/js/views/auth/Register.vue`
+- `resources/js/router/index.js`
+- `resources/js/layouts/AdminLayout.vue`
+- `database/migrations/2024_01_01_000017_make_phone_unique_on_users_table.php`
+
+**Implementation Details:**
+
+1. **Login Method Toggle (Login.vue)**
+   - Added toggle between Phone/Email on login page
+   - Phone is the **primary/default** login method
+   - Toggle buttons: Phone | Email (Phone selected by default)
+   ```javascript
+   const loginMethod = ref('phone') // Default is phone
+   ```
+
+2. **Backend Phone Matching (AuthController.php)**
+   - Added `normalizePhone()` - strips all non-digit chars except leading +
+   - Added `findUserByPhone()` - flexible matching for various formats
+   - Supported phone formats:
+     - `8122116594` (10 digits)
+     - `+918122116594` (with country code)
+     - `918122116594` (country code without +)
+     - `08122116594` (with leading 0)
+   - Works for Indian (+91) and international numbers
+   ```php
+   private function normalizePhone(string $phone): string
+   private function findUserByPhone(string $phone): ?User
+   ```
+
+3. **Phone Registration (Register.vue)**
+   - Phone number is now **required** field
+   - Added unique constraint on phone column
+   - Helper text: "With or without country code (e.g., 8122116594 or +91 8122116594)"
+
+4. **Contact Support Options**
+   - Added "Need Help?" section to Login.vue and ForgotPassword.vue
+   - Call Us button: +91 81221 16594
+   - WhatsApp button with pre-filled message
+   ```html
+   <a href="tel:+918122116594">Call Us</a>
+   <a href="https://wa.me/918122116594?text=Hi...">WhatsApp</a>
+   ```
+
+5. **Admin Layout Fix**
+   - Fixed admin sidebar not showing
+   - Changed from flat routes to nested children under AdminLayout
+   - Changed `<slot />` to `<router-view />` in AdminLayout.vue
+   ```javascript
+   // router/index.js - Nested admin routes
+   {
+     path: '/admin',
+     component: AdminLayout,
+     children: [
+       { path: '', name: 'admin-dashboard', component: AdminDashboard },
+       { path: 'users', name: 'admin-users', component: AdminUsers },
+       // ... all admin routes as children
+     ]
+   }
+   ```
+
+6. **Database Migration**
+   - Created migration: `2024_01_01_000017_make_phone_unique_on_users_table.php`
+   - Added unique constraint on `phone` column
 
 ### Session: January 1, 2026 (Conversation Monitoring & Contact Tracking)
 - Added Admin Conversations page to monitor all user chats
@@ -453,7 +517,14 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 
 ## Important Reminders for Claude
 
-1. **Always update CLAUDE.md** after fixing bugs or making changes
+1. **ALWAYS update CLAUDE.md** - Document every change, every fix, every plan in this file. Update immediately after:
+   - Making any code changes
+   - Fixing bugs
+   - Adding new features
+   - Planning implementations
+   - Discovering issues
+   This is CRITICAL - the user relies on this file to understand what was done.
+
 2. **Always test the site** after deployment before telling user it's ready
 3. **Never run** `php artisan config:cache` - it breaks the site
 4. **Always run** `npm run build` before committing frontend changes
