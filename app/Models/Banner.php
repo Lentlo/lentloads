@@ -49,6 +49,11 @@ class Banner extends Model
         return $query->where('position', $position);
     }
 
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('order');
+    }
+
     public function incrementClicks()
     {
         $this->increment('clicks');
