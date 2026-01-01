@@ -5,7 +5,7 @@
  */
 
 // Set your secret token here (change this!)
-$secretToken = 'lentloads-deploy-2024-secure';
+$secretToken = '07d5b8cee9e561ce7305fa2a489d0aaa55b77734';
 
 // Verify token
 if (($_GET['token'] ?? '') !== $secretToken) {
