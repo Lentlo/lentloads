@@ -240,6 +240,8 @@ const router = createRouter({
 })
 
 // Navigation guards
+let authInitialized = false
+
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
@@ -247,6 +249,17 @@ router.beforeEach(async (to, from, next) => {
   document.title = to.meta.title
     ? `${to.meta.title} | Lentloads Marketplace`
     : 'Lentloads Marketplace'
+
+  // On first load, try to fetch user if we have a token
+  if (!authInitialized && authStore.token) {
+    authInitialized = true
+    try {
+      await authStore.fetchUser()
+    } catch (e) {
+      // Token invalid, user will be redirected to login if needed
+    }
+  }
+  authInitialized = true
 
   // Check if route requires auth
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
