@@ -1,7 +1,7 @@
 # Laravel
 /vendor
 /node_modules
-/public/build
+# /public/build  # Commented out - we need to deploy build files
 /public/hot
 /public/storage
 /storage/*.key
