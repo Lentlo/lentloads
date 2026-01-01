@@ -134,6 +134,19 @@
               </div>
             </div>
           </div>
+
+          <!-- Location Map -->
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Location</h3>
+            <LocationDisplay
+              :latitude="listing.latitude"
+              :longitude="listing.longitude"
+              :locality="listing.locality"
+              :city="listing.city"
+              :state="listing.state"
+              :postal-code="listing.postal_code"
+            />
+          </div>
         </div>
 
         <!-- Sidebar -->
@@ -263,6 +276,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useListingsStore } from '@/stores/listings'
 import api from '@/services/api'
 import ListingCard from '@/components/common/ListingCard.vue'
+import LocationDisplay from '@/components/common/LocationDisplay.vue'
 import ChatModal from '@/components/modals/ChatModal.vue'
 import ReportModal from '@/components/modals/ReportModal.vue'
 import dayjs from 'dayjs'

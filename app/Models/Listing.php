@@ -28,6 +28,7 @@ class Listing extends Model
         'model',
         'year',
         'address',
+        'locality',
         'city',
         'state',
         'country',

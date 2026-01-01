@@ -1,0 +1,334 @@
+<template>
+  <div class="location-picker">
+    <!-- Map Container -->
+    <div class="relative">
+      <div ref="mapContainer" class="h-64 rounded-lg border border-gray-300 z-0"></div>
+
+      <!-- Loading Overlay -->
+      <div v-if="loading" class="absolute inset-0 bg-white/70 flex items-center justify-center rounded-lg">
+        <div class="flex items-center gap-2 text-gray-600">
+          <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>{{ loadingText }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GPS Button -->
+    <button
+      type="button"
+      @click="useMyLocation"
+      :disabled="gpsLoading"
+      class="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-lg transition"
+    >
+      <svg v-if="!gpsLoading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+      <svg v-else class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      {{ gpsLoading ? 'Getting location...' : 'Use My Current Location' }}
+    </button>
+
+    <p class="text-xs text-gray-500 mt-2 text-center">
+      Click on the map to pin your location, or use GPS
+    </p>
+
+    <!-- Location Details Form -->
+    <div v-if="hasLocation" class="mt-4 p-4 bg-gray-50 rounded-lg space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Locality / Area</label>
+          <input
+            v-model="locationData.locality"
+            type="text"
+            class="input text-sm"
+            placeholder="e.g., Koramangala"
+            @input="emitLocation"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">City *</label>
+          <input
+            v-model="locationData.city"
+            type="text"
+            required
+            class="input text-sm"
+            placeholder="e.g., Bangalore"
+            @input="emitLocation"
+          />
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">State</label>
+          <input
+            v-model="locationData.state"
+            type="text"
+            class="input text-sm"
+            placeholder="e.g., Karnataka"
+            @input="emitLocation"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">PIN Code</label>
+          <input
+            v-model="locationData.postal_code"
+            type="text"
+            class="input text-sm"
+            placeholder="e.g., 560034"
+            maxlength="6"
+            @input="emitLocation"
+          />
+        </div>
+      </div>
+      <p class="text-xs text-gray-400">
+        You can edit the auto-filled details if needed
+      </p>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+
+// Fix Leaflet default marker icon issue
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+})
+
+const props = defineProps({
+  initialLatitude: {
+    type: Number,
+    default: null
+  },
+  initialLongitude: {
+    type: Number,
+    default: null
+  },
+  initialCity: {
+    type: String,
+    default: ''
+  },
+  initialState: {
+    type: String,
+    default: ''
+  },
+  initialLocality: {
+    type: String,
+    default: ''
+  },
+  initialPostalCode: {
+    type: String,
+    default: ''
+  }
+})
+
+const emit = defineEmits(['update:location'])
+
+const mapContainer = ref(null)
+const loading = ref(false)
+const loadingText = ref('Loading map...')
+const gpsLoading = ref(false)
+
+let map = null
+let marker = null
+
+const locationData = reactive({
+  latitude: props.initialLatitude,
+  longitude: props.initialLongitude,
+  locality: props.initialLocality,
+  city: props.initialCity,
+  state: props.initialState,
+  postal_code: props.initialPostalCode,
+  address: ''
+})
+
+const hasLocation = computed(() => {
+  return locationData.latitude && locationData.longitude
+})
+
+// Initialize map
+onMounted(() => {
+  initMap()
+})
+
+onUnmounted(() => {
+  if (map) {
+    map.remove()
+    map = null
+  }
+})
+
+const initMap = () => {
+  if (!mapContainer.value) return
+
+  // Default center: India (or initial coordinates if provided)
+  const defaultLat = props.initialLatitude || 20.5937
+  const defaultLng = props.initialLongitude || 78.9629
+  const defaultZoom = props.initialLatitude ? 15 : 5
+
+  map = L.map(mapContainer.value).setView([defaultLat, defaultLng], defaultZoom)
+
+  // Add OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map)
+
+  // Add marker if initial coordinates exist
+  if (props.initialLatitude && props.initialLongitude) {
+    addMarker(props.initialLatitude, props.initialLongitude)
+  }
+
+  // Click handler to place marker
+  map.on('click', (e) => {
+    const { lat, lng } = e.latlng
+    addMarker(lat, lng)
+    reverseGeocode(lat, lng)
+  })
+}
+
+const addMarker = (lat, lng) => {
+  // Remove existing marker
+  if (marker) {
+    map.removeLayer(marker)
+  }
+
+  // Add new draggable marker
+  marker = L.marker([lat, lng], { draggable: true }).addTo(map)
+
+  // Update location on drag end
+  marker.on('dragend', (e) => {
+    const position = e.target.getLatLng()
+    reverseGeocode(position.lat, position.lng)
+  })
+
+  // Update coordinates
+  locationData.latitude = lat
+  locationData.longitude = lng
+}
+
+const reverseGeocode = async (lat, lng) => {
+  loading.value = true
+  loadingText.value = 'Getting address...'
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+      {
+        headers: {
+          'Accept-Language': 'en'
+        }
+      }
+    )
+
+    if (!response.ok) throw new Error('Geocoding failed')
+
+    const data = await response.json()
+    const address = data.address || {}
+
+    // Update location data
+    locationData.latitude = lat
+    locationData.longitude = lng
+    locationData.locality = address.suburb || address.neighbourhood || address.village || address.town || ''
+    locationData.city = address.city || address.town || address.village || address.county || ''
+    locationData.state = address.state || ''
+    locationData.postal_code = address.postcode || ''
+    locationData.address = data.display_name || ''
+
+    emitLocation()
+  } catch (error) {
+    console.error('Reverse geocoding error:', error)
+    // Still update coordinates even if geocoding fails
+    locationData.latitude = lat
+    locationData.longitude = lng
+    emitLocation()
+  } finally {
+    loading.value = false
+  }
+}
+
+const useMyLocation = () => {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser')
+    return
+  }
+
+  gpsLoading.value = true
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords
+
+      // Center map on user's location
+      map.setView([latitude, longitude], 16)
+
+      // Add marker
+      addMarker(latitude, longitude)
+
+      // Get address details
+      reverseGeocode(latitude, longitude)
+
+      gpsLoading.value = false
+    },
+    (error) => {
+      gpsLoading.value = false
+      let message = 'Unable to get your location'
+
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          message = 'Location permission denied. Please enable location access in your browser settings.'
+          break
+        case error.POSITION_UNAVAILABLE:
+          message = 'Location information unavailable. Please try again.'
+          break
+        case error.TIMEOUT:
+          message = 'Location request timed out. Please try again.'
+          break
+      }
+
+      alert(message)
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  )
+}
+
+const emitLocation = () => {
+  emit('update:location', {
+    latitude: locationData.latitude,
+    longitude: locationData.longitude,
+    locality: locationData.locality,
+    city: locationData.city,
+    state: locationData.state,
+    postal_code: locationData.postal_code,
+    address: locationData.address
+  })
+}
+
+// Watch for prop changes (useful for edit mode)
+watch(() => [props.initialLatitude, props.initialLongitude], ([newLat, newLng]) => {
+  if (newLat && newLng && map) {
+    map.setView([newLat, newLng], 15)
+    addMarker(newLat, newLng)
+  }
+})
+</script>
+
+<style>
+.location-picker .leaflet-container {
+  z-index: 0;
+}
+</style>

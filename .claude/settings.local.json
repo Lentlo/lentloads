@@ -18,7 +18,8 @@
       "Bash(composer show:*)",
       "Bash(cat:*)",
       "Bash(php artisan:*)",
-      "WebFetch(domain:lentloweb.com)"
+      "WebFetch(domain:lentloweb.com)",
+      "Bash(npm install:*)"
     ]
   }
 }

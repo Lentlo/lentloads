@@ -148,27 +148,11 @@
           <!-- Location -->
           <div class="border-t pt-6">
             <h3 class="font-semibold text-gray-900 mb-4">Your Location</h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="label">City *</label>
-                <input
-                  v-model="form.city"
-                  type="text"
-                  required
-                  class="input"
-                  placeholder="Your city"
-                />
-              </div>
-              <div>
-                <label class="label">State</label>
-                <input
-                  v-model="form.state"
-                  type="text"
-                  class="input"
-                  placeholder="Your state"
-                />
-              </div>
-            </div>
+            <LocationPicker
+              :initial-city="form.city"
+              :initial-state="form.state"
+              @update:location="handleLocationUpdate"
+            />
           </div>
 
           <!-- Submit -->
@@ -197,6 +181,7 @@ import { useAppStore } from '@/stores/app'
 import { useListingsStore } from '@/stores/listings'
 import { toast } from 'vue3-toastify'
 import { CameraIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import LocationPicker from '@/components/common/LocationPicker.vue'
 
 const router = useRouter()
 const appStore = useAppStore()
@@ -217,6 +202,10 @@ const form = reactive({
   model: '',
   city: '',
   state: '',
+  locality: '',
+  postal_code: '',
+  latitude: null,
+  longitude: null,
 })
 
 const categories = computed(() => appStore.categories)
@@ -250,6 +239,15 @@ const handleImageUpload = (event) => {
 const removeImage = (index) => {
   images.value.splice(index, 1)
   previewImages.value.splice(index, 1)
+}
+
+const handleLocationUpdate = (location) => {
+  form.city = location.city
+  form.state = location.state
+  form.locality = location.locality
+  form.postal_code = location.postal_code
+  form.latitude = location.latitude
+  form.longitude = location.longitude
 }
 
 const handleSubmit = async () => {

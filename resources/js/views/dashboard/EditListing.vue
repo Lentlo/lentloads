@@ -162,16 +162,15 @@
           <!-- Location -->
           <div class="border-t pt-6">
             <h3 class="font-semibold text-gray-900 mb-4">Location</h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="label">City *</label>
-                <input v-model="form.city" type="text" required class="input" />
-              </div>
-              <div>
-                <label class="label">State</label>
-                <input v-model="form.state" type="text" class="input" />
-              </div>
-            </div>
+            <LocationPicker
+              :initial-latitude="form.latitude"
+              :initial-longitude="form.longitude"
+              :initial-city="form.city"
+              :initial-state="form.state"
+              :initial-locality="form.locality"
+              :initial-postal-code="form.postal_code"
+              @update:location="handleLocationUpdate"
+            />
           </div>
 
           <!-- Submit -->
@@ -201,6 +200,7 @@ import { useListingsStore } from '@/stores/listings'
 import { toast } from 'vue3-toastify'
 import api from '@/services/api'
 import { CameraIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import LocationPicker from '@/components/common/LocationPicker.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -222,6 +222,10 @@ const form = reactive({
   model: '',
   city: '',
   state: '',
+  locality: '',
+  postal_code: '',
+  latitude: null,
+  longitude: null,
 })
 
 const categories = computed(() => appStore.categories)
@@ -241,6 +245,10 @@ const fetchListing = async () => {
     form.model = listing.model || ''
     form.city = listing.city
     form.state = listing.state || ''
+    form.locality = listing.locality || ''
+    form.postal_code = listing.postal_code || ''
+    form.latitude = listing.latitude || null
+    form.longitude = listing.longitude || null
 
     existingImages.value = listing.images || []
   } catch (error) {
@@ -295,6 +303,15 @@ const setPrimaryImage = async (imageId) => {
   } catch (error) {
     toast.error('Failed to update primary image')
   }
+}
+
+const handleLocationUpdate = (location) => {
+  form.city = location.city
+  form.state = location.state
+  form.locality = location.locality
+  form.postal_code = location.postal_code
+  form.latitude = location.latitude
+  form.longitude = location.longitude
 }
 
 const handleSubmit = async () => {
