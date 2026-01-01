@@ -9,7 +9,9 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // $schedule->command('listings:expire')->daily();
+        // $schedule->command('saved-searches:notify')->hourly();
+        // $schedule->command('packages:expire')->daily();
     }
 
     protected function commands(): void
