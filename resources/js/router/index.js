@@ -183,54 +183,61 @@ const routes = [
     meta: { title: 'Notifications', requiresAuth: true }
   },
 
-  // Admin routes
+  // Admin routes with layout
   {
     path: '/admin',
-    name: 'admin-dashboard',
-    component: AdminDashboard,
-    meta: { title: 'Admin Dashboard', requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/users',
-    name: 'admin-users',
-    component: AdminUsers,
-    meta: { title: 'Manage Users', requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/listings',
-    name: 'admin-listings',
-    component: AdminListings,
-    meta: { title: 'Manage Listings', requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/categories',
-    name: 'admin-categories',
-    component: AdminCategories,
-    meta: { title: 'Manage Categories', requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/reports',
-    name: 'admin-reports',
-    component: AdminReports,
-    meta: { title: 'Reports', requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/settings',
-    name: 'admin-settings',
-    component: AdminSettings,
-    meta: { title: 'Settings', requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/conversations',
-    name: 'admin-conversations',
-    component: AdminConversations,
-    meta: { title: 'Conversations', requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/contact-views',
-    name: 'admin-contact-views',
-    component: AdminContactViews,
-    meta: { title: 'Contact Views', requiresAuth: true, requiresAdmin: true }
+    component: AdminLayout,
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      {
+        path: '',
+        name: 'admin-dashboard',
+        component: AdminDashboard,
+        meta: { title: 'Admin Dashboard' }
+      },
+      {
+        path: 'users',
+        name: 'admin-users',
+        component: AdminUsers,
+        meta: { title: 'Manage Users' }
+      },
+      {
+        path: 'listings',
+        name: 'admin-listings',
+        component: AdminListings,
+        meta: { title: 'Manage Listings' }
+      },
+      {
+        path: 'categories',
+        name: 'admin-categories',
+        component: AdminCategories,
+        meta: { title: 'Manage Categories' }
+      },
+      {
+        path: 'reports',
+        name: 'admin-reports',
+        component: AdminReports,
+        meta: { title: 'Reports' }
+      },
+      {
+        path: 'settings',
+        name: 'admin-settings',
+        component: AdminSettings,
+        meta: { title: 'Settings' }
+      },
+      {
+        path: 'conversations',
+        name: 'admin-conversations',
+        component: AdminConversations,
+        meta: { title: 'Conversations' }
+      },
+      {
+        path: 'contact-views',
+        name: 'admin-contact-views',
+        component: AdminContactViews,
+        meta: { title: 'Contact Views' }
+      },
+    ]
   },
 
   // 404

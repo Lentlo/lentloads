@@ -61,7 +61,7 @@
 
       <!-- Page Content -->
       <main>
-        <slot />
+        <router-view />
       </main>
     </div>
 
