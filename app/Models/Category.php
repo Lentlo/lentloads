@@ -90,14 +90,6 @@ class Category extends Model
         return $this->name;
     }
 
-    public function getTotalActiveListingsCountAttribute(): int
-    {
-        $categoryIds = $this->getAllChildrenIds();
-        return Listing::whereIn('category_id', $categoryIds)
-            ->where('status', 'active')
-            ->count();
-    }
-
     // Scopes
     public function scopeActive($query)
     {
