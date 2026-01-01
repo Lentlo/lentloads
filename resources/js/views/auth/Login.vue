@@ -47,8 +47,9 @@
               required
               class="input"
               :class="{ 'input-error': errors.login }"
-              placeholder="+91 XXXXX XXXXX"
+              placeholder="Enter your phone number"
             />
+            <p class="mt-1 text-xs text-gray-500">Works with or without country code (e.g., 8122116594 or +91 8122116594)</p>
             <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
           </div>
 

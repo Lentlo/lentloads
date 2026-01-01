@@ -56,16 +56,25 @@ class AuthController extends Controller
         // Determine if login is email or phone
         $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
-        // Clean phone number (remove spaces, dashes)
+        $user = null;
+
         if ($field === 'phone') {
-            $login = preg_replace('/[\s\-\(\)]/', '', $login);
-        }
+            // Normalize phone: remove all non-digits except leading +
+            $normalizedPhone = $this->normalizePhone($login);
 
-        if (!Auth::attempt([$field => $login, 'password' => $password])) {
-            return $this->errorResponse('Invalid credentials', 401);
-        }
+            // Try to find user with various phone formats
+            $user = $this->findUserByPhone($normalizedPhone);
 
-        $user = User::where($field, $login)->first();
+            if (!$user || !Hash::check($password, $user->password)) {
+                return $this->errorResponse('Invalid credentials', 401);
+            }
+        } else {
+            // Email login
+            if (!Auth::attempt(['email' => $login, 'password' => $password])) {
+                return $this->errorResponse('Invalid credentials', 401);
+            }
+            $user = User::where('email', $login)->first();
+        }
 
         if ($user->status !== 'active') {
             return $this->errorResponse('Your account has been suspended', 403);
@@ -261,5 +270,70 @@ class AuthController extends Controller
         $user->delete();
 
         return $this->successResponse(null, 'Account deleted successfully');
+    }
+
+    /**
+     * Normalize phone number by removing all non-digit characters except leading +
+     */
+    private function normalizePhone(string $phone): string
+    {
+        // Remove all characters except digits and leading +
+        $phone = preg_replace('/[^\d+]/', '', $phone);
+
+        // Ensure + is only at the start
+        if (strpos($phone, '+') > 0) {
+            $phone = str_replace('+', '', $phone);
+        }
+
+        return $phone;
+    }
+
+    /**
+     * Find user by phone number, trying various formats
+     * Supports: 8122116594, +918122116594, 918122116594, 08122116594
+     */
+    private function findUserByPhone(string $phone): ?User
+    {
+        // Remove leading + if present
+        $phoneWithoutPlus = ltrim($phone, '+');
+
+        // Try exact match first
+        $user = User::where('phone', $phone)->first();
+        if ($user) return $user;
+
+        // Try without +
+        $user = User::where('phone', $phoneWithoutPlus)->first();
+        if ($user) return $user;
+
+        // Try with + prefix
+        $user = User::where('phone', '+' . $phoneWithoutPlus)->first();
+        if ($user) return $user;
+
+        // For Indian numbers: try with/without 91 prefix
+        if (strlen($phoneWithoutPlus) === 10) {
+            // User entered 10 digits, try with 91 prefix
+            $user = User::where('phone', '91' . $phoneWithoutPlus)
+                ->orWhere('phone', '+91' . $phoneWithoutPlus)
+                ->orWhere('phone', '0' . $phoneWithoutPlus)
+                ->first();
+            if ($user) return $user;
+        } elseif (strlen($phoneWithoutPlus) === 12 && str_starts_with($phoneWithoutPlus, '91')) {
+            // User entered with 91 prefix, try without
+            $withoutCountryCode = substr($phoneWithoutPlus, 2);
+            $user = User::where('phone', $withoutCountryCode)
+                ->orWhere('phone', '0' . $withoutCountryCode)
+                ->first();
+            if ($user) return $user;
+        } elseif (strlen($phoneWithoutPlus) === 11 && str_starts_with($phoneWithoutPlus, '0')) {
+            // User entered with leading 0
+            $withoutZero = substr($phoneWithoutPlus, 1);
+            $user = User::where('phone', $withoutZero)
+                ->orWhere('phone', '91' . $withoutZero)
+                ->orWhere('phone', '+91' . $withoutZero)
+                ->first();
+            if ($user) return $user;
+        }
+
+        return null;
     }
 }

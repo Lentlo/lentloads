@@ -57,10 +57,10 @@
               required
               class="input"
               :class="{ 'input-error': errors.phone }"
-              placeholder="+91 XXXXX XXXXX"
+              placeholder="Enter your phone number"
             />
             <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone }}</p>
-            <p class="mt-1 text-sm text-gray-500">You can use this to login</p>
+            <p class="mt-1 text-xs text-gray-500">With or without country code (e.g., 8122116594 or +91 8122116594). You can use this to login.</p>
           </div>
 
           <!-- Password -->
