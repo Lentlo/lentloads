@@ -43,4 +43,14 @@ class City extends Model
     {
         return $query->where('is_active', true);
     }
+
+    public function scopePopular($query)
+    {
+        return $query->where('is_popular', true);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('name');
+    }
 }

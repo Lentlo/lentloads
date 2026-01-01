@@ -5,73 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Country extends Model
+class Location extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
-        'code',
-        'phone_code',
-        'currency',
-        'is_active',
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
-    public function states(): HasMany
-    {
-        return $this->hasMany(State::class);
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-}
-
-class State extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'country_id',
-        'name',
-        'code',
-        'is_active',
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
-    public function country(): BelongsTo
-    {
-        return $this->belongsTo(Country::class);
-    }
-
-    public function cities(): HasMany
-    {
-        return $this->hasMany(City::class);
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-}
-
-class City extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
+        'slug',
+        'city_id',
         'state_id',
-        'name',
+        'country_id',
         'latitude',
         'longitude',
         'is_active',
@@ -86,9 +30,19 @@ class City extends Model
         'is_popular' => 'boolean',
     ];
 
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
+
     public function state(): BelongsTo
     {
         return $this->belongsTo(State::class);
+    }
+
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class);
     }
 
     public function scopeActive($query)
@@ -101,8 +55,8 @@ class City extends Model
         return $query->where('is_popular', true);
     }
 
-    public function getFullNameAttribute(): string
+    public function scopeOrdered($query)
     {
-        return $this->name . ', ' . $this->state->name;
+        return $query->orderBy('name');
     }
 }
