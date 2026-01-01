@@ -37,10 +37,8 @@ return new class extends Migration
             $table->index('starts_at');
         });
 
-        // Add composite index to reports for polymorphic queries
-        Schema::table('reports', function (Blueprint $table) {
-            $table->index(['reportable_type', 'reportable_id']);
-        });
+        // Composite index for reports - already exists from morphs() definition
+        // Skipping: $table->index(['reportable_type', 'reportable_id']);
     }
 
     /**
@@ -68,8 +66,6 @@ return new class extends Migration
             $table->dropIndex(['starts_at']);
         });
 
-        Schema::table('reports', function (Blueprint $table) {
-            $table->dropIndex(['reportable_type', 'reportable_id']);
-        });
+        // Reports index not added by this migration
     }
 };
