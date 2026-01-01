@@ -1,0 +1,130 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Country;
+use App\Models\State;
+use App\Models\City;
+use App\Models\Listing;
+use Illuminate\Http\Request;
+
+class LocationController extends Controller
+{
+    public function countries()
+    {
+        $countries = Country::active()->orderBy('name')->get();
+
+        return $this->successResponse($countries);
+    }
+
+    public function states($countryId)
+    {
+        $states = State::where('country_id', $countryId)
+            ->active()
+            ->orderBy('name')
+            ->get();
+
+        return $this->successResponse($states);
+    }
+
+    public function cities(Request $request, $stateId)
+    {
+        $query = City::where('state_id', $stateId)->active();
+
+        if ($request->filled('q')) {
+            $query->where('name', 'like', "%{$request->q}%");
+        }
+
+        $cities = $query->orderBy('name')->get();
+
+        return $this->successResponse($cities);
+    }
+
+    public function popularCities()
+    {
+        $cities = City::with('state:id,name')
+            ->popular()
+            ->active()
+            ->orderByDesc('listings_count')
+            ->limit(20)
+            ->get();
+
+        return $this->successResponse($cities);
+    }
+
+    public function searchCities(Request $request)
+    {
+        $query = $request->input('q', '');
+
+        if (strlen($query) < 2) {
+            return $this->successResponse([]);
+        }
+
+        $cities = City::with('state:id,name')
+            ->where('name', 'like', "%{$query}%")
+            ->active()
+            ->orderByDesc('listings_count')
+            ->limit(10)
+            ->get()
+            ->map(function ($city) {
+                return [
+                    'id' => $city->id,
+                    'name' => $city->name,
+                    'state' => $city->state->name,
+                    'full_name' => $city->full_name,
+                    'latitude' => $city->latitude,
+                    'longitude' => $city->longitude,
+                ];
+            });
+
+        return $this->successResponse($cities);
+    }
+
+    public function citiesWithListings()
+    {
+        $cities = Listing::active()
+            ->selectRaw('city, state, COUNT(*) as listings_count')
+            ->groupBy('city', 'state')
+            ->orderByDesc('listings_count')
+            ->limit(50)
+            ->get();
+
+        return $this->successResponse($cities);
+    }
+
+    public function detectLocation(Request $request)
+    {
+        $request->validate([
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+
+        // Find nearest city
+        $city = City::selectRaw("*,
+            (6371 * acos(cos(radians(?))
+            * cos(radians(latitude))
+            * cos(radians(longitude) - radians(?))
+            + sin(radians(?))
+            * sin(radians(latitude)))) AS distance", [
+            $request->latitude,
+            $request->longitude,
+            $request->latitude,
+        ])
+            ->having('distance', '<', 100)
+            ->orderBy('distance')
+            ->first();
+
+        if ($city) {
+            return $this->successResponse([
+                'city' => $city->name,
+                'state' => $city->state->name,
+                'country' => $city->state->country->name,
+                'latitude' => $city->latitude,
+                'longitude' => $city->longitude,
+            ]);
+        }
+
+        return $this->errorResponse('Location not found', 404);
+    }
+}
