@@ -14,12 +14,11 @@ class PageController extends Controller
 {
     public function home()
     {
-        // Featured categories
-        $categories = Category::with(['children' => fn($q) => $q->active()->limit(5)])
-            ->parents()
+        // Featured categories - get without children first to avoid query interference
+        $categories = Category::parents()
             ->active()
             ->featured()
-            ->withCount('activeListings')
+            ->ordered()
             ->limit(8)
             ->get();
 
@@ -31,6 +30,9 @@ class PageController extends Controller
                 ->where('status', 'active')
                 ->count();
         }
+
+        // Now load children for display
+        $categories->load(['children' => fn($q) => $q->active()->limit(5)]);
 
         // Featured listings
         $featuredListings = Listing::with(['primaryImage', 'category:id,name', 'user:id,name,city'])

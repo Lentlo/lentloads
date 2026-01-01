@@ -11,10 +11,8 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::with(['children' => function ($q) {
-            $q->active()->ordered()->withCount('activeListings');
-        }])
-            ->parents()
+        // Get categories without eager loading first
+        $categories = Category::parents()
             ->active()
             ->ordered()
             ->withCount('activeListings')
@@ -28,6 +26,11 @@ class CategoryController extends Controller
                 ->where('status', 'active')
                 ->count();
         }
+
+        // Now load children
+        $categories->load(['children' => function ($q) {
+            $q->active()->ordered()->withCount('activeListings');
+        }]);
 
         return $this->successResponse($categories);
     }
