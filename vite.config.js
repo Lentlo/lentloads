@@ -1,11 +1,23 @@
 import { defineConfig } from 'vite'
+import laravel from 'laravel-vite-plugin'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 export default defineConfig({
   plugins: [
-    vue(),
+    laravel({
+      input: ['resources/js/main.js'],
+      refresh: true,
+    }),
+    vue({
+      template: {
+        transformAssetUrls: {
+          base: null,
+          includeAbsolute: false,
+        },
+      },
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -70,13 +82,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './resources/js'),
-    }
-  },
-  build: {
-    outDir: 'public/build',
-    manifest: true,
-    rollupOptions: {
-      input: 'resources/js/main.js'
     }
   },
   server: {
