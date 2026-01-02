@@ -1,97 +1,83 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-6">
-    <div class="container-app max-w-2xl">
-      <div class="flex items-center justify-between mb-6">
+  <div class="saved-searches-page">
+    <div class="container-app py-6">
+      <!-- Header -->
+      <div class="page-header">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Saved Searches</h1>
-          <p class="text-gray-500">Get notified when new items match your criteria</p>
+          <h1>Saved Searches</h1>
+          <p>Get notified when new items match your criteria</p>
         </div>
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="space-y-4">
-        <div v-for="i in 3" :key="i" class="card p-4">
-          <div class="skeleton h-5 w-1/3 mb-2"></div>
-          <div class="skeleton h-4 w-2/3"></div>
+      <div v-if="loading" class="searches-list">
+        <div v-for="i in 3" :key="i" class="search-card-skeleton">
+          <div class="skeleton h-6 w-1/3 mb-3"></div>
+          <div class="skeleton h-4 w-2/3 mb-4"></div>
+          <div class="skeleton h-10 w-full"></div>
         </div>
       </div>
 
       <!-- Saved Searches List -->
-      <div v-else-if="searches.length" class="space-y-4">
-        <div
-          v-for="search in searches"
-          :key="search.id"
-          class="card p-4"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <h3 class="font-semibold text-gray-900">{{ search.name }}</h3>
-              <div class="flex flex-wrap gap-2 mt-2">
-                <span v-if="search.query" class="badge-primary">
-                  "{{ search.query }}"
+      <div v-else-if="searches.length" class="searches-list">
+        <div v-for="search in searches" :key="search.id" class="search-card">
+          <!-- Header -->
+          <div class="search-header">
+            <div class="search-info">
+              <h3 class="search-name">{{ search.name }}</h3>
+              <div class="search-tags">
+                <span v-if="search.query" class="tag primary">
+                  <MagnifyingGlassIcon class="w-3 h-3" />
+                  {{ search.query }}
                 </span>
-                <span v-if="search.category" class="badge bg-gray-100 text-gray-700">
+                <span v-if="search.category" class="tag">
                   {{ search.category.name }}
                 </span>
-                <span v-if="search.city" class="badge bg-gray-100 text-gray-700">
+                <span v-if="search.city" class="tag">
+                  <MapPinIcon class="w-3 h-3" />
                   {{ search.city }}
                 </span>
-                <span v-if="search.min_price || search.max_price" class="badge bg-gray-100 text-gray-700">
+                <span v-if="search.min_price || search.max_price" class="tag">
                   ₹{{ search.min_price || 0 }} - ₹{{ search.max_price || '∞' }}
                 </span>
               </div>
             </div>
-
-            <div class="flex items-center gap-2">
-              <button
-                @click="runSearch(search)"
-                class="p-2 text-primary-600 hover:bg-primary-50 rounded"
-                title="Run search"
-              >
+            <div class="search-actions">
+              <button @click="runSearch(search)" class="action-btn primary" title="Run search">
                 <MagnifyingGlassIcon class="w-5 h-5" />
               </button>
-              <button
-                @click="editSearch(search)"
-                class="p-2 text-gray-600 hover:bg-gray-100 rounded"
-                title="Edit"
-              >
+              <button @click="editSearch(search)" class="action-btn" title="Edit">
                 <PencilIcon class="w-5 h-5" />
               </button>
-              <button
-                @click="deleteSearch(search.id)"
-                class="p-2 text-red-600 hover:bg-red-50 rounded"
-                title="Delete"
-              >
+              <button @click="deleteSearch(search.id)" class="action-btn danger" title="Delete">
                 <TrashIcon class="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <!-- Notification settings -->
-          <div class="flex items-center gap-4 mt-4 pt-4 border-t">
-            <label class="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                :checked="search.notify_push"
-                @change="toggleNotification(search, 'push')"
-                class="rounded text-primary-600"
-              />
-              Push notifications
-            </label>
-            <label class="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                :checked="search.notify_email"
-                @change="toggleNotification(search, 'email')"
-                class="rounded text-primary-600"
-              />
-              Email notifications
-            </label>
-            <select
-              v-model="search.notify_frequency"
-              @change="updateFrequency(search)"
-              class="text-sm border rounded px-2 py-1"
-            >
+          <!-- Notification Settings -->
+          <div class="notification-settings">
+            <div class="notification-toggles">
+              <label class="toggle-item" :class="{ 'active': search.notify_push }">
+                <input
+                  type="checkbox"
+                  :checked="search.notify_push"
+                  @change="toggleNotification(search, 'push')"
+                />
+                <BellIcon class="w-4 h-4" />
+                <span>Push</span>
+              </label>
+              <label class="toggle-item" :class="{ 'active': search.notify_email }">
+                <input
+                  type="checkbox"
+                  :checked="search.notify_email"
+                  @change="toggleNotification(search, 'email')"
+                />
+                <EnvelopeIcon class="w-4 h-4" />
+                <span>Email</span>
+              </label>
+            </div>
+            <select v-model="search.notify_frequency" @change="updateFrequency(search)" class="frequency-select">
               <option value="instant">Instant</option>
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
@@ -101,36 +87,35 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else class="card p-12 text-center">
-        <MagnifyingGlassIcon class="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No saved searches</h3>
-        <p class="text-gray-500 mb-4">
-          Save a search to get notified when new items are posted
-        </p>
+      <div v-else class="empty-state">
+        <div class="empty-icon">
+          <BookmarkIcon class="w-16 h-16" />
+        </div>
+        <h3>No saved searches</h3>
+        <p>Save a search to get notified when new items are posted</p>
         <router-link to="/search" class="btn-primary">
+          <MagnifyingGlassIcon class="w-5 h-5" />
           Start Searching
         </router-link>
       </div>
     </div>
 
     <!-- Edit Modal -->
-    <div v-if="editingSearch" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/50" @click="editingSearch = null"></div>
-      <div class="relative bg-white rounded-xl p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold mb-4">Edit Saved Search</h3>
-        <div class="space-y-4">
-          <div>
-            <label class="label">Name</label>
-            <input v-model="editingSearch.name" type="text" class="input" />
-          </div>
-          <div class="flex gap-2">
-            <button @click="editingSearch = null" class="btn-secondary flex-1">
-              Cancel
-            </button>
-            <button @click="saveSearch" class="btn-primary flex-1">
-              Save
-            </button>
-          </div>
+    <div v-if="editingSearch" class="modal-overlay" @click.self="editingSearch = null">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Edit Saved Search</h3>
+          <button @click="editingSearch = null" class="modal-close">
+            <XMarkIcon class="w-6 h-6" />
+          </button>
+        </div>
+        <div class="modal-body">
+          <label class="input-label">Search Name</label>
+          <input v-model="editingSearch.name" type="text" class="input" placeholder="Enter a name" />
+        </div>
+        <div class="modal-footer">
+          <button @click="editingSearch = null" class="btn-secondary">Cancel</button>
+          <button @click="saveSearch" class="btn-primary">Save Changes</button>
         </div>
       </div>
     </div>
@@ -146,6 +131,11 @@ import {
   MagnifyingGlassIcon,
   PencilIcon,
   TrashIcon,
+  BellIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  BookmarkIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -157,7 +147,12 @@ const editingSearch = ref(null)
 const fetchSearches = async () => {
   try {
     const response = await api.get('/saved-searches')
-    searches.value = response.data.data
+    // Ensure both notifications are enabled by default for display
+    searches.value = response.data.data.map(search => ({
+      ...search,
+      notify_push: search.notify_push ?? true,
+      notify_email: search.notify_email ?? true,
+    }))
   } finally {
     loading.value = false
   }
@@ -234,3 +229,311 @@ onMounted(() => {
   fetchSearches()
 })
 </script>
+
+<style scoped>
+.saved-searches-page {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* Header */
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.page-header p {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Searches List */
+.searches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Search Card */
+.search-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.search-card-skeleton {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.search-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.search-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 20px;
+}
+
+.tag.primary {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.search-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #e2e8f0;
+}
+
+.action-btn.primary {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.action-btn.primary:hover {
+  background: #ddd6fe;
+}
+
+.action-btn.danger {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.action-btn.danger:hover {
+  background: #fee2e2;
+}
+
+/* Notification Settings */
+.notification-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.notification-toggles {
+  display: flex;
+  gap: 12px;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-item input {
+  display: none;
+}
+
+.toggle-item.active {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #7c3aed;
+}
+
+.frequency-select {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+}
+
+.frequency-select:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 64px 20px;
+  background: white;
+  border-radius: 16px;
+}
+
+.empty-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c3aed;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.empty-state .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #64748b;
+}
+
+.modal-close:hover {
+  background: #f1f5f9;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.input-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #f8fafc;
+}
+
+.modal-footer button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-secondary {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.btn-primary {
+  background: #7c3aed;
+  color: white;
+}
+</style>

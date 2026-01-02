@@ -12,12 +12,19 @@
     <template v-else-if="listing">
       <!-- Image Gallery Section -->
       <div class="image-gallery-section">
-        <!-- Main Image -->
-        <div class="main-image-container" @click="openLightbox">
+        <!-- Main Image with Swipe -->
+        <div
+          class="main-image-container"
+          @click="openLightbox"
+          @touchstart="handleSwipeStart"
+          @touchmove="handleSwipeMove"
+          @touchend="handleSwipeEnd"
+        >
           <img
             :src="currentImage"
             :alt="listing.title"
             class="main-image"
+            :style="{ transform: `translateX(${swipeOffset}px)` }"
           />
 
           <!-- Image Counter -->
@@ -31,13 +38,15 @@
             <span v-if="listing.is_urgent" class="badge-urgent">Urgent</span>
           </div>
 
-          <!-- Navigation Arrows -->
-          <button v-if="listing.images?.length > 1" @click.stop="prevImage" class="nav-arrow nav-prev">
-            <ChevronLeftIcon class="w-6 h-6" />
-          </button>
-          <button v-if="listing.images?.length > 1" @click.stop="nextImage" class="nav-arrow nav-next">
-            <ChevronRightIcon class="w-6 h-6" />
-          </button>
+          <!-- Swipe Dots Indicator -->
+          <div v-if="listing.images?.length > 1" class="swipe-dots">
+            <span
+              v-for="(_, index) in listing.images"
+              :key="index"
+              class="dot"
+              :class="{ 'active': currentImageIndex === index }"
+            ></span>
+          </div>
         </div>
 
         <!-- Thumbnails -->
@@ -314,6 +323,40 @@ let touchStartX = 0
 let touchStartY = 0
 let lastTouchDistance = 0
 
+// Swipe state for main gallery
+const swipeOffset = ref(0)
+let swipeStartX = 0
+let isSwiping = false
+
+const handleSwipeStart = (e) => {
+  if (e.touches.length === 1) {
+    swipeStartX = e.touches[0].clientX
+    isSwiping = true
+  }
+}
+
+const handleSwipeMove = (e) => {
+  if (!isSwiping || e.touches.length !== 1) return
+  const diff = e.touches[0].clientX - swipeStartX
+  // Limit the swipe offset
+  swipeOffset.value = Math.max(-100, Math.min(100, diff))
+}
+
+const handleSwipeEnd = () => {
+  if (!isSwiping) return
+  isSwiping = false
+
+  const threshold = 50
+  if (swipeOffset.value > threshold && listing.value?.images?.length > 1) {
+    prevImage()
+  } else if (swipeOffset.value < -threshold && listing.value?.images?.length > 1) {
+    nextImage()
+  }
+
+  // Reset offset with animation
+  swipeOffset.value = 0
+}
+
 const currentImage = computed(() => {
   if (!listing.value?.images?.length) return listing.value?.primary_image_url
   return listing.value.images[currentImageIndex.value]?.url
@@ -529,29 +572,64 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
   color: white;
 }
 
-.nav-arrow {
+/* Swipe dots indicator */
+.swipe-dots {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  bottom: 12px;
+  right: 12px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
+  gap: 6px;
+}
+
+.swipe-dots .dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  color: #333;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  background: rgba(255, 255, 255, 0.5);
   transition: all 0.2s;
 }
 
-.nav-arrow:hover {
+.swipe-dots .dot.active {
   background: white;
-  transform: translateY(-50%) scale(1.05);
+  width: 20px;
+  border-radius: 4px;
 }
 
-.nav-prev { left: 12px; }
-.nav-next { right: 12px; }
+/* Main image transition */
+.main-image {
+  transition: transform 0.15s ease-out;
+}
+
+/* Hide nav arrows on mobile - only show on desktop */
+.nav-arrow {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .nav-arrow {
+    display: flex;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s;
+  }
+
+  .nav-arrow:hover {
+    background: white;
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .nav-prev { left: 12px; }
+  .nav-next { right: 12px; }
+}
 
 .thumbnails-strip {
   display: flex;
