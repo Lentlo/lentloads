@@ -49,10 +49,10 @@
           >
             <BellIcon class="w-6 h-6" />
             <span
-              v-if="unreadCount > 0"
+              v-if="unreadNotifications > 0"
               class="absolute top-1 right-1 w-5 h-5 bg-gradient-accent text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce-in"
             >
-              {{ unreadCount > 9 ? '9+' : unreadCount }}
+              {{ unreadNotifications > 9 ? '9+' : unreadNotifications }}
             </span>
           </button>
 
@@ -226,17 +226,21 @@ const authStore = useAuthStore()
 
 const showUserMenu = ref(false)
 const searchQuery = ref('')
-const unreadCount = ref(0)
+const unreadNotifications = ref(0)
 const unreadMessages = ref(0)
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-// Fetch unread message count
-const fetchUnreadMessages = async () => {
+// Fetch unread counts
+const fetchUnreadCounts = async () => {
   if (!isAuthenticated.value) return
   try {
-    const response = await api.get('/conversations/unread-count')
-    unreadMessages.value = response.data.data?.count || 0
+    const [messagesRes, notificationsRes] = await Promise.all([
+      api.get('/conversations/unread-count'),
+      api.get('/notifications/unread-count')
+    ])
+    unreadMessages.value = messagesRes.data.data?.count || 0
+    unreadNotifications.value = notificationsRes.data.data?.count || 0
   } catch (e) {
     // Silently fail
   }
@@ -262,31 +266,32 @@ const closeMenu = (e) => {
   }
 }
 
-let messageInterval = null
+let countInterval = null
 
 onMounted(() => {
   document.addEventListener('click', closeMenu)
 
-  // Fetch unread messages on mount and periodically
+  // Fetch unread counts on mount and periodically
   if (isAuthenticated.value) {
-    fetchUnreadMessages()
-    messageInterval = setInterval(fetchUnreadMessages, 30000) // Every 30 seconds
+    fetchUnreadCounts()
+    countInterval = setInterval(fetchUnreadCounts, 30000) // Every 30 seconds
   }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', closeMenu)
-  if (messageInterval) clearInterval(messageInterval)
+  if (countInterval) clearInterval(countInterval)
 })
 
 // Watch for auth changes
 watch(isAuthenticated, (newVal) => {
   if (newVal) {
-    fetchUnreadMessages()
-    messageInterval = setInterval(fetchUnreadMessages, 30000)
+    fetchUnreadCounts()
+    countInterval = setInterval(fetchUnreadCounts, 30000)
   } else {
     unreadMessages.value = 0
-    if (messageInterval) clearInterval(messageInterval)
+    unreadNotifications.value = 0
+    if (countInterval) clearInterval(countInterval)
   }
 })
 </script>

@@ -1,7 +1,8 @@
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
     <div class="absolute inset-0 bg-black/50" @click="$emit('cancel')"></div>
-    <div class="relative bg-white rounded-xl p-6 w-full max-w-md animate-scale-in">
+
+    <div class="relative bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-2xl p-6 animate-slide-up safe-area-bottom">
       <div class="text-center">
         <div
           v-if="type === 'danger'"
@@ -23,14 +24,11 @@
         </div>
 
         <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ title }}</h3>
-        <p class="text-gray-500">{{ message }}</p>
+        <p class="text-gray-500 text-sm">{{ message }}</p>
       </div>
 
       <div class="flex gap-3 mt-6">
-        <button
-          @click="$emit('cancel')"
-          class="btn-secondary flex-1"
-        >
+        <button @click="$emit('cancel')" class="btn-secondary flex-1">
           {{ cancelText }}
         </button>
         <button
@@ -54,26 +52,11 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
-  title: {
-    type: String,
-    default: 'Confirm Action'
-  },
-  message: {
-    type: String,
-    default: 'Are you sure you want to proceed?'
-  },
-  confirmText: {
-    type: String,
-    default: 'Confirm'
-  },
-  cancelText: {
-    type: String,
-    default: 'Cancel'
-  },
-  confirmClass: {
-    type: String,
-    default: null
-  },
+  title: { type: String, default: 'Confirm Action' },
+  message: { type: String, default: 'Are you sure you want to proceed?' },
+  confirmText: { type: String, default: 'Confirm' },
+  cancelText: { type: String, default: 'Cancel' },
+  confirmClass: { type: String, default: null },
   type: {
     type: String,
     default: 'info',
@@ -85,24 +68,27 @@ defineEmits(['confirm', 'cancel'])
 
 const defaultConfirmClass = computed(() => {
   if (props.type === 'danger') return 'btn-danger'
-  if (props.type === 'warning') return 'btn-primary'
   return 'btn-primary'
 })
 </script>
 
 <style scoped>
-@keyframes scale-in {
+@keyframes slide-up {
   from {
-    transform: scale(0.95);
+    transform: translateY(100%);
     opacity: 0;
   }
   to {
-    transform: scale(1);
+    transform: translateY(0);
     opacity: 1;
   }
 }
 
-.animate-scale-in {
-  animation: scale-in 0.2s ease-out;
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0), 16px);
 }
 </style>

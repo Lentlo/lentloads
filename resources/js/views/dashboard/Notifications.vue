@@ -1,11 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-6">
-    <div class="container-app max-w-2xl">
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
+  <div class="min-h-screen bg-gray-50">
+    <div class="container-app py-4 max-w-2xl">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-xl font-bold text-gray-900">Notifications</h1>
         <button
-          v-if="notifications.length"
-          @click="markAllRead"
+          v-if="notifications.length && hasUnread"
+          @click="markAllAsRead"
           class="text-sm text-primary-600 hover:underline"
         >
           Mark all as read
@@ -13,12 +14,14 @@
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="space-y-2">
-        <div v-for="i in 5" :key="i" class="card p-4 flex gap-4">
-          <div class="skeleton w-10 h-10 rounded-full"></div>
-          <div class="flex-1">
-            <div class="skeleton h-4 w-3/4 mb-2"></div>
-            <div class="skeleton h-3 w-1/4"></div>
+      <div v-if="loading && !notifications.length" class="space-y-3">
+        <div v-for="i in 5" :key="i" class="card p-4">
+          <div class="flex gap-3">
+            <div class="skeleton w-10 h-10 rounded-full"></div>
+            <div class="flex-1">
+              <div class="skeleton h-4 w-3/4 mb-2"></div>
+              <div class="skeleton h-3 w-1/2"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -28,41 +31,50 @@
         <div
           v-for="notification in notifications"
           :key="notification.id"
-          class="card p-4 flex gap-4 cursor-pointer hover:shadow-md transition"
-          :class="!notification.read_at ? 'bg-primary-50 border-primary-200' : ''"
           @click="handleNotificationClick(notification)"
+          class="card p-4 cursor-pointer hover:bg-gray-50 transition"
+          :class="!notification.read_at ? 'border-l-4 border-l-primary-500 bg-primary-50/30' : ''"
         >
-          <!-- Icon -->
-          <div
-            class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-            :class="getIconClass(notification.data.type)"
-          >
-            <component :is="getIcon(notification.data.type)" class="w-5 h-5" />
-          </div>
+          <div class="flex gap-3">
+            <!-- Icon -->
+            <div
+              class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+              :class="getIconClass(notification.data.type)"
+            >
+              <component :is="getIcon(notification.data.type)" class="w-5 h-5" />
+            </div>
 
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <p class="text-gray-900">{{ notification.data.message }}</p>
-            <p class="text-sm text-gray-500 mt-1">{{ formatDate(notification.created_at) }}</p>
-          </div>
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-gray-900" :class="!notification.read_at ? 'font-medium' : ''">
+                {{ notification.data.message }}
+              </p>
+              <p class="text-xs text-gray-500 mt-1">{{ formatTime(notification.created_at) }}</p>
+            </div>
 
-          <!-- Unread indicator -->
-          <div v-if="!notification.read_at" class="w-2 h-2 bg-primary-600 rounded-full"></div>
+            <!-- Actions -->
+            <button
+              @click.stop="deleteNotification(notification.id)"
+              class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded"
+            >
+              <XMarkIcon class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Load More -->
+        <div v-if="hasMore" class="text-center pt-4">
+          <button @click="loadMore" :disabled="loading" class="btn-secondary">
+            {{ loading ? 'Loading...' : 'Load More' }}
+          </button>
         </div>
       </div>
 
       <!-- Empty State -->
       <div v-else class="card p-12 text-center">
         <BellIcon class="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
-        <p class="text-gray-500">You're all caught up!</p>
-      </div>
-
-      <!-- Load More -->
-      <div v-if="hasMore" class="mt-6 text-center">
-        <button @click="loadMore" :disabled="loadingMore" class="btn-secondary">
-          {{ loadingMore ? 'Loading...' : 'Load More' }}
-        </button>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No notifications yet</h3>
+        <p class="text-gray-500">We'll notify you about your listings and messages</p>
       </div>
     </div>
   </div>
@@ -76,11 +88,13 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import {
   BellIcon,
+  XMarkIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
   ChatBubbleLeftIcon,
   HeartIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ShoppingBagIcon,
+  TagIcon,
 } from '@heroicons/vue/24/outline'
 
 dayjs.extend(relativeTime)
@@ -88,93 +102,97 @@ dayjs.extend(relativeTime)
 const router = useRouter()
 
 const loading = ref(true)
-const loadingMore = ref(false)
 const notifications = ref([])
 const currentPage = ref(1)
 const lastPage = ref(1)
 
 const hasMore = computed(() => currentPage.value < lastPage.value)
+const hasUnread = computed(() => notifications.value.some(n => !n.read_at))
 
-const formatDate = (date) => dayjs(date).fromNow()
+const formatTime = (date) => dayjs(date).fromNow()
 
 const getIcon = (type) => {
   const icons = {
-    message: ChatBubbleLeftIcon,
-    favorite: HeartIcon,
-    listing_approved: CheckCircleIcon,
-    listing_rejected: ExclamationCircleIcon,
-    sold: ShoppingBagIcon,
+    'listing_approved': CheckCircleIcon,
+    'listing_rejected': XCircleIcon,
+    'listing_pending': ClockIcon,
+    'listing_expired': ClockIcon,
+    'new_message': ChatBubbleLeftIcon,
+    'new_offer': TagIcon,
+    'offer_accepted': CheckCircleIcon,
+    'offer_rejected': XCircleIcon,
+    'new_favorite': HeartIcon,
   }
   return icons[type] || BellIcon
 }
 
 const getIconClass = (type) => {
   const classes = {
-    message: 'bg-blue-100 text-blue-600',
-    favorite: 'bg-red-100 text-red-600',
-    listing_approved: 'bg-green-100 text-green-600',
-    listing_rejected: 'bg-red-100 text-red-600',
-    sold: 'bg-purple-100 text-purple-600',
+    'listing_approved': 'bg-green-100 text-green-600',
+    'listing_rejected': 'bg-red-100 text-red-600',
+    'listing_pending': 'bg-yellow-100 text-yellow-600',
+    'listing_expired': 'bg-gray-100 text-gray-600',
+    'new_message': 'bg-blue-100 text-blue-600',
+    'new_offer': 'bg-purple-100 text-purple-600',
+    'offer_accepted': 'bg-green-100 text-green-600',
+    'offer_rejected': 'bg-red-100 text-red-600',
+    'new_favorite': 'bg-pink-100 text-pink-600',
   }
   return classes[type] || 'bg-gray-100 text-gray-600'
 }
 
 const fetchNotifications = async (append = false) => {
-  if (append) {
-    loadingMore.value = true
-  } else {
-    loading.value = true
-  }
-
+  loading.value = true
   try {
     const response = await api.get('/notifications', {
       params: { page: append ? currentPage.value + 1 : 1 }
     })
-
+    const data = response.data.data
     if (append) {
-      notifications.value = [...notifications.value, ...response.data.data]
+      notifications.value = [...notifications.value, ...data]
     } else {
-      notifications.value = response.data.data
+      notifications.value = data
     }
-
     currentPage.value = response.data.meta.current_page
     lastPage.value = response.data.meta.last_page
   } finally {
     loading.value = false
-    loadingMore.value = false
   }
 }
+
+const loadMore = () => fetchNotifications(true)
 
 const handleNotificationClick = async (notification) => {
   // Mark as read
   if (!notification.read_at) {
-    await api.post(`/notifications/${notification.id}/read`)
-    notification.read_at = new Date().toISOString()
+    try {
+      await api.post(`/notifications/${notification.id}/read`)
+      notification.read_at = new Date().toISOString()
+    } catch (e) {}
   }
 
   // Navigate based on type
-  if (notification.data.url) {
-    router.push(notification.data.url)
+  const data = notification.data
+  if (data.listing_slug) {
+    router.push(`/listing/${data.listing_slug}`)
+  } else if (data.conversation_uuid) {
+    router.push(`/messages/${data.conversation_uuid}`)
   }
 }
 
-const markAllRead = async () => {
+const markAllAsRead = async () => {
   try {
     await api.post('/notifications/read-all')
-    notifications.value = notifications.value.map(n => ({
-      ...n,
-      read_at: n.read_at || new Date().toISOString()
-    }))
-  } catch (error) {
-    console.error('Failed to mark all as read')
-  }
+    notifications.value.forEach(n => n.read_at = new Date().toISOString())
+  } catch (e) {}
 }
 
-const loadMore = () => {
-  fetchNotifications(true)
+const deleteNotification = async (id) => {
+  try {
+    await api.delete(`/notifications/${id}`)
+    notifications.value = notifications.value.filter(n => n.id !== id)
+  } catch (e) {}
 }
 
-onMounted(() => {
-  fetchNotifications()
-})
+onMounted(() => fetchNotifications())
 </script>
