@@ -17,7 +17,7 @@
             <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
           </svg>
         </div>
-        <span class="logo-name-mobile">Lentlo</span>
+        <span class="logo-name-mobile">Lentlo Ads</span>
       </router-link>
 
       <!-- Location Selector (Desktop) -->
@@ -281,7 +281,7 @@ let searchTimeout = null
 const isScrolled = ref(false)
 const showMobileSearch = ref(true)
 let lastScrollY = 0
-let scrollTimeout = null
+let ticking = false
 
 // Location picker state
 const showLocationPicker = ref(false)
@@ -290,26 +290,35 @@ const cityResults = ref([])
 const detectingLocation = ref(false)
 const selectedLocation = ref(null)
 
-// Handle scroll for showing/hiding mobile search
+// Handle scroll for showing/hiding mobile search - optimized with RAF
 const handleScroll = () => {
-  const currentScrollY = window.scrollY
+  if (ticking) return
 
-  // Add scrolled class when past threshold
-  isScrolled.value = currentScrollY > 10
+  ticking = true
+  requestAnimationFrame(() => {
+    const currentScrollY = window.scrollY
 
-  // Show search on scroll up, hide on scroll down
-  if (currentScrollY < 50) {
-    // Always show search at top of page
-    showMobileSearch.value = true
-  } else if (currentScrollY > lastScrollY + 5) {
-    // Scrolling down - hide search
-    showMobileSearch.value = false
-  } else if (currentScrollY < lastScrollY - 5) {
-    // Scrolling up - show search
-    showMobileSearch.value = true
-  }
+    // Only process on mobile (< 768px)
+    if (window.innerWidth < 768) {
+      // Add scrolled class when past threshold
+      const shouldBeScrolled = currentScrollY > 10
+      if (isScrolled.value !== shouldBeScrolled) {
+        isScrolled.value = shouldBeScrolled
+      }
 
-  lastScrollY = currentScrollY
+      // Show search on scroll up, hide on scroll down
+      if (currentScrollY < 50) {
+        if (!showMobileSearch.value) showMobileSearch.value = true
+      } else if (currentScrollY > lastScrollY + 10) {
+        if (showMobileSearch.value) showMobileSearch.value = false
+      } else if (currentScrollY < lastScrollY - 10) {
+        if (!showMobileSearch.value) showMobileSearch.value = true
+      }
+    }
+
+    lastScrollY = currentScrollY
+    ticking = false
+  })
 }
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -1057,23 +1066,23 @@ watch(() => route.query.q, (newQ) => {
   }
 }
 
-/* Mobile Search */
+/* Mobile Search - GPU accelerated animation */
 .mobile-search {
   padding: 0 12px 10px;
   display: flex;
   align-items: center;
   gap: 8px;
-  max-height: 52px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  transform: translateY(0);
   opacity: 1;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  will-change: transform, opacity;
 }
 
 .mobile-search:not(.search-visible) {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
+  transform: translateY(-100%);
   opacity: 0;
+  pointer-events: none;
+  position: absolute;
 }
 
 @media (min-width: 768px) {
