@@ -25,12 +25,11 @@ echo "=== Deployment Started: " . date('Y-m-d H:i:s') . " ===\n\n";
 flush();
 
 // Deployment commands
+// NOTE: DO NOT use config:cache - it causes APP_KEY issues on this server
 $commands = [
     'git fetch origin main' => 10,
     'git reset --hard origin/main' => 30,
-    'composer dump-autoload --optimize --no-interaction' => 60,
-    'php artisan config:cache' => 10,
-    'php artisan route:cache' => 10,
+    'php artisan optimize:clear' => 10,
 ];
 
 foreach ($commands as $cmd => $timeout) {
