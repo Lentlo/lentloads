@@ -1461,4 +1461,56 @@ ssh lentlo@139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && 
 
 ---
 
-*Last Updated: January 2, 2026 (Fuzzy Search + Main Header Redesign)*
+### Session: January 2, 2026 (iOS Input Zoom Fix)
+
+**Issue Reported:**
+- Whole site zooms out when search field is clicked on iOS
+- User has to pinch to zoom back in to normal view
+
+**Root Cause:**
+- iOS Safari auto-zooms when an input has `font-size` smaller than 16px
+- This is a "feature" to help users see what they're typing, but causes layout issues
+
+**Fix Applied:**
+
+1. **Global CSS Rule** (`resources/js/assets/css/app.css`)
+   - Added minimum 16px font-size for all inputs/textareas/selects on mobile
+   - On desktop (768px+), reverts to inherit
+   ```css
+   @layer base {
+     input, textarea, select {
+       font-size: 16px;
+     }
+     @media (min-width: 768px) {
+       input, textarea, select {
+         font-size: inherit;
+       }
+     }
+   }
+   ```
+
+2. **Chat Textarea** (`resources/js/views/dashboard/Conversation.vue`)
+   - Changed from `font-size: 15px` to `font-size: 16px`
+
+3. **Search Inputs** (`resources/js/components/layout/AppHeader.vue`)
+   - Already had 16px - no change needed
+
+**Technical Notes:**
+- iOS Safari requires minimum 16px to prevent auto-zoom on focus
+- The global rule ensures all form inputs get this fix automatically
+- Desktop users unaffected (inherit allows smaller sizes)
+
+**Files Modified:**
+- `resources/js/assets/css/app.css` - Global iOS zoom prevention
+- `resources/js/views/dashboard/Conversation.vue` - Chat textarea 16px
+
+**Deploy Status:**
+- Code pushed to GitHub
+- SSH to server timed out - needs manual deployment:
+  ```bash
+  ssh master@139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main"
+  ```
+
+---
+
+*Last Updated: January 2, 2026 (iOS Input Zoom Fix)*
