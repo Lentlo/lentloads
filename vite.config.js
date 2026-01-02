@@ -52,7 +52,31 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // SPA fallback - ensures all navigation requests go to index.html
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [
+          /^\/api\//,  // Don't intercept API calls
+          /^\/v1\//,   // Don't intercept v1 API calls
+          /^\/storage\//, // Don't intercept storage files
+          /^\/build\//, // Don't intercept build assets
+          /\.\w+$/,    // Don't intercept files with extensions
+        ],
+        // Don't cache HTML pages to prevent stale content issues
+        globIgnores: ['**/index.html'],
         runtimeCaching: [
+          {
+            // Use NetworkFirst for navigation requests (HTML pages)
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 // 1 hour
+              },
+              networkTimeoutSeconds: 3
+            }
+          },
           {
             urlPattern: /^https:\/\/api\..*/i,
             handler: 'NetworkFirst',
@@ -61,7 +85,21 @@ export default defineConfig({
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              }
+              },
+              networkTimeoutSeconds: 5
+            }
+          },
+          {
+            // Also handle same-origin API calls
+            urlPattern: /\/v1\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              },
+              networkTimeoutSeconds: 5
             }
           },
           {
@@ -75,7 +113,10 @@ export default defineConfig({
               }
             }
           }
-        ]
+        ],
+        // Skip waiting to activate new service worker immediately
+        skipWaiting: true,
+        clientsClaim: true
       }
     })
   ],

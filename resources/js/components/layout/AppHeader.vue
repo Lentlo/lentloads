@@ -580,6 +580,8 @@ watch(() => route.query.q, (newQ) => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
   transition: box-shadow 0.3s ease;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 @media (min-width: 768px) {
@@ -1126,6 +1128,8 @@ watch(() => route.query.q, (newQ) => {
               opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
               transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
               padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .mobile-search:not(.search-visible) {
@@ -1173,6 +1177,8 @@ watch(() => route.query.q, (newQ) => {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   backdrop-filter: blur(4px);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .mobile-search-inner input {
