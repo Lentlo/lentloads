@@ -147,6 +147,35 @@ expect eof
 2. Commit and push to GitHub
 3. Run the **SAFE** deployment command above
 4. Clear OPcache if needed
+5. **TEST the live site immediately** (see checklist below)
+6. **ALERT user immediately if anything is broken**
+
+### Post-Deployment Testing Checklist
+
+**MUST TEST after every deployment:**
+```
+□ Homepage loads correctly
+□ Listings display with images
+□ Search works
+□ User can login (if auth changes)
+□ User can register (if auth changes)
+□ Create listing works (if listing changes)
+□ Image upload works (if storage/image changes)
+□ Mobile view works (if UI changes)
+```
+
+**How to test:**
+```bash
+# Quick check - homepage loads
+curl -s -o /dev/null -w "%{http_code}" https://lentloads.com
+
+# Should return 200
+```
+
+**If ANY test fails:**
+1. IMMEDIATELY inform the user
+2. DO NOT continue with other tasks
+3. Investigate and fix, or rollback if needed
 
 ### Backup Recommendations
 
