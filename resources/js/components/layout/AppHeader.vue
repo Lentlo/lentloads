@@ -401,7 +401,7 @@ watch(isAuthenticated, (val) => {
   padding: 10px 8px;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 16px;
   color: #1f2937;
   outline: none;
 }
@@ -732,7 +732,7 @@ watch(isAuthenticated, (val) => {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 16px;
   color: #1f2937;
   outline: none;
 }

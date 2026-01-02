@@ -873,7 +873,7 @@ onMounted(load)
   background: #f3f4f6;
   border: none;
   border-radius: 22px;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.4;
   resize: none;
   max-height: 100px;

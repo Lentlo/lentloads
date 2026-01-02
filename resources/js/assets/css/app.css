@@ -11,6 +11,21 @@
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
   }
+
+  /* Prevent iOS auto-zoom on input focus - requires minimum 16px font-size */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  @media (min-width: 768px) {
+    input,
+    textarea,
+    select {
+      font-size: inherit;
+    }
+  }
 }
 
 @layer components {
