@@ -6,10 +6,12 @@
 @layer base {
   html {
     @apply scroll-smooth;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
+    overflow-x: hidden;
   }
 
   /* Prevent iOS auto-zoom on input focus - requires minimum 16px font-size */
