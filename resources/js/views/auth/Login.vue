@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 overflow-x-hidden">
-    <div class="max-w-md w-full">
+  <div class="auth-page">
+    <div class="max-w-md w-full mx-auto">
       <!-- Page Title -->
       <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-gray-900">
@@ -628,3 +628,22 @@ onMounted(() => {
   loginInput.value?.focus()
 })
 </script>
+
+<style scoped>
+.auth-page {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding: 24px 16px;
+  overflow-x: hidden;
+}
+
+/* On larger screens, center the form vertically */
+@media (min-width: 640px) {
+  .auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px;
+  }
+}
+</style>

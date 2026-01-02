@@ -345,10 +345,10 @@ const handleScroll = () => {
       // Accumulate scroll distance in current direction
       scrollAccumulator += Math.abs(scrollDelta)
 
-      // Only toggle after accumulating enough scroll (50px) and cooldown period (300ms)
-      const canToggle = now - lastToggleTime > 300
+      // Only toggle after accumulating enough scroll (120px) and cooldown period (900ms)
+      const canToggle = now - lastToggleTime > 900
 
-      if (canToggle && scrollAccumulator > 50) {
+      if (canToggle && scrollAccumulator > 120) {
         if (scrollDirection === 'down' && showMobileSearch.value) {
           showMobileSearch.value = false
           lastToggleTime = now
@@ -1122,10 +1122,10 @@ watch(() => route.query.q, (newQ) => {
   overflow: hidden;
   transform: translateY(0);
   will-change: max-height, opacity, transform;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.9s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobile-search:not(.search-visible) {
