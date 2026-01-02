@@ -31,7 +31,7 @@
       @authenticated="onAuthenticated"
     />
 
-    <div class="container-app py-4 max-w-2xl">
+    <div class="container-app py-4 pb-24 max-w-2xl">
       <!-- Step 1: Category -->
       <div v-if="currentStep === 1" class="space-y-4">
         <div class="text-center mb-6">
@@ -453,11 +453,5 @@ onMounted(() => {
 <style scoped>
 .safe-area-bottom {
   padding-bottom: max(env(safe-area-inset-bottom, 0), 16px);
-}
-
-@media (max-width: 640px) {
-  .safe-area-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0), 80px);
-  }
 }
 </style>

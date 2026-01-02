@@ -412,22 +412,36 @@ const fetchListings = async (append = false) => {
   loading.value = true
 
   try {
-    const params = { ...filters, page: append ? currentPage.value + 1 : 1 }
-    Object.keys(params).forEach(key => { if (params[key] === '' || params[key] === null) delete params[key] })
-
-    const response = await listingsStore.fetchListings(params, append)
-
-    if (append) {
-      listings.value = [...listings.value, ...response.data]
-    } else {
-      listings.value = response.data
+    const params = {
+      page: append ? currentPage.value + 1 : 1,
+      sort: filters.sort,
     }
 
-    total.value = response.meta.total
-    currentPage.value = response.meta.current_page
-    lastPage.value = response.meta.last_page
+    // Only add non-empty filter values
+    if (filters.q) params.q = filters.q
+    if (filters.category) params.category = filters.category
+    if (filters.city) params.city = filters.city
+    if (filters.min_price) params.min_price = filters.min_price
+    if (filters.max_price) params.max_price = filters.max_price
+    if (filters.condition) params.condition = filters.condition
 
-    router.replace({ query: params })
+    const response = await api.get('/listings', { params })
+
+    if (append) {
+      listings.value = [...listings.value, ...response.data.data]
+    } else {
+      listings.value = response.data.data
+    }
+
+    total.value = response.data.meta.total
+    currentPage.value = response.data.meta.current_page
+    lastPage.value = response.data.meta.last_page
+
+    // Update URL with current filters
+    const queryParams = { ...params }
+    delete queryParams.page
+    if (params.page > 1) queryParams.page = params.page
+    router.replace({ query: queryParams })
   } catch (error) {
     toast.error('Failed to fetch listings')
   } finally {
@@ -489,12 +503,18 @@ onMounted(() => {
   fetchListings()
 })
 
-watch(() => route.query.q, (newQ) => {
-  if (newQ !== filters.q) {
-    filters.q = newQ || ''
-    fetchListings()
-  }
-})
+// Watch for route query changes
+watch(() => route.query, (newQuery) => {
+  let changed = false
+  if (newQuery.q !== filters.q) { filters.q = newQuery.q || ''; changed = true }
+  if (newQuery.category !== filters.category) { filters.category = newQuery.category || ''; changed = true }
+  if (newQuery.city !== filters.city) { filters.city = newQuery.city || ''; changed = true }
+  if (newQuery.min_price !== filters.min_price) { filters.min_price = newQuery.min_price || ''; changed = true }
+  if (newQuery.max_price !== filters.max_price) { filters.max_price = newQuery.max_price || ''; changed = true }
+  if (newQuery.condition !== filters.condition) { filters.condition = newQuery.condition || ''; changed = true }
+  if (newQuery.sort !== filters.sort && newQuery.sort) { filters.sort = newQuery.sort; changed = true }
+  if (changed) fetchListings()
+}, { deep: true })
 </script>
 
 <style scoped>

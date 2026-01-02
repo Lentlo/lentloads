@@ -1,7 +1,7 @@
 <template>
-  <div class="h-screen flex flex-col bg-gray-100">
+  <div class="fixed inset-0 flex flex-col bg-gray-100">
     <!-- Chat Header -->
-    <header class="bg-white border-b shadow-sm safe-area-top">
+    <header class="bg-white border-b shadow-sm safe-area-top flex-shrink-0">
       <div class="flex items-center gap-3 px-4 py-3">
         <button @click="$router.push('/messages')" class="p-2 -ml-2 hover:bg-gray-100 rounded-full">
           <ArrowLeftIcon class="w-5 h-5 text-gray-600" />
@@ -178,7 +178,7 @@
     </div>
 
     <!-- Input Area - Fixed at bottom -->
-    <div class="bg-white border-t px-3 py-3 safe-area-bottom">
+    <div class="bg-white border-t px-3 py-3 safe-area-bottom flex-shrink-0">
       <form @submit.prevent="sendMessage" class="flex items-end gap-2">
         <!-- Make Offer button -->
         <button

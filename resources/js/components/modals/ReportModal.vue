@@ -3,7 +3,7 @@
   <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
     <div class="absolute inset-0 bg-black/50" @click="$emit('close')"></div>
 
-    <div class="relative bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up">
+    <div class="relative bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-2xl flex flex-col animate-slide-up" style="max-height: calc(100vh - 60px); max-height: calc(100dvh - 60px);">
       <!-- Header - Fixed -->
       <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
         <h3 class="text-lg font-semibold text-gray-900">
@@ -15,7 +15,7 @@
       </div>
 
       <!-- Content - Scrollable -->
-      <div class="flex-1 overflow-y-auto p-4">
+      <div class="flex-1 overflow-y-auto p-4 min-h-0">
         <p class="text-sm text-gray-500 mb-4">
           Please select a reason for reporting this {{ type === 'listing' ? 'listing' : 'user' }}.
         </p>
