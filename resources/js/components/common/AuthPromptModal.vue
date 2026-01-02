@@ -1,10 +1,10 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+  <div v-if="isOpen" class="auth-modal-overlay">
     <!-- Backdrop -->
-    <div class="absolute inset-0 bg-black/50" @click="$emit('close')"></div>
+    <div class="auth-modal-backdrop" @click="$emit('close')"></div>
 
     <!-- Modal -->
-    <div class="relative bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl shadow-xl p-6 z-10 max-h-[90vh] overflow-y-auto safe-area-bottom">
+    <div class="auth-modal-content">
       <!-- Close Button -->
       <button
         @click="$emit('close')"
@@ -356,13 +356,46 @@ const register = async () => {
 </script>
 
 <style scoped>
-.safe-area-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom, 0), 16px);
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
-@media (max-width: 640px) {
-  .safe-area-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0), 24px);
+@media (min-width: 640px) {
+  .auth-modal-overlay {
+    align-items: center;
+    padding: 1rem;
+  }
+}
+
+.auth-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.auth-modal-content {
+  position: relative;
+  background: white;
+  width: 100%;
+  max-width: 28rem;
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  z-index: 10;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-bottom: max(env(safe-area-inset-bottom, 0), 24px);
+}
+
+@media (min-width: 640px) {
+  .auth-modal-content {
+    border-radius: 1rem;
+    padding-bottom: 1.5rem;
   }
 }
 </style>
