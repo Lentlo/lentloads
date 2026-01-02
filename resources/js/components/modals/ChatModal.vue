@@ -76,7 +76,7 @@
       </div>
 
       <!-- Actions -->
-      <div class="flex gap-3 p-4 border-t bg-gray-50 rounded-b-xl">
+      <div class="flex gap-3 p-4 border-t bg-gray-50 sm:rounded-b-xl safe-area-bottom">
         <button @click="$emit('close')" class="btn-secondary flex-1">
           Cancel
         </button>
@@ -183,5 +183,15 @@ const sendMessage = async () => {
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0), 16px);
+}
+
+@media (max-width: 640px) {
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0), 80px);
+  }
 }
 </style>

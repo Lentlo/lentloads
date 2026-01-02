@@ -1,10 +1,10 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
     <!-- Backdrop -->
     <div class="absolute inset-0 bg-black/50" @click="$emit('close')"></div>
 
     <!-- Modal -->
-    <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 z-10">
+    <div class="relative bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl shadow-xl p-6 z-10 max-h-[90vh] overflow-y-auto safe-area-bottom">
       <!-- Close Button -->
       <button
         @click="$emit('close')"
@@ -329,3 +329,15 @@ const register = async () => {
   }
 }
 </script>
+
+<style scoped>
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0), 16px);
+}
+
+@media (max-width: 640px) {
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0), 24px);
+  }
+}
+</style>

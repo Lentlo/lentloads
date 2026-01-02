@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="min-h-screen flex flex-col">
-    <!-- Header -->
-    <AppHeader v-if="!isAdminRoute" />
+    <!-- Header - hide on conversation page for mobile chat experience -->
+    <AppHeader v-if="!isAdminRoute && !(isConversationPage && isMobile)" />
     <AdminHeader v-else-if="isAuthenticated && isAdmin" />
 
     <!-- Main Content -->
@@ -13,11 +13,11 @@
       </router-view>
     </main>
 
-    <!-- Footer -->
-    <AppFooter v-if="!isAdminRoute" />
+    <!-- Footer - hide on conversation page -->
+    <AppFooter v-if="!isAdminRoute && !isConversationPage" />
 
-    <!-- Mobile Bottom Navigation -->
-    <MobileNav v-if="!isAdminRoute && isMobile" />
+    <!-- Mobile Bottom Navigation - hide on conversation page for chat experience -->
+    <MobileNav v-if="!isAdminRoute && isMobile && !isConversationPage" />
 
     <!-- PWA Install Prompt -->
     <PWAInstallPrompt v-if="showInstallPrompt" @dismiss="showInstallPrompt = false" />
@@ -50,6 +50,7 @@ const isMobile = ref(false)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isAdmin = computed(() => authStore.isAdmin)
 const isAdminRoute = computed(() => route.path.startsWith('/admin'))
+const isConversationPage = computed(() => route.name === 'conversation')
 const isLoading = computed(() => appStore.isLoading)
 
 // Check mobile

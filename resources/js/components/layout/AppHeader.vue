@@ -202,9 +202,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 import {
   PlusIcon,
   BellIcon,
@@ -229,6 +230,17 @@ const unreadCount = ref(0)
 const unreadMessages = ref(0)
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+// Fetch unread message count
+const fetchUnreadMessages = async () => {
+  if (!isAuthenticated.value) return
+  try {
+    const response = await api.get('/conversations/unread-count')
+    unreadMessages.value = response.data.data?.count || 0
+  } catch (e) {
+    // Silently fail
+  }
+}
 const isAdmin = computed(() => authStore.isAdmin)
 const user = computed(() => authStore.user)
 
@@ -250,11 +262,31 @@ const closeMenu = (e) => {
   }
 }
 
+let messageInterval = null
+
 onMounted(() => {
   document.addEventListener('click', closeMenu)
+
+  // Fetch unread messages on mount and periodically
+  if (isAuthenticated.value) {
+    fetchUnreadMessages()
+    messageInterval = setInterval(fetchUnreadMessages, 30000) // Every 30 seconds
+  }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', closeMenu)
+  if (messageInterval) clearInterval(messageInterval)
+})
+
+// Watch for auth changes
+watch(isAuthenticated, (newVal) => {
+  if (newVal) {
+    fetchUnreadMessages()
+    messageInterval = setInterval(fetchUnreadMessages, 30000)
+  } else {
+    unreadMessages.value = 0
+    if (messageInterval) clearInterval(messageInterval)
+  }
 })
 </script>
