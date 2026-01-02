@@ -79,6 +79,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/search-cities', [LocationController::class, 'searchCities']);
         Route::get('/cities-with-listings', [LocationController::class, 'citiesWithListings']);
         Route::post('/detect', [LocationController::class, 'detectLocation']);
+        Route::get('/detect-by-ip', [LocationController::class, 'detectLocationByIp']);
     });
 
     // Pages & Content

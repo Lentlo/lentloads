@@ -155,6 +155,9 @@
           placeholder="Search..."
           @keyup.enter="handleSearch"
         />
+        <button v-if="searchQuery" @click="clearSearch" class="mobile-clear-btn">
+          <XMarkIcon class="w-5 h-5" />
+        </button>
       </div>
     </div>
   </header>
@@ -162,7 +165,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import {
@@ -181,6 +184,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const showUserMenu = ref(false)
@@ -218,6 +222,12 @@ const handleSearch = () => {
 const clearSearch = () => {
   searchQuery.value = ''
   suggestions.value = []
+  // If on search page, clear the query param
+  if (route.path === '/search' && route.query.q) {
+    const newQuery = { ...route.query }
+    delete newQuery.q
+    router.replace({ query: newQuery })
+  }
 }
 
 const handleSearchInput = () => {
@@ -290,6 +300,13 @@ watch(isAuthenticated, (val) => {
     if (countInterval) clearInterval(countInterval)
   }
 })
+
+// Sync search query with URL
+watch(() => route.query.q, (newQ) => {
+  if (route.path === '/search') {
+    searchQuery.value = newQ || ''
+  }
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -739,5 +756,15 @@ watch(isAuthenticated, (val) => {
 
 .mobile-search-inner input::placeholder {
   color: #9ca3af;
+}
+
+.mobile-clear-btn {
+  padding: 4px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.mobile-clear-btn:hover {
+  color: #6b7280;
 }
 </style>

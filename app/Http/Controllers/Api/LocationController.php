@@ -127,4 +127,69 @@ class LocationController extends Controller
 
         return $this->errorResponse('Location not found', 404);
     }
+
+    /**
+     * Detect location based on user's IP address
+     */
+    public function detectLocationByIp(Request $request)
+    {
+        try {
+            $ip = $request->ip();
+
+            // Don't use local IPs
+            if (in_array($ip, ['127.0.0.1', '::1']) || str_starts_with($ip, '192.168.') || str_starts_with($ip, '10.')) {
+                // Use a fallback for local development
+                return $this->successResponse([
+                    'city' => 'Chennai',
+                    'state' => 'Tamil Nadu',
+                    'country' => 'India',
+                    'latitude' => 13.0827,
+                    'longitude' => 80.2707,
+                    'source' => 'fallback',
+                ]);
+            }
+
+            // Use ip-api.com (free, no API key needed, 45 requests/min limit)
+            $response = @file_get_contents("http://ip-api.com/json/{$ip}?fields=status,city,regionName,country,lat,lon");
+
+            if ($response) {
+                $data = json_decode($response, true);
+
+                if ($data && $data['status'] === 'success') {
+                    // Try to find matching city in our database
+                    $city = City::where('name', 'like', $data['city'] . '%')
+                        ->with('state:id,name')
+                        ->first();
+
+                    return $this->successResponse([
+                        'city' => $city ? $city->name : $data['city'],
+                        'state' => $city ? $city->state->name : $data['regionName'],
+                        'country' => $data['country'],
+                        'latitude' => $city ? $city->latitude : $data['lat'],
+                        'longitude' => $city ? $city->longitude : $data['lon'],
+                        'source' => 'ip',
+                    ]);
+                }
+            }
+
+            // Fallback to default location (India center)
+            return $this->successResponse([
+                'city' => null,
+                'state' => null,
+                'country' => 'India',
+                'latitude' => 20.5937,
+                'longitude' => 78.9629,
+                'source' => 'default',
+            ]);
+        } catch (\Exception $e) {
+            return $this->successResponse([
+                'city' => null,
+                'state' => null,
+                'country' => 'India',
+                'latitude' => 20.5937,
+                'longitude' => 78.9629,
+                'source' => 'error',
+            ]);
+        }
+    }
 }

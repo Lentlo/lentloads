@@ -53,7 +53,8 @@
           <MapPinIcon class="w-3.5 h-3.5" />
           <span>{{ shortLocation }}</span>
         </span>
-        <span class="time">{{ formatDate(listing.published_at || listing.created_at) }}</span>
+        <span v-if="formattedDistance" class="distance">{{ formattedDistance }}</span>
+        <span v-else class="time">{{ formatDate(listing.published_at || listing.created_at) }}</span>
       </div>
     </div>
   </router-link>
@@ -118,6 +119,23 @@ const shortLocation = computed(() => {
   // Get just the city name (first part before comma)
   const city = loc.split(',')[0].trim()
   return city.length > 15 ? city.substring(0, 15) + '...' : city
+})
+
+// Format distance nicely
+const formattedDistance = computed(() => {
+  const distance = props.listing.distance
+  if (distance === undefined || distance === null) return ''
+
+  if (distance < 1) {
+    // Less than 1 km - show in meters
+    return `${Math.round(distance * 1000)}m away`
+  } else if (distance < 10) {
+    // Less than 10 km - show with decimal
+    return `${distance.toFixed(1)} km`
+  } else {
+    // 10 km or more - show rounded
+    return `${Math.round(distance)} km`
+  }
 })
 
 const toggleFavorite = async () => {
@@ -291,9 +309,15 @@ const handleImageError = (e) => {
   text-overflow: ellipsis;
 }
 
-.time {
+.time,
+.distance {
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.distance {
+  color: #7c3aed;
+  font-weight: 500;
 }
 
 /* Mobile optimizations */

@@ -95,19 +95,16 @@ class ListingController extends Controller
         if ($hasLocation) {
             $lat = $request->latitude;
             $lng = $request->longitude;
-            $radius = $request->input('radius', 100); // Default 100km radius
 
-            // Add distance calculation using Haversine formula
-            $haversine = "(6371 * acos(cos(radians($lat))
+            // Add distance calculation using Haversine formula (returns km)
+            $haversine = "(6371 * acos(LEAST(1.0, cos(radians($lat))
                          * cos(radians(latitude))
                          * cos(radians(longitude) - radians($lng))
                          + sin(radians($lat))
-                         * sin(radians(latitude))))";
+                         * sin(radians(latitude)))))";
 
-            $query->selectRaw("listings.*, {$haversine} AS distance")
-                ->whereNotNull('latitude')
-                ->whereNotNull('longitude')
-                ->havingRaw("distance < ?", [$radius]);
+            // Calculate distance for all listings, don't filter by radius
+            $query->selectRaw("listings.*, {$haversine} AS distance");
         }
 
         // Sorting - default to nearest when location is provided

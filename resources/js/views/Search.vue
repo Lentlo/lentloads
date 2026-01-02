@@ -19,6 +19,17 @@
             </span>
           </button>
 
+          <!-- Near Me Button -->
+          <button
+            @click="handleNearMeClick"
+            class="flex items-center gap-1.5 px-4 py-2.5 rounded-full border shadow-sm flex-shrink-0 text-sm font-medium transition"
+            :class="locationActive ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 hover:bg-gray-50'"
+          >
+            <MapPinIcon class="w-4 h-4" />
+            <span>{{ locationActive ? 'Near Me' : 'Near Me' }}</span>
+            <span v-if="locationLoading" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          </button>
+
           <!-- Sort -->
           <div class="relative flex-shrink-0">
             <select
@@ -26,8 +37,8 @@
               @change="fetchListings"
               class="appearance-none px-4 py-2.5 pr-8 bg-white rounded-full border shadow-sm text-sm font-medium"
             >
-              <option value="nearest">Nearest</option>
               <option value="newest">Newest</option>
+              <option v-if="locationActive" value="nearest">Nearest</option>
               <option value="price_low">Price: Low</option>
               <option value="price_high">Price: High</option>
             </select>
@@ -35,6 +46,13 @@
           </div>
 
           <!-- Active Filter Tags -->
+          <span
+            v-if="filters.q"
+            class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
+          >
+            "{{ filters.q }}"
+            <button @click="clearSearchQuery"><XMarkIcon class="w-4 h-4" /></button>
+          </span>
           <span
             v-if="filters.category"
             class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
@@ -141,9 +159,20 @@
             </div>
 
             <div class="hidden lg:flex items-center gap-3">
+              <!-- Near Me Button (Desktop) -->
+              <button
+                @click="handleNearMeClick"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition"
+                :class="locationActive ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 hover:bg-gray-50'"
+              >
+                <MapPinIcon class="w-4 h-4" />
+                <span>Near Me</span>
+                <span v-if="locationLoading" class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              </button>
+
               <select v-model="filters.sort" @change="fetchListings" class="input w-auto text-sm">
-                <option value="nearest">Nearest First</option>
                 <option value="newest">Newest First</option>
+                <option v-if="locationActive" value="nearest">Nearest First</option>
                 <option value="price_low">Price: Low to High</option>
                 <option value="price_high">Price: High to Low</option>
               </select>
@@ -307,6 +336,44 @@
         </div>
       </div>
     </div>
+
+    <!-- Location Permission Modal -->
+    <div v-if="showLocationModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showLocationModal = false"></div>
+      <div class="relative bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-2xl p-6 safe-area-bottom animate-slide-up">
+        <div class="text-center mb-4">
+          <div class="w-16 h-16 mx-auto mb-4 bg-primary-100 rounded-full flex items-center justify-center">
+            <MapPinIcon class="w-8 h-8 text-primary-600" />
+          </div>
+          <h3 class="text-lg font-semibold mb-2">Enable Location</h3>
+          <p class="text-sm text-gray-500">
+            To show listings near you, we need access to your location. This helps you find the best deals nearby.
+          </p>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-3 mb-4">
+          <ul class="text-sm text-gray-600 space-y-2">
+            <li class="flex items-start gap-2">
+              <CheckCircleIcon class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+              <span>See distance to each listing</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <CheckCircleIcon class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+              <span>Sort by nearest first</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <CheckCircleIcon class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+              <span>Find deals in your area</span>
+            </li>
+          </ul>
+        </div>
+        <div class="flex gap-3">
+          <button @click="showLocationModal = false" class="btn-secondary flex-1">Not Now</button>
+          <button @click="requestLocationPermission" class="btn-primary flex-1">
+            Allow Location
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -325,6 +392,8 @@ import {
   XMarkIcon,
   ChevronDownIcon,
   BookmarkIcon,
+  MapPinIcon,
+  CheckCircleIcon,
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -342,6 +411,9 @@ const showFilters = ref(false)
 const showSaveSearchModal = ref(false)
 const saveSearchName = ref('')
 const savingSearch = ref(false)
+const showLocationModal = ref(false)
+const locationLoading = ref(false)
+const locationActive = ref(false)
 
 const filters = reactive({
   q: '',
@@ -350,7 +422,7 @@ const filters = reactive({
   min_price: '',
   max_price: '',
   condition: '',
-  sort: 'nearest', // Default to nearest when location is available
+  sort: 'newest', // Default to newest, switch to nearest when location enabled
   latitude: null,
   longitude: null,
 })
@@ -406,6 +478,11 @@ const clearFilter = (key) => {
 const clearPriceFilter = () => {
   filters.min_price = ''
   filters.max_price = ''
+  fetchListings()
+}
+
+const clearSearchQuery = () => {
+  filters.q = ''
   fetchListings()
 }
 
@@ -469,8 +546,7 @@ const resetFilters = () => {
   filters.min_price = ''
   filters.max_price = ''
   filters.condition = ''
-  // Keep nearest sort if we have location, otherwise use newest
-  filters.sort = (filters.latitude && filters.longitude) ? 'nearest' : 'newest'
+  // Keep sort and location as they are
   showFilters.value = false
   fetchListings()
 }
@@ -499,40 +575,88 @@ const saveSearch = async () => {
   }
 }
 
-// Get user's location for nearest sorting
-const getUserLocation = () => {
-  // First check if we have saved location in app store
-  if (appStore.currentLocation?.latitude && appStore.currentLocation?.longitude) {
-    filters.latitude = appStore.currentLocation.latitude
-    filters.longitude = appStore.currentLocation.longitude
+// Handle Near Me button click
+const handleNearMeClick = () => {
+  if (locationActive.value) {
+    // Toggle off - clear location and switch to newest
+    locationActive.value = false
+    filters.latitude = null
+    filters.longitude = null
+    filters.sort = 'newest'
+    fetchListings()
     return
   }
 
-  // Try to get current location from browser
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        filters.latitude = position.coords.latitude
-        filters.longitude = position.coords.longitude
-        // Refetch listings with location if we're on default sort
-        if (filters.sort === 'nearest' && listings.value.length > 0) {
-          fetchListings()
-        }
-      },
-      (error) => {
-        console.log('Geolocation not available:', error.message)
-        // Fall back to newest sort if location not available
-        if (filters.sort === 'nearest') {
-          filters.sort = 'newest'
-        }
-      },
-      { timeout: 5000, maximumAge: 300000 } // 5s timeout, cache for 5 min
-    )
-  } else {
-    // Geolocation not supported, fall back to newest
-    if (filters.sort === 'nearest') {
-      filters.sort = 'newest'
+  // Check if we already have permission (stored location)
+  if (appStore.currentLocation?.latitude && appStore.currentLocation?.longitude) {
+    // Already have location, just activate
+    filters.latitude = appStore.currentLocation.latitude
+    filters.longitude = appStore.currentLocation.longitude
+    filters.sort = 'nearest'
+    locationActive.value = true
+    fetchListings()
+    return
+  }
+
+  // Show educational popup before requesting permission
+  showLocationModal.value = true
+}
+
+// Request location permission after user agrees
+const requestLocationPermission = () => {
+  showLocationModal.value = false
+  locationLoading.value = true
+
+  if (!navigator.geolocation) {
+    toast.error('Geolocation is not supported by your browser')
+    locationLoading.value = false
+    return
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      filters.latitude = position.coords.latitude
+      filters.longitude = position.coords.longitude
+      filters.sort = 'nearest'
+      locationActive.value = true
+      locationLoading.value = false
+
+      // Save to app store for reuse
+      appStore.setLocation({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      })
+
+      fetchListings()
+      toast.success('Location enabled! Showing nearest listings.')
+    },
+    (error) => {
+      locationLoading.value = false
+      if (error.code === error.PERMISSION_DENIED) {
+        toast.error('Location access denied. Please enable in browser settings.')
+      } else {
+        toast.error('Could not get your location. Please try again.')
+      }
+    },
+    { timeout: 10000, maximumAge: 300000 } // 10s timeout, cache for 5 min
+  )
+}
+
+// Get approximate location from IP (used as fallback on page load)
+const getLocationFromIP = async () => {
+  try {
+    const response = await api.get('/location/detect-by-ip')
+    if (response.data.data?.latitude && response.data.data?.longitude) {
+      // Store IP-based location but don't activate location filter automatically
+      appStore.setLocation({
+        latitude: response.data.data.latitude,
+        longitude: response.data.data.longitude,
+        city: response.data.data.city,
+        source: 'ip'
+      })
     }
+  } catch (error) {
+    console.log('IP location detection failed:', error)
   }
 }
 
@@ -546,8 +670,8 @@ onMounted(() => {
   if (query.condition) filters.condition = query.condition
   if (query.sort) filters.sort = query.sort
 
-  // Get user location for nearest sorting
-  getUserLocation()
+  // Get IP-based location in background (doesn't require permission)
+  getLocationFromIP()
 
   fetchListings()
 })
