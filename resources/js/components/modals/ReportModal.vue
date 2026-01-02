@@ -1,21 +1,20 @@
 <template>
-  <!-- Mobile: full screen sheet, Desktop: centered modal -->
-  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-    <div class="absolute inset-0 bg-black/50" @click="$emit('close')"></div>
+  <div class="report-modal">
+    <div class="report-backdrop" @click="$emit('close')"></div>
 
-    <div class="relative bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-2xl flex flex-col animate-slide-up" style="max-height: calc(100vh - 60px); max-height: calc(100dvh - 60px);">
-      <!-- Header - Fixed -->
-      <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
+    <div class="report-sheet">
+      <!-- Header -->
+      <div class="report-header">
         <h3 class="text-lg font-semibold text-gray-900">
           Report {{ type === 'listing' ? 'Listing' : 'User' }}
         </h3>
-        <button @click="$emit('close')" class="p-2 hover:bg-gray-100 rounded-full">
+        <button @click="$emit('close')" class="p-2 hover:bg-gray-100 rounded-full -mr-2">
           <XMarkIcon class="w-5 h-5 text-gray-500" />
         </button>
       </div>
 
       <!-- Content - Scrollable -->
-      <div class="flex-1 overflow-y-auto p-4 min-h-0">
+      <div class="report-content">
         <p class="text-sm text-gray-500 mb-4">
           Please select a reason for reporting this {{ type === 'listing' ? 'listing' : 'user' }}.
         </p>
@@ -32,9 +31,9 @@
               type="radio"
               :value="reason.value"
               v-model="selectedReason"
-              class="mt-1 text-primary-600"
+              class="mt-0.5 text-primary-600"
             />
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
               <p class="font-medium text-gray-900 text-sm">{{ reason.label }}</p>
               <p class="text-xs text-gray-500">{{ reason.description }}</p>
             </div>
@@ -53,8 +52,8 @@
         </div>
       </div>
 
-      <!-- Actions - Fixed at bottom -->
-      <div class="flex gap-3 p-4 border-t bg-gray-50 sm:rounded-b-xl flex-shrink-0 safe-area-bottom">
+      <!-- Actions - Always visible -->
+      <div class="report-actions">
         <button @click="$emit('close')" class="btn-secondary flex-1">
           Cancel
         </button>
@@ -149,28 +148,84 @@ const submitReport = async () => {
 </script>
 
 <style scoped>
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
+.report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .report-modal {
+    align-items: center;
   }
 }
 
-.animate-slide-up {
+.report-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.report-sheet {
+  position: relative;
+  background: white;
+  width: 100%;
+  max-width: 28rem;
+  border-radius: 1rem 1rem 0 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  max-height: 80dvh;
   animation: slide-up 0.3s ease-out;
 }
 
-.safe-area-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom, 0), 16px);
+@media (min-width: 640px) {
+  .report-sheet {
+    border-radius: 1rem;
+    max-height: 85vh;
+    max-height: 85dvh;
+  }
 }
 
-@media (max-width: 640px) {
-  .safe-area-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0), 20px);
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.report-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+}
+
+.report-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  flex-shrink: 0;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+
+@media (min-width: 640px) {
+  .report-actions {
+    border-radius: 0 0 1rem 1rem;
+    padding-bottom: 1rem;
   }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 </style>

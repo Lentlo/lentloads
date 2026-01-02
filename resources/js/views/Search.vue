@@ -182,25 +182,25 @@
     </div>
 
     <!-- Mobile Filters Modal -->
-    <div v-if="showFilters" class="fixed inset-0 z-50 flex items-end justify-center lg:hidden">
-      <div class="absolute inset-0 bg-black/50" @click="showFilters = false"></div>
+    <div v-if="showFilters" class="filter-modal lg:hidden">
+      <div class="filter-backdrop" @click="showFilters = false"></div>
 
-      <div class="relative bg-white w-full rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up">
+      <div class="filter-sheet">
         <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
+        <div class="filter-header">
           <h3 class="text-lg font-semibold">Filters</h3>
           <div class="flex items-center gap-2">
-            <button @click="resetFilters" class="text-sm text-primary-600">Clear</button>
+            <button @click="resetFilters" class="text-sm text-primary-600 font-medium">Clear all</button>
             <button @click="showFilters = false" class="p-2 hover:bg-gray-100 rounded-full">
               <XMarkIcon class="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <!-- Filter Options -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-6">
+        <!-- Filter Options - Scrollable -->
+        <div class="filter-content">
           <!-- Category -->
-          <div>
+          <div class="mb-6">
             <h4 class="font-medium text-gray-900 mb-3">Category</h4>
             <div class="flex flex-wrap gap-2">
               <button
@@ -223,13 +223,13 @@
           </div>
 
           <!-- Location -->
-          <div>
+          <div class="mb-6">
             <h4 class="font-medium text-gray-900 mb-3">City</h4>
             <input v-model="filters.city" type="text" placeholder="Enter city name" class="input" />
           </div>
 
           <!-- Price Range -->
-          <div>
+          <div class="mb-6">
             <h4 class="font-medium text-gray-900 mb-3">Price Range</h4>
             <div class="flex flex-wrap gap-2 mb-3">
               <button
@@ -237,7 +237,7 @@
                 :key="range.label"
                 @click="setPrice(range)"
                 class="px-3 py-2 text-sm border rounded-full transition"
-                :class="filters.min_price == range.min && filters.max_price == range.max ? 'border-primary-500 bg-primary-50 text-primary-700' : 'hover:bg-gray-50'"
+                :class="String(filters.min_price) === String(range.min) && String(filters.max_price) === String(range.max) ? 'border-primary-500 bg-primary-50 text-primary-700' : 'hover:bg-gray-50'"
               >
                 {{ range.label }}
               </button>
@@ -250,7 +250,7 @@
           </div>
 
           <!-- Condition -->
-          <div>
+          <div class="mb-6">
             <h4 class="font-medium text-gray-900 mb-3">Condition</h4>
             <div class="flex flex-wrap gap-2">
               <button
@@ -266,21 +266,18 @@
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="p-4 border-t bg-gray-50 flex-shrink-0 safe-area-bottom">
-          <div class="flex gap-3">
-            <button
-              v-if="isAuthenticated && hasActiveFilters"
-              @click="showSaveSearchModal = true; showFilters = false"
-              class="btn-secondary flex-1"
-            >
-              <BookmarkIcon class="w-4 h-4 mr-1" />
-              Save
-            </button>
-            <button @click="applyFilters" class="btn-primary flex-1">
-              Show {{ total }} Results
-            </button>
-          </div>
+        <!-- Actions - Always visible at bottom -->
+        <div class="filter-actions">
+          <button
+            v-if="isAuthenticated && hasActiveFilters"
+            @click="showSaveSearchModal = true; showFilters = false"
+            class="btn-secondary"
+          >
+            <BookmarkIcon class="w-4 h-4" />
+          </button>
+          <button @click="applyFilters" class="btn-primary flex-1">
+            Show Results
+          </button>
         </div>
       </div>
     </div>
@@ -518,10 +515,66 @@ watch(() => route.query, (newQuery) => {
 </script>
 
 <style scoped>
+/* Filter Modal Styles */
+.filter-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.filter-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.filter-sheet {
+  position: relative;
+  background: white;
+  width: 100%;
+  border-radius: 1rem 1rem 0 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  max-height: 80dvh;
+  animation: slide-up 0.3s ease-out;
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.filter-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  flex-shrink: 0;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+
 @keyframes slide-up {
   from { transform: translateY(100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
 .animate-slide-up { animation: slide-up 0.3s ease-out; }
 .safe-area-bottom { padding-bottom: max(env(safe-area-inset-bottom, 0), 16px); }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

@@ -1,7 +1,7 @@
 <template>
-  <div class="fixed inset-0 flex flex-col bg-gray-100">
-    <!-- Chat Header -->
-    <header class="bg-white border-b shadow-sm safe-area-top flex-shrink-0">
+  <div class="conversation-container">
+    <!-- Fixed Header -->
+    <header class="conversation-header">
       <div class="flex items-center gap-3 px-4 py-3">
         <button @click="$router.push('/messages')" class="p-2 -ml-2 hover:bg-gray-100 rounded-full">
           <ArrowLeftIcon class="w-5 h-5 text-gray-600" />
@@ -10,9 +10,9 @@
         <div v-if="conversation" class="flex items-center gap-3 flex-1 min-w-0">
           <div class="relative">
             <img
-              :src="otherUser?.avatar_url"
+              :src="otherUser?.avatar_url || '/images/default-avatar.png'"
               :alt="otherUser?.name"
-              class="w-10 h-10 rounded-full object-cover"
+              class="w-10 h-10 rounded-full object-cover bg-gray-200"
             />
             <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
           </div>
@@ -22,7 +22,6 @@
           </div>
         </div>
 
-        <!-- Actions -->
         <div class="flex items-center gap-1">
           <a
             v-if="otherUser?.phone"
@@ -31,20 +30,21 @@
           >
             <PhoneIcon class="w-5 h-5 text-gray-600" />
           </a>
-          <button
-            @click="showOptionsMenu = !showOptionsMenu"
-            class="p-2 hover:bg-gray-100 rounded-full relative"
-          >
-            <EllipsisVerticalIcon class="w-5 h-5 text-gray-600" />
+          <div class="relative">
+            <button
+              @click="showOptionsMenu = !showOptionsMenu"
+              class="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <EllipsisVerticalIcon class="w-5 h-5 text-gray-600" />
+            </button>
 
-            <!-- Options dropdown -->
             <div
               v-if="showOptionsMenu"
               class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border z-50"
             >
               <router-link
                 :to="`/listing/${conversation?.listing?.slug}`"
-                class="block px-4 py-3 text-gray-700 hover:bg-gray-50"
+                class="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-t-xl"
                 @click="showOptionsMenu = false"
               >
                 View Listing
@@ -69,7 +69,7 @@
                 Delete Chat
               </button>
             </div>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -82,28 +82,27 @@
           <img
             :src="conversation.listing.primary_image_url"
             :alt="conversation.listing.title"
-            class="w-14 h-14 rounded-lg object-cover"
+            class="w-12 h-12 rounded-lg object-cover bg-gray-200"
           />
           <div class="flex-1 min-w-0">
             <p class="font-medium text-gray-900 truncate text-sm">{{ conversation.listing.title }}</p>
-            <p class="text-primary-600 font-bold">{{ conversation.listing.formatted_price || '₹' + conversation.listing.price }}</p>
+            <p class="text-primary-600 font-bold text-sm">{{ conversation.listing.formatted_price || '₹' + conversation.listing.price }}</p>
           </div>
-          <ChevronRightIcon class="w-5 h-5 text-gray-400" />
+          <ChevronRightIcon class="w-5 h-5 text-gray-400 flex-shrink-0" />
         </router-link>
       </div>
     </header>
 
+    <!-- Overlay to close menu -->
+    <div v-if="showOptionsMenu" class="fixed inset-0 z-40" @click="showOptionsMenu = false"></div>
+
     <!-- Messages Area -->
-    <div
-      ref="messagesContainer"
-      class="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-    >
+    <div ref="messagesContainer" class="messages-area">
       <div v-if="loading" class="flex justify-center py-8">
         <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
       </div>
 
       <template v-else>
-        <!-- Date separator -->
         <div class="flex justify-center mb-4">
           <span class="px-3 py-1 bg-gray-200 rounded-full text-xs text-gray-600">
             {{ formatDate(messages[0]?.created_at) }}
@@ -113,7 +112,7 @@
         <div
           v-for="message in messages"
           :key="message.id"
-          class="flex"
+          class="flex mb-3"
           :class="message.sender_id === currentUserId ? 'justify-end' : 'justify-start'"
         >
           <div
@@ -122,7 +121,6 @@
               ? 'bg-primary-600 text-white rounded-br-sm'
               : 'bg-white text-gray-900 rounded-bl-sm'"
           >
-            <!-- Offer message -->
             <div v-if="message.type === 'offer'" class="mb-2">
               <div class="flex items-center gap-2 mb-1">
                 <CurrencyRupeeIcon class="w-4 h-4" />
@@ -157,10 +155,8 @@
               </p>
             </div>
 
-            <!-- Text message -->
-            <p class="whitespace-pre-wrap">{{ message.body }}</p>
+            <p class="whitespace-pre-wrap break-words">{{ message.body }}</p>
 
-            <!-- Timestamp -->
             <p
               class="text-[10px] mt-1 flex items-center gap-1"
               :class="message.sender_id === currentUserId ? 'text-primary-200 justify-end' : 'text-gray-400'"
@@ -174,13 +170,16 @@
             </p>
           </div>
         </div>
+
+        <div v-if="messages.length === 0" class="text-center py-8 text-gray-500">
+          <p>No messages yet. Say hello!</p>
+        </div>
       </template>
     </div>
 
-    <!-- Input Area - Fixed at bottom -->
-    <div class="bg-white border-t px-3 py-3 safe-area-bottom flex-shrink-0">
+    <!-- Fixed Input Area -->
+    <div class="conversation-input">
       <form @submit.prevent="sendMessage" class="flex items-end gap-2">
-        <!-- Make Offer button -->
         <button
           type="button"
           @click="showOfferModal = true"
@@ -192,13 +191,15 @@
 
         <div class="flex-1 relative">
           <textarea
+            ref="messageInput"
             v-model="newMessage"
             placeholder="Type a message..."
-            class="w-full px-4 py-3 bg-gray-100 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 max-h-32"
+            class="w-full px-4 py-3 bg-gray-100 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
             rows="1"
             :disabled="sending"
             @input="autoResize"
             @keydown.enter.exact.prevent="sendMessage"
+            style="max-height: 120px;"
           ></textarea>
         </div>
 
@@ -215,14 +216,14 @@
     <!-- Make Offer Modal -->
     <div v-if="showOfferModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div class="absolute inset-0 bg-black/50" @click="showOfferModal = false"></div>
-      <div class="relative bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-xl p-6 safe-area-bottom">
+      <div class="relative bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-2xl p-6 pb-safe">
         <h3 class="text-lg font-semibold mb-4">Make an Offer</h3>
         <div v-if="conversation?.listing" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
           <img
             :src="conversation.listing.primary_image_url"
             class="w-12 h-12 rounded-lg object-cover"
           />
-          <div>
+          <div class="min-w-0 flex-1">
             <p class="font-medium text-sm truncate">{{ conversation.listing.title }}</p>
             <p class="text-primary-600 font-bold">{{ conversation.listing.formatted_price || '₹' + conversation.listing.price }}</p>
           </div>
@@ -255,7 +256,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
@@ -284,6 +285,7 @@ const showOptionsMenu = ref(false)
 const showOfferModal = ref(false)
 const offerAmount = ref('')
 const messagesContainer = ref(null)
+const messageInput = ref(null)
 
 const currentUserId = computed(() => authStore.user?.id)
 const otherUser = computed(() => {
@@ -305,7 +307,13 @@ const formatDate = (date) => {
 const autoResize = (e) => {
   const textarea = e.target
   textarea.style.height = 'auto'
-  textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px'
+  textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px'
+}
+
+const resetInputHeight = () => {
+  if (messageInput.value) {
+    messageInput.value.style.height = 'auto'
+  }
 }
 
 const scrollToBottom = () => {
@@ -336,6 +344,7 @@ const sendMessage = async () => {
   sending.value = true
   const messageText = newMessage.value
   newMessage.value = ''
+  resetInputHeight()
 
   try {
     const response = await api.post(`/conversations/${route.params.uuid}/messages`, {
@@ -406,16 +415,78 @@ const deleteConversation = async () => {
   }
 }
 
+// Handle viewport resize (keyboard open/close on mobile)
+const handleResize = () => {
+  scrollToBottom()
+}
+
 onMounted(() => {
   fetchConversation()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <style scoped>
-.safe-area-top {
+.conversation-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f3f4f6;
+}
+
+.conversation-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
   padding-top: env(safe-area-inset-top, 0);
 }
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.conversation-input {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  flex-shrink: 0;
+}
+
+.pb-safe {
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
+}
+
+/* Ensure the container uses full viewport height including dynamic parts */
+@supports (height: 100dvh) {
+  .conversation-container {
+    height: 100dvh;
+  }
+}
+
+@supports not (height: 100dvh) {
+  .conversation-container {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
 }
 </style>

@@ -236,8 +236,8 @@
     </div>
 
     <!-- Bottom Actions -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t safe-area-bottom">
-      <div class="container-app py-3 flex gap-3">
+    <div class="bottom-actions">
+      <div class="container-app flex gap-3">
         <button
           v-if="currentStep > 1"
           @click="prevStep"
@@ -451,7 +451,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.safe-area-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom, 0), 16px);
+.bottom-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 12px 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  z-index: 40;
 }
 </style>
