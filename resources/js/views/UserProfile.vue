@@ -299,7 +299,13 @@ const fetchUser = async () => {
   loading.value = true
   try {
     const response = await api.get(`/users/${route.params.id}`)
-    user.value = response.data.data
+    const data = response.data.data
+    // Merge user object with additional fields from response
+    user.value = {
+      ...data.user,
+      member_since: data.member_since,
+      response_rate: data.response_rate
+    }
   } catch (error) {
     user.value = null
   } finally {
@@ -747,16 +753,6 @@ onMounted(() => {
 
 .write-review-btn:hover {
   background: rgba(255, 255, 255, 0.3);
-}
-
-@media (max-width: 640px) {
-  .write-review-btn span {
-    display: none;
-  }
-  .write-review-btn {
-    padding: 6px;
-    margin-left: 4px;
-  }
 }
 
 /* Review Modal */
