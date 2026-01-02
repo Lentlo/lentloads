@@ -1,5 +1,18 @@
 # Lentlo Ads - Project Notes for Claude
 
+## Project Info
+- **Domain**: lentloads.com
+- **App Name**: Lentlo Ads (OLX-like classifieds marketplace)
+- **Region**: India
+
+## ⚠️ INCIDENT LOG - Learn From Past Mistakes
+
+### 2025-01-02: Image Data Loss
+**What happened:** All user-uploaded images were permanently deleted
+**Cause:** Used `git clean -fd` during deployment, which deleted untracked `storage/app/public/`
+**Lesson:** NEVER use `git clean` on production - user uploads are not tracked by git
+**Prevention:** Safe deploy commands documented below, backups recommended
+
 ## Important UI Considerations
 
 ### Mobile Bottom Navigation
@@ -188,6 +201,37 @@ If uploads are deleted:
 1. Check Cloudways backups immediately
 2. Restore from most recent backup
 3. If no backup, data is lost permanently
+
+## Staging Environment (Optional)
+
+### When You Need Staging
+- Breaking changes or risky migrations
+- Team of multiple developers
+- High traffic, can't afford downtime
+- Testing payment integrations
+
+### When You DON'T Need Staging (Current State)
+- Small app, few users
+- Solo developer
+- Safe deploy commands in place
+- Backups enabled
+
+### How Staging Works (If You Set It Up Later)
+```
+Production (lentloads.com)      → Real users, real database
+Staging (staging.lentloads.com) → Test data, separate database
+```
+
+**Key points:**
+- Staging has SEPARATE database (not production data)
+- Deploying code does NOT affect production database
+- User data is safe - only CODE is deployed
+- Periodic DB clones can sync structure (anonymize sensitive data)
+
+### Current Recommendation
+1. ✅ Use safe deploy commands (done)
+2. ✅ Enable Cloudways backups (priority)
+3. ⏸️ Add staging later when app grows
 
 ## Mobile Header Design
 
