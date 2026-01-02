@@ -111,9 +111,18 @@ expect eof
 '
 ```
 
-**❌ DANGEROUS - Never use (deletes uploads):**
+**⚠️ USE WITH CAUTION - If you must clean untracked files:**
 ```bash
-# git clean -fd  # NEVER USE - deletes storage/app/public/
+# SAFE - excludes storage directory
+git clean -fd --exclude=storage/
+
+# SAFE - excludes multiple directories
+git clean -fd --exclude=storage/ --exclude=.env
+```
+
+**❌ NEVER USE (deletes uploads):**
+```bash
+# git clean -fd  # WITHOUT --exclude - deletes storage/app/public/
 # git reset --hard  # Avoid unless necessary
 ```
 
