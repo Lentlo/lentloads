@@ -12,8 +12,8 @@ class AdminConversationController extends Controller
     public function index(Request $request)
     {
         $query = Conversation::with([
-            'buyer:id,name,email,avatar_url',
-            'seller:id,name,email,avatar_url',
+            'buyer:id,name,email,avatar',
+            'seller:id,name,email,avatar',
             'listing:id,title,slug',
             'latestMessage',
         ])->withCount('messages');
@@ -50,10 +50,10 @@ class AdminConversationController extends Controller
     public function show($id)
     {
         $conversation = Conversation::with([
-            'buyer:id,name,email,phone,avatar_url',
-            'seller:id,name,email,phone,avatar_url',
+            'buyer:id,name,email,phone,avatar',
+            'seller:id,name,email,phone,avatar',
             'listing:id,title,slug,price',
-            'messages.sender:id,name,avatar_url',
+            'messages.sender:id,name,avatar',
         ])->findOrFail($id);
 
         return $this->successResponse($conversation);
@@ -76,8 +76,8 @@ class AdminConversationController extends Controller
     public function contactViews(Request $request)
     {
         $query = ContactView::with([
-            'viewer:id,name,email,avatar_url',
-            'owner:id,name,email,phone,avatar_url',
+            'viewer:id,name,email,avatar',
+            'owner:id,name,email,phone,avatar',
             'listing:id,title,slug',
         ]);
 

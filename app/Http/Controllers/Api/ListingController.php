@@ -94,7 +94,7 @@ class ListingController extends Controller
     public function show($slugOrId)
     {
         $listing = Listing::with([
-            'user:id,name,avatar,city,rating,total_reviews,created_at,is_verified_seller',
+            'user:id,name,phone,avatar,city,rating,total_reviews,created_at,is_verified_seller',
             'category:id,name,slug,parent_id',
             'category.parent:id,name,slug',
             'images',

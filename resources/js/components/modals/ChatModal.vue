@@ -1,7 +1,8 @@
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <!-- Mobile: full screen from bottom, Desktop: centered modal -->
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
     <div class="absolute inset-0 bg-black/50" @click="$emit('close')"></div>
-    <div class="relative bg-white rounded-xl w-full max-w-md animate-slide-up">
+    <div class="relative bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl animate-slide-up max-h-[90vh] overflow-y-auto">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b">
         <h3 class="text-lg font-semibold text-gray-900">Contact Seller</h3>
@@ -94,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import api from '@/services/api'
 import { toast } from 'vue3-toastify'
 import { useRouter } from 'vue-router'
@@ -105,12 +106,11 @@ const props = defineProps({
   listing: {
     type: Object,
     required: true
-  },
-  sellerId: {
-    type: [Number, String],
-    required: true
   }
 })
+
+// Get seller ID from listing
+const sellerId = computed(() => props.listing?.user?.id || props.listing?.user_id)
 
 const emit = defineEmits(['close', 'sent'])
 
@@ -136,7 +136,7 @@ const sendMessage = async () => {
   try {
     const payload = {
       listing_id: props.listing.id,
-      receiver_id: props.sellerId,
+      receiver_id: sellerId.value,
       message: message.value.trim(),
     }
 
@@ -150,13 +150,15 @@ const sendMessage = async () => {
     emit('sent', response.data.data)
     emit('close')
 
-    // Navigate to the conversation
-    router.push(`/dashboard/messages/${response.data.data.id}`)
+    // Navigate to the conversation using uuid
+    const conversation = response.data.data.conversation
+    router.push(`/messages/${conversation.uuid}`)
   } catch (error) {
     if (error.response?.status === 409) {
       // Conversation already exists
       toast.info('You already have a conversation about this listing')
-      router.push(`/dashboard/messages/${error.response.data.conversation_id}`)
+      const existingUuid = error.response.data.data?.uuid || error.response.data.uuid
+      router.push(`/messages/${existingUuid}`)
       emit('close')
     } else {
       toast.error('Failed to send message')
