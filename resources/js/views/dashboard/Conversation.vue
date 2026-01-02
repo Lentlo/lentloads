@@ -1,261 +1,170 @@
 <template>
   <div class="conversation-page">
+    <!-- Sending Overlay -->
+    <div v-if="sending" class="sending-overlay">
+      <div class="sending-popup">
+        <div class="sending-spinner"></div>
+        <p>Sending...</p>
+      </div>
+    </div>
+
     <!-- Sticky Header -->
     <header class="conversation-header">
-      <div class="flex items-center gap-3 px-4 py-3">
-        <button @click="$router.push('/messages')" class="p-2 -ml-2 hover:bg-gray-100 rounded-full">
-          <ArrowLeftIcon class="w-5 h-5 text-gray-600" />
+      <div class="header-content">
+        <button @click="$router.push('/messages')" class="back-btn">
+          <ArrowLeftIcon class="w-5 h-5" />
         </button>
 
-        <div v-if="conversation" class="flex items-center gap-3 flex-1 min-w-0">
-          <div class="relative">
+        <div v-if="conversation" class="user-info">
+          <div class="avatar-wrapper">
             <img
               :src="otherUser?.avatar_url || '/images/default-avatar.png'"
               :alt="otherUser?.name"
-              class="w-10 h-10 rounded-full object-cover bg-gray-200"
+              class="avatar"
             />
-            <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+            <span class="online-dot"></span>
           </div>
-          <div class="min-w-0 flex-1">
-            <h1 class="font-semibold text-gray-900 truncate">{{ otherUser?.name }}</h1>
-            <p class="text-xs text-green-600">Online</p>
+          <div class="user-details">
+            <h1>{{ otherUser?.name }}</h1>
+            <p>Online</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-1">
-          <a
-            v-if="otherUser?.phone"
-            :href="`tel:${otherUser.phone}`"
-            class="p-2 hover:bg-gray-100 rounded-full"
-          >
-            <PhoneIcon class="w-5 h-5 text-gray-600" />
+        <div class="header-actions">
+          <a v-if="otherUser?.phone" :href="`tel:${otherUser.phone}`" class="action-btn">
+            <PhoneIcon class="w-5 h-5" />
           </a>
-          <div class="relative">
-            <button
-              @click="showOptionsMenu = !showOptionsMenu"
-              class="p-2 hover:bg-gray-100 rounded-full"
-            >
-              <EllipsisVerticalIcon class="w-5 h-5 text-gray-600" />
-            </button>
-
-            <div
-              v-if="showOptionsMenu"
-              class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border z-50"
-            >
-              <router-link
-                :to="`/listing/${conversation?.listing?.slug}`"
-                class="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-t-xl"
-                @click="showOptionsMenu = false"
-              >
-                View Listing
-              </router-link>
-              <router-link
-                :to="`/user/${otherUser?.id}`"
-                class="block px-4 py-3 text-gray-700 hover:bg-gray-50"
-                @click="showOptionsMenu = false"
-              >
-                View Profile
-              </router-link>
-              <button
-                @click="blockUser"
-                class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50"
-              >
-                Block User
-              </button>
-              <button
-                @click="deleteConversation"
-                class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-b-xl"
-              >
-                Delete Chat
-              </button>
-            </div>
-          </div>
+          <button @click="showOptionsMenu = !showOptionsMenu" class="action-btn">
+            <EllipsisVerticalIcon class="w-5 h-5" />
+          </button>
         </div>
       </div>
 
+      <!-- Options Menu -->
+      <div v-if="showOptionsMenu" class="options-menu">
+        <router-link :to="`/listing/${conversation?.listing?.slug}`" @click="showOptionsMenu = false">
+          View Listing
+        </router-link>
+        <router-link :to="`/user/${otherUser?.id}`" @click="showOptionsMenu = false">
+          View Profile
+        </router-link>
+        <button @click="blockUser" class="danger">Block User</button>
+        <button @click="deleteConversation" class="danger">Delete Chat</button>
+      </div>
+
       <!-- Product Card -->
-      <div v-if="conversation?.listing" class="px-4 pb-3">
-        <router-link
-          :to="`/listing/${conversation.listing.slug}`"
-          class="flex items-center gap-3 p-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition"
-        >
-          <img
-            :src="conversation.listing.primary_image_url"
-            :alt="conversation.listing.title"
-            class="w-12 h-12 rounded-lg object-cover bg-gray-200"
-          />
-          <div class="flex-1 min-w-0">
-            <p class="font-medium text-gray-900 truncate text-sm">{{ conversation.listing.title }}</p>
-            <p class="text-primary-600 font-bold text-sm">{{ conversation.listing.formatted_price || '₹' + conversation.listing.price }}</p>
+      <div v-if="conversation?.listing" class="product-card">
+        <router-link :to="`/listing/${conversation.listing.slug}`" class="product-link">
+          <img :src="conversation.listing.primary_image_url" :alt="conversation.listing.title" />
+          <div class="product-info">
+            <p class="product-title">{{ conversation.listing.title }}</p>
+            <p class="product-price">{{ conversation.listing.formatted_price || '₹' + conversation.listing.price }}</p>
           </div>
-          <ChevronRightIcon class="w-5 h-5 text-gray-400 flex-shrink-0" />
+          <ChevronRightIcon class="w-5 h-5 text-gray-400" />
         </router-link>
       </div>
     </header>
 
-    <!-- Overlay to close menu -->
-    <div v-if="showOptionsMenu" class="fixed inset-0 z-40" @click="showOptionsMenu = false"></div>
+    <!-- Menu Overlay -->
+    <div v-if="showOptionsMenu" class="menu-overlay" @click="showOptionsMenu = false"></div>
 
     <!-- Messages Area -->
-    <div ref="messagesContainer" class="messages-area">
-      <div v-if="loading" class="flex justify-center py-8">
-        <div class="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+    <div ref="messagesContainer" class="messages-area" @touchstart="onTouchStart" @touchmove="onTouchMove">
+      <div v-if="loading" class="loading-spinner">
+        <div class="spinner"></div>
       </div>
 
       <template v-else>
-        <div class="flex justify-center mb-4">
-          <span class="px-3 py-1 bg-gray-200 rounded-full text-xs text-gray-600">
-            {{ formatDate(messages[0]?.created_at) }}
-          </span>
+        <div v-if="messages.length > 0" class="date-badge">
+          {{ formatDate(messages[0]?.created_at) }}
         </div>
 
         <div
           v-for="message in messages"
           :key="message.id"
-          class="flex mb-3"
-          :class="message.sender_id === currentUserId ? 'justify-end' : 'justify-start'"
+          class="message-row"
+          :class="message.sender_id === currentUserId ? 'sent' : 'received'"
         >
-          <div
-            class="max-w-[80%] rounded-2xl px-4 py-2 shadow-sm transition-opacity"
-            :class="[
-              message.sender_id === currentUserId
-                ? 'bg-primary-600 text-white rounded-br-sm'
-                : 'bg-white text-gray-900 rounded-bl-sm',
-              String(message.id).startsWith('temp-') ? 'opacity-70' : ''
-            ]"
-          >
-            <div v-if="message.type === 'offer'" class="mb-2">
-              <div class="flex items-center gap-2 mb-1">
+          <div class="message-bubble" :class="{ 'pending': message.pending }">
+            <!-- Offer Message -->
+            <div v-if="message.type === 'offer'" class="offer-content">
+              <div class="offer-header">
                 <CurrencyRupeeIcon class="w-4 h-4" />
-                <span class="text-sm opacity-80">Offer</span>
+                <span>Offer</span>
               </div>
-              <p class="text-2xl font-bold">₹{{ message.offer_amount?.toLocaleString() }}</p>
-              <div
-                v-if="message.offer_status === 'pending' && message.sender_id !== currentUserId"
-                class="flex gap-2 mt-3"
-              >
-                <button
-                  @click="respondToOffer(message.id, 'accept')"
-                  class="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-medium"
-                >
-                  Accept
-                </button>
-                <button
-                  @click="respondToOffer(message.id, 'reject')"
-                  class="flex-1 px-3 py-2 bg-white/20 text-white rounded-lg text-sm font-medium"
-                >
-                  Decline
-                </button>
+              <p class="offer-amount">₹{{ message.offer_amount?.toLocaleString() }}</p>
+              <div v-if="message.offer_status === 'pending' && message.sender_id !== currentUserId" class="offer-actions">
+                <button @click="respondToOffer(message.id, 'accept')" class="accept-btn">Accept</button>
+                <button @click="respondToOffer(message.id, 'reject')" class="decline-btn">Decline</button>
               </div>
-              <p
-                v-else-if="message.offer_status !== 'pending'"
-                class="text-sm mt-2 font-medium"
-                :class="message.sender_id === currentUserId
-                  ? (message.offer_status === 'accepted' ? 'text-green-200' : 'text-red-200')
-                  : (message.offer_status === 'accepted' ? 'text-green-600' : 'text-red-600')"
-              >
+              <p v-else-if="message.offer_status !== 'pending'" class="offer-status" :class="message.offer_status">
                 {{ message.offer_status === 'accepted' ? 'Accepted' : 'Declined' }}
               </p>
             </div>
 
-            <p class="whitespace-pre-wrap break-words">{{ message.body }}</p>
+            <p class="message-text">{{ message.body }}</p>
 
-            <p
-              class="text-[10px] mt-1 flex items-center gap-1"
-              :class="message.sender_id === currentUserId ? 'text-primary-200 justify-end' : 'text-gray-400'"
-            >
-              <template v-if="String(message.id).startsWith('temp-')">
-                Sending...
-              </template>
+            <p class="message-time">
+              <template v-if="message.pending">Sending...</template>
               <template v-else>
                 {{ formatTime(message.created_at) }}
-                <span v-if="message.sender_id === currentUserId" class="flex items-center">
-                  <CheckIcon v-if="message.is_read" class="w-3 h-3" />
+                <span v-if="message.sender_id === currentUserId" class="read-status">
+                  <CheckIcon class="w-3 h-3" />
                   <CheckIcon v-if="message.is_read" class="w-3 h-3 -ml-1" />
-                  <CheckIcon v-else class="w-3 h-3" />
                 </span>
               </template>
             </p>
           </div>
         </div>
 
-        <div v-if="messages.length === 0" class="text-center py-8 text-gray-500">
+        <div v-if="messages.length === 0" class="empty-state">
           <p>No messages yet. Say hello!</p>
         </div>
       </template>
     </div>
 
     <!-- Fixed Input Area -->
-    <div class="conversation-input">
-      <form @submit.prevent="sendMessage" class="flex items-center gap-2">
-        <button
-          type="button"
-          @click="showOfferModal = true"
-          class="w-11 h-11 text-primary-600 hover:bg-primary-50 rounded-full flex-shrink-0 flex items-center justify-center"
-          title="Make an offer"
-        >
-          <CurrencyRupeeIcon class="w-6 h-6" />
-        </button>
+    <div class="input-area">
+      <button type="button" @click="showOfferModal = true" class="offer-btn" :disabled="sending">
+        <CurrencyRupeeIcon class="w-6 h-6" />
+      </button>
 
-        <div class="flex-1">
-          <textarea
-            ref="messageInput"
-            v-model="newMessage"
-            placeholder="Type a message..."
-            class="w-full px-4 py-2.5 bg-gray-100 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 leading-normal"
-            rows="1"
-            @input="autoResize"
-            @keydown.enter.exact.prevent="sendMessage"
-            style="max-height: 120px;"
-          ></textarea>
-        </div>
+      <div class="input-wrapper">
+        <textarea
+          ref="messageInput"
+          v-model="newMessage"
+          placeholder="Type a message..."
+          rows="1"
+          :disabled="sending"
+          @input="autoResize"
+          @keydown.enter.exact.prevent="sendMessage"
+        ></textarea>
+      </div>
 
-        <button
-          type="submit"
-          :disabled="!newMessage.trim() || sending"
-          class="w-11 h-11 bg-primary-600 text-white rounded-full flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-700 transition flex items-center justify-center"
-        >
-          <PaperAirplaneIcon class="w-5 h-5" />
-        </button>
-      </form>
+      <button type="button" @click="sendMessage" :disabled="!newMessage.trim() || sending" class="send-btn">
+        <PaperAirplaneIcon class="w-5 h-5" />
+      </button>
     </div>
 
     <!-- Make Offer Modal -->
-    <div v-if="showOfferModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div class="absolute inset-0 bg-black/50" @click="showOfferModal = false"></div>
-      <div class="relative bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-2xl p-6 pb-safe">
-        <h3 class="text-lg font-semibold mb-4">Make an Offer</h3>
-        <div v-if="conversation?.listing" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
-          <img
-            :src="conversation.listing.primary_image_url"
-            class="w-12 h-12 rounded-lg object-cover"
-          />
-          <div class="min-w-0 flex-1">
-            <p class="font-medium text-sm truncate">{{ conversation.listing.title }}</p>
-            <p class="text-primary-600 font-bold">{{ conversation.listing.formatted_price || '₹' + conversation.listing.price }}</p>
+    <div v-if="showOfferModal" class="modal-overlay">
+      <div class="modal-backdrop" @click="showOfferModal = false"></div>
+      <div class="modal-content">
+        <h3>Make an Offer</h3>
+        <div v-if="conversation?.listing" class="modal-product">
+          <img :src="conversation.listing.primary_image_url" />
+          <div>
+            <p class="title">{{ conversation.listing.title }}</p>
+            <p class="price">{{ conversation.listing.formatted_price || '₹' + conversation.listing.price }}</p>
           </div>
         </div>
-        <div class="relative mb-4">
-          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">₹</span>
-          <input
-            v-model="offerAmount"
-            type="number"
-            min="1"
-            class="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500"
-            placeholder="Enter your offer"
-          />
+        <div class="offer-input">
+          <span>₹</span>
+          <input v-model="offerAmount" type="number" min="1" placeholder="Enter your offer" />
         </div>
-        <div class="flex gap-3">
-          <button @click="showOfferModal = false" class="flex-1 py-3 border border-gray-300 rounded-xl font-medium">
-            Cancel
-          </button>
-          <button
-            @click="makeOffer"
-            class="flex-1 py-3 bg-primary-600 text-white rounded-xl font-medium disabled:opacity-50"
-            :disabled="!offerAmount"
-          >
-            Send Offer
-          </button>
+        <div class="modal-actions">
+          <button @click="showOfferModal = false" class="cancel-btn">Cancel</button>
+          <button @click="makeOffer" class="submit-btn" :disabled="!offerAmount">Send Offer</button>
         </div>
       </div>
     </div>
@@ -294,6 +203,10 @@ const offerAmount = ref('')
 const messagesContainer = ref(null)
 const messageInput = ref(null)
 
+// Touch tracking for scroll
+let touchStartY = 0
+let isScrolling = false
+
 const currentUserId = computed(() => authStore.user?.id)
 const otherUser = computed(() => {
   if (!conversation.value) return null
@@ -331,6 +244,20 @@ const scrollToBottom = () => {
   })
 }
 
+// Touch handlers for better scroll
+const onTouchStart = (e) => {
+  touchStartY = e.touches[0].clientY
+  isScrolling = false
+}
+
+const onTouchMove = (e) => {
+  const touchY = e.touches[0].clientY
+  const diff = Math.abs(touchY - touchStartY)
+  if (diff > 10) {
+    isScrolling = true
+  }
+}
+
 const fetchConversation = async () => {
   try {
     const response = await api.get(`/conversations/${route.params.uuid}`)
@@ -353,42 +280,32 @@ const sendMessage = async () => {
   newMessage.value = ''
   resetInputHeight()
 
-  // Optimistic update - show message immediately
-  const tempId = 'temp-' + Date.now()
-  const optimisticMessage = {
-    id: tempId,
-    body: messageText,
-    sender_id: currentUserId.value,
-    created_at: new Date().toISOString(),
-    is_read: false,
-    type: 'text',
-  }
-  messages.value.push(optimisticMessage)
-  scrollToBottom()
-
-  // Re-enable sending immediately for better UX
-  sending.value = false
-
   try {
     const response = await api.post(`/conversations/${route.params.uuid}/messages`, {
       message: messageText,
       type: 'text',
     })
-    // Replace temp message with real one
-    const index = messages.value.findIndex(m => m.id === tempId)
-    if (index !== -1) {
-      messages.value[index] = response.data.data
-    }
+    messages.value.push(response.data.data)
+    scrollToBottom()
   } catch (error) {
-    // Remove optimistic message on error
-    messages.value = messages.value.filter(m => m.id !== tempId)
     newMessage.value = messageText
     toast.error('Failed to send message')
+  } finally {
+    sending.value = false
+    // Refocus input after sending
+    nextTick(() => {
+      if (messageInput.value) {
+        messageInput.value.focus()
+      }
+    })
   }
 }
 
 const makeOffer = async () => {
   if (!offerAmount.value) return
+
+  sending.value = true
+  showOfferModal.value = false
 
   try {
     const response = await api.post(`/conversations/${route.params.uuid}/messages`, {
@@ -397,12 +314,13 @@ const makeOffer = async () => {
       offer_amount: offerAmount.value,
     })
     messages.value.push(response.data.data)
-    showOfferModal.value = false
     offerAmount.value = ''
     scrollToBottom()
     toast.success('Offer sent!')
   } catch (error) {
     toast.error('Failed to send offer')
+  } finally {
+    sending.value = false
   }
 }
 
@@ -441,22 +359,13 @@ const deleteConversation = async () => {
   }
 }
 
-// Handle viewport resize (keyboard open/close on mobile)
-const handleResize = () => {
-  scrollToBottom()
-}
-
 onMounted(() => {
   fetchConversation()
-  window.addEventListener('resize', handleResize)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <style scoped>
+/* Base Layout */
 .conversation-page {
   position: fixed;
   top: 0;
@@ -466,19 +375,237 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   background: #f3f4f6;
-  overflow: hidden;
   z-index: 40;
 }
 
+/* Sending Overlay */
+.sending-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.sending-popup {
+  background: white;
+  padding: 24px 40px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.sending-popup p {
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.sending-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
 .conversation-header {
   background: white;
   border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
-  /* Safe area for notch */
   padding-top: env(safe-area-inset-top, 0);
+  position: relative;
+  z-index: 50;
 }
 
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.back-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #4b5563;
+}
+
+.back-btn:active {
+  background: #f3f4f6;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: #22c55e;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.user-details {
+  min-width: 0;
+}
+
+.user-details h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-details p {
+  font-size: 12px;
+  color: #22c55e;
+}
+
+.header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.action-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #6b7280;
+}
+
+.action-btn:active {
+  background: #f3f4f6;
+}
+
+/* Options Menu */
+.options-menu {
+  position: absolute;
+  top: 100%;
+  right: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 60;
+  min-width: 180px;
+}
+
+.options-menu a,
+.options-menu button {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 15px;
+  color: #374151;
+  background: white;
+  border: none;
+}
+
+.options-menu a:active,
+.options-menu button:active {
+  background: #f9fafb;
+}
+
+.options-menu .danger {
+  color: #dc2626;
+}
+
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+}
+
+/* Product Card */
+.product-card {
+  padding: 0 16px 12px;
+}
+
+.product-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.product-link:active {
+  background: #f3f4f6;
+}
+
+.product-link img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+/* Messages Area */
 .messages-area {
   flex: 1;
   overflow-y: auto;
@@ -489,15 +616,378 @@ onUnmounted(() => {
   min-height: 0;
 }
 
-.conversation-input {
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.date-badge {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.date-badge::after {
+  content: attr(data-date);
+}
+
+.date-badge {
+  padding: 6px 14px;
+  background: #e5e7eb;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #6b7280;
+  width: fit-content;
+  margin: 0 auto 16px;
+}
+
+/* Message Rows */
+.message-row {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.message-row.sent {
+  justify-content: flex-end;
+}
+
+.message-row.received {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.message-row.sent .message-bubble {
+  background: #7c3aed;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message-row.received .message-bubble {
+  background: white;
+  color: #111827;
+  border-bottom-left-radius: 4px;
+}
+
+.message-bubble.pending {
+  opacity: 0.7;
+}
+
+.message-text {
+  font-size: 15px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.message-time {
+  font-size: 10px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.message-row.sent .message-time {
+  color: rgba(255, 255, 255, 0.7);
+  justify-content: flex-end;
+}
+
+.message-row.received .message-time {
+  color: #9ca3af;
+}
+
+.read-status {
+  display: flex;
+  align-items: center;
+}
+
+/* Offer Messages */
+.offer-content {
+  margin-bottom: 8px;
+}
+
+.offer-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.offer-amount {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.offer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.accept-btn {
+  flex: 1;
+  padding: 8px;
+  background: #22c55e;
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.decline-btn {
+  flex: 1;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.offer-status {
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.offer-status.accepted {
+  color: #86efac;
+}
+
+.offer-status.rejected {
+  color: #fca5a5;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+/* Input Area */
+.input-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
   background: white;
   border-top: 1px solid #e5e7eb;
-  padding: 12px;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+}
+
+.offer-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #7c3aed;
   flex-shrink: 0;
 }
 
-.pb-safe {
-  padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
+.offer-btn:active {
+  background: #f3e8ff;
+}
+
+.offer-btn:disabled {
+  opacity: 0.5;
+}
+
+.input-wrapper {
+  flex: 1;
+}
+
+.input-wrapper textarea {
+  width: 100%;
+  padding: 10px 16px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 24px;
+  font-size: 15px;
+  line-height: 1.4;
+  resize: none;
+  max-height: 120px;
+  outline: none;
+}
+
+.input-wrapper textarea:focus {
+  background: #e5e7eb;
+}
+
+.input-wrapper textarea:disabled {
+  opacity: 0.5;
+}
+
+.send-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #7c3aed;
+  color: white;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.send-btn:active {
+  background: #6d28d9;
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 60;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 20px 20px 0 0;
+  padding: 24px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0));
+}
+
+.modal-content h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.modal-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.modal-product img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.modal-product .title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.modal-product .price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.offer-input {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.offer-input span {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.offer-input input {
+  width: 100%;
+  padding: 14px 16px 14px 40px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  outline: none;
+}
+
+.offer-input input:focus {
+  background: #e5e7eb;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 14px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.submit-btn {
+  flex: 1;
+  padding: 14px;
+  background: #7c3aed;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+  }
+
+  .modal-content {
+    border-radius: 20px;
+    padding-bottom: 24px;
+  }
 }
 </style>

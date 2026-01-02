@@ -10,6 +10,12 @@ class SavedSearch extends Model
 {
     use HasFactory;
 
+    protected $attributes = [
+        'notify_push' => true,
+        'notify_email' => true,
+        'notify_frequency' => 'instant',
+    ];
+
     protected $fillable = [
         'user_id',
         'name',
