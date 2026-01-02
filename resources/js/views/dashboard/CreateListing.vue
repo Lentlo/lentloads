@@ -4,6 +4,13 @@
       <div class="card p-6">
         <h1 class="text-2xl font-bold text-gray-900 mb-6">Post Your Ad</h1>
 
+        <!-- Auth Modal -->
+        <AuthPromptModal
+          :is-open="showAuthModal"
+          @close="showAuthModal = false"
+          @authenticated="onAuthenticated"
+        />
+
         <form @submit.prevent="handleSubmit" class="space-y-6">
           <!-- Category Selection -->
           <div>
@@ -178,16 +185,20 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 import { useListingsStore } from '@/stores/listings'
 import { toast } from 'vue3-toastify'
 import { CameraIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import LocationPicker from '@/components/common/LocationPicker.vue'
+import AuthPromptModal from '@/components/common/AuthPromptModal.vue'
 
 const router = useRouter()
 const appStore = useAppStore()
+const authStore = useAuthStore()
 const listingsStore = useListingsStore()
 
 const loading = ref(false)
+const showAuthModal = ref(false)
 const images = ref([])
 const previewImages = ref([])
 
@@ -253,6 +264,16 @@ const handleLocationUpdate = (location) => {
 const handleSubmit = async () => {
   if (!isFormValid.value) return
 
+  // Check if user is authenticated
+  if (!authStore.isAuthenticated) {
+    showAuthModal.value = true
+    return
+  }
+
+  await submitListing()
+}
+
+const submitListing = async () => {
   loading.value = true
 
   try {
@@ -269,6 +290,11 @@ const handleSubmit = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const onAuthenticated = async () => {
+  showAuthModal.value = false
+  await submitListing()
 }
 
 onMounted(() => {

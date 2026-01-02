@@ -40,6 +40,12 @@ Route::prefix('v1')->group(function () {
         Route::get('verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
     });
 
+    // Auth routes for listing flow (less strict rate limiting)
+    Route::prefix('auth')->middleware('throttle:10,1')->group(function () {
+        Route::post('check-phone', [AuthController::class, 'checkPhone']);
+        Route::post('quick-register', [AuthController::class, 'quickRegister']);
+    });
+
     // Categories
     Route::prefix('categories')->group(function () {
         Route::get('/', [CategoryController::class, 'index']);

@@ -273,6 +273,62 @@ class AuthController extends Controller
     }
 
     /**
+     * Check if a phone number is already registered
+     * Used for the listing creation flow
+     */
+    public function checkPhone(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string|min:10|max:15',
+        ]);
+
+        $normalizedPhone = $this->normalizePhone($request->phone);
+        $user = $this->findUserByPhone($normalizedPhone);
+
+        return $this->successResponse([
+            'exists' => $user !== null,
+            'name' => $user ? $user->name : null,
+        ]);
+    }
+
+    /**
+     * Register a new user and return token (used in listing flow)
+     * Simplified version without email confirmation
+     */
+    public function quickRegister(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => ['required', PasswordRule::min(8)],
+            'phone' => 'required|string|max:20',
+        ]);
+
+        // Check if phone already exists
+        $normalizedPhone = $this->normalizePhone($validated['phone']);
+        $existingUser = $this->findUserByPhone($normalizedPhone);
+
+        if ($existingUser) {
+            return $this->errorResponse('This phone number is already registered', 422);
+        }
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'phone' => $validated['phone'],
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return $this->successResponse([
+            'user' => $user,
+            'token' => $token,
+            'token_type' => 'Bearer',
+        ], 'Account created successfully', 201);
+    }
+
+    /**
      * Normalize phone number by removing all non-digit characters except leading +
      */
     private function normalizePhone(string $phone): string

@@ -132,7 +132,7 @@ const routes = [
     path: '/sell',
     name: 'create-listing',
     component: CreateListing,
-    meta: { title: 'Post Ad', requiresAuth: true }
+    meta: { title: 'Post Ad' } // No auth required - modal handles authentication
   },
   {
     path: '/listing/:id/edit',
