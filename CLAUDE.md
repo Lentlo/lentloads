@@ -1025,4 +1025,85 @@ const shortLocation = computed(() => {
 
 ---
 
-*Last Updated: January 2, 2026 (UI Polish & Card Redesign)*
+### Session: January 2, 2026 (Major Page Redesigns)
+
+**Pages Redesigned:**
+
+1. **ListingDetail.vue - Complete Overhaul**
+   - OLX-style full-width image gallery
+   - Lightbox with pinch-to-zoom on mobile (touch gestures)
+   - Zoom controls (+/- buttons)
+   - Pan/drag when zoomed in
+   - Image counter badge
+   - Thumbnail strip navigation
+   - Card-based content layout
+   - Better seller card with placeholder avatar
+   - Removed "(Negotiable)" from prices
+
+   **Key Features:**
+   ```javascript
+   // Lightbox zoom state
+   const zoomLevel = ref(1)
+   const panX = ref(0)
+   const panY = ref(0)
+
+   // Pinch-to-zoom handling
+   const handleTouchMove = (e) => {
+     if (e.touches.length === 2) {
+       const distance = Math.hypot(...)
+       zoomLevel.value = Math.max(1, Math.min(3, zoomLevel.value * scale))
+     }
+   }
+
+   // Placeholder avatar
+   const sellerAvatar = computed(() => {
+     if (avatar && !avatar.includes('default')) return avatar
+     return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=7c3aed&color=fff'
+   })
+   ```
+
+2. **UserProfile.vue - Complete Overhaul**
+   - Purple gradient header
+   - Placeholder avatar using ui-avatars.com API
+   - Star ratings display
+   - Stats bar (Listings, Sold, Response Rate)
+   - Modern tab design for Listings/Reviews
+   - Verified badge with green checkmark
+   - Mobile-first responsive design
+
+   **Placeholder Avatar:**
+   ```javascript
+   const userAvatar = computed(() => {
+     const avatar = user.value?.avatar_url
+     if (avatar && !avatar.includes('default') && !avatar.includes('null')) return avatar
+     return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.value?.name || 'U') + '&background=7c3aed&color=fff&size=200&bold=true'
+   })
+   ```
+
+3. **MyListings.vue - Complete Overhaul**
+   - Stats overview cards at top (Total, Active, Pending, Sold)
+   - Pill-style filter buttons
+   - Modern listing cards with status badges
+   - Clean action buttons (Edit, Mark Sold, Renew, Delete)
+   - Better responsive layout
+   - Empty state with icon
+   - Removed "(Negotiable)" from prices
+
+**Files Changed:**
+- `resources/js/views/ListingDetail.vue` - Complete rewrite (~970 lines)
+- `resources/js/views/UserProfile.vue` - Complete rewrite (~600 lines)
+- `resources/js/views/dashboard/MyListings.vue` - Complete rewrite (~690 lines)
+
+**Design System Updates:**
+- Purple primary color: `#7c3aed`
+- Card border-radius: `12px` / `16px`
+- Consistent shadow: `0 1px 3px rgba(0, 0, 0, 0.05)`
+- Status badge colors:
+  - Active: Green (`#dcfce7`, `#16a34a`)
+  - Pending: Yellow (`#fef3c7`, `#d97706`)
+  - Sold: Blue (`#dbeafe`, `#2563eb`)
+  - Expired: Gray (`#f1f5f9`, `#64748b`)
+
+---
+
+*Last Updated: January 2, 2026 (Major Page Redesigns)*
