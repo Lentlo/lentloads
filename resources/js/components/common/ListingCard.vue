@@ -153,7 +153,11 @@ const formatDate = (date) => {
 }
 
 const handleImageError = (e) => {
-  e.target.src = 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=400&h=300&fit=crop&auto=format'
+  // Prevent infinite loop - only replace once
+  if (!e.target.dataset.fallback) {
+    e.target.dataset.fallback = 'true'
+    e.target.src = 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image'
+  }
 }
 </script>
 

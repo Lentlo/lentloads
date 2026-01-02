@@ -402,19 +402,12 @@ const nextImage = () => {
   resetZoom()
 }
 
-// Handle broken images - fallback to thumbnail or placeholder
+// Handle broken images - show placeholder
 const handleImageError = (e) => {
-  const img = e.target
-  const currentImg = listing.value?.images?.[currentImageIndex.value]
-
-  // Try medium_url first, then thumbnail_url, then a placeholder
-  if (currentImg?.medium_url && img.src !== currentImg.medium_url) {
-    img.src = currentImg.medium_url
-  } else if (currentImg?.thumbnail_url && img.src !== currentImg.thumbnail_url) {
-    img.src = currentImg.thumbnail_url
-  } else {
-    // Final fallback - placeholder
-    img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-size="16">Image not available</text></svg>')
+  // Prevent infinite loop - only replace once per image
+  if (!e.target.dataset.fallback) {
+    e.target.dataset.fallback = 'true'
+    e.target.src = 'https://placehold.co/800x600/e2e8f0/64748b?text=Image+Not+Available'
   }
 }
 
