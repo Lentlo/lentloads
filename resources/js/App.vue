@@ -5,7 +5,7 @@
     <AdminHeader v-else-if="isAuthenticated && isAdmin" />
 
     <!-- Main Content -->
-    <main class="flex-1">
+    <main class="flex-1" :class="showMobileNav ? 'pb-20' : ''">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -53,6 +53,7 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 const isConversationPage = computed(() => route.name === 'conversation')
 const isCreateListingPage = computed(() => route.name === 'create-listing')
 const isLoading = computed(() => appStore.isLoading)
+const showMobileNav = computed(() => !isAdminRoute.value && isMobile.value && !isConversationPage.value && !isCreateListingPage.value)
 
 // Check mobile
 const checkMobile = () => {

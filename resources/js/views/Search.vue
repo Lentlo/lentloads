@@ -3,11 +3,11 @@
     <div class="container-app py-4">
       <!-- Mobile Search Header -->
       <div class="lg:hidden mb-4">
-        <!-- Active Filters Summary -->
         <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <!-- Filters Button -->
           <button
             @click="showFilters = true"
-            class="flex items-center gap-2 px-4 py-2 bg-white rounded-full border shadow-sm flex-shrink-0"
+            class="flex items-center gap-2 px-4 py-2.5 bg-white rounded-full border shadow-sm flex-shrink-0"
           >
             <AdjustmentsHorizontalIcon class="w-5 h-5 text-gray-600" />
             <span class="text-sm font-medium">Filters</span>
@@ -19,17 +19,16 @@
             </span>
           </button>
 
-          <!-- Sort Dropdown -->
+          <!-- Sort -->
           <div class="relative flex-shrink-0">
             <select
               v-model="filters.sort"
               @change="fetchListings"
-              class="appearance-none px-4 py-2 pr-8 bg-white rounded-full border shadow-sm text-sm font-medium"
+              class="appearance-none px-4 py-2.5 pr-8 bg-white rounded-full border shadow-sm text-sm font-medium"
             >
               <option value="newest">Newest</option>
               <option value="price_low">Price: Low</option>
               <option value="price_high">Price: High</option>
-              <option value="popular">Popular</option>
             </select>
             <ChevronDownIcon class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
@@ -37,30 +36,24 @@
           <!-- Active Filter Tags -->
           <span
             v-if="filters.category"
-            class="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
+            class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
           >
             {{ getCategoryName(filters.category) }}
-            <button @click="clearFilter('category')" class="hover:text-primary-900">
-              <XMarkIcon class="w-4 h-4" />
-            </button>
+            <button @click="clearFilter('category')"><XMarkIcon class="w-4 h-4" /></button>
           </span>
           <span
             v-if="filters.city"
-            class="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
+            class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
           >
             {{ filters.city }}
-            <button @click="clearFilter('city')" class="hover:text-primary-900">
-              <XMarkIcon class="w-4 h-4" />
-            </button>
+            <button @click="clearFilter('city')"><XMarkIcon class="w-4 h-4" /></button>
           </span>
           <span
             v-if="filters.min_price || filters.max_price"
-            class="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
+            class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
           >
-            ₹{{ filters.min_price || 0 }} - ₹{{ filters.max_price || '∞' }}
-            <button @click="clearPriceFilter" class="hover:text-primary-900">
-              <XMarkIcon class="w-4 h-4" />
-            </button>
+            ₹{{ filters.min_price || 0 }} - {{ filters.max_price || '∞' }}
+            <button @click="clearPriceFilter"><XMarkIcon class="w-4 h-4" /></button>
           </span>
         </div>
       </div>
@@ -76,10 +69,10 @@
               </button>
             </div>
 
-            <!-- Category Filter -->
-            <div class="mb-6">
-              <h4 class="font-medium text-gray-700 mb-2 text-sm">Category</h4>
-              <select v-model="filters.category" @change="fetchListings" class="input text-sm">
+            <!-- Category -->
+            <div class="mb-5">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <select v-model="filters.category" class="input text-sm">
                 <option value="">All Categories</option>
                 <option v-for="category in categories" :key="category.id" :value="category.slug">
                   {{ category.name }}
@@ -87,57 +80,50 @@
               </select>
             </div>
 
-            <!-- Location Filter -->
-            <div class="mb-6">
-              <h4 class="font-medium text-gray-700 mb-2 text-sm">Location</h4>
+            <!-- Location -->
+            <div class="mb-5">
+              <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
               <input
                 v-model="filters.city"
                 type="text"
                 placeholder="Enter city"
                 class="input text-sm"
-                @change="fetchListings"
               />
             </div>
 
             <!-- Price Range -->
-            <div class="mb-6">
-              <h4 class="font-medium text-gray-700 mb-2 text-sm">Price Range</h4>
+            <div class="mb-5">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
               <div class="flex items-center gap-2">
-                <input
-                  v-model="filters.min_price"
-                  type="number"
-                  placeholder="Min"
-                  class="input text-sm"
-                />
+                <input v-model="filters.min_price" type="number" placeholder="Min" class="input text-sm" />
                 <span class="text-gray-400">-</span>
-                <input
-                  v-model="filters.max_price"
-                  type="number"
-                  placeholder="Max"
-                  class="input text-sm"
-                />
+                <input v-model="filters.max_price" type="number" placeholder="Max" class="input text-sm" />
               </div>
             </div>
 
-            <!-- Condition Filter -->
-            <div class="mb-6">
-              <h4 class="font-medium text-gray-700 mb-2 text-sm">Condition</h4>
+            <!-- Condition -->
+            <div class="mb-5">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Condition</label>
               <div class="space-y-2">
                 <label v-for="condition in conditions" :key="condition.value" class="flex items-center">
-                  <input
-                    type="radio"
-                    v-model="filters.condition"
-                    :value="condition.value"
-                    @change="fetchListings"
-                    class="text-primary-600"
-                  />
+                  <input type="radio" v-model="filters.condition" :value="condition.value" class="text-primary-600" />
                   <span class="ml-2 text-sm text-gray-600">{{ condition.label }}</span>
                 </label>
               </div>
             </div>
 
-            <button @click="fetchListings" class="btn-primary w-full">
+            <button @click="fetchListings" class="btn-primary w-full mb-3">
               Apply Filters
+            </button>
+
+            <!-- Save Search -->
+            <button
+              v-if="isAuthenticated && hasActiveFilters"
+              @click="showSaveSearchModal = true"
+              class="btn-secondary w-full text-sm"
+            >
+              <BookmarkIcon class="w-4 h-4 mr-2" />
+              Save This Search
             </button>
           </div>
         </aside>
@@ -153,18 +139,18 @@
               <p class="text-sm text-gray-500">{{ total }} results</p>
             </div>
 
-            <!-- Desktop Sort -->
-            <select v-model="filters.sort" @change="fetchListings" class="hidden lg:block input w-auto text-sm">
-              <option value="newest">Newest First</option>
-              <option value="price_low">Price: Low to High</option>
-              <option value="price_high">Price: High to Low</option>
-              <option value="popular">Most Popular</option>
-            </select>
+            <div class="hidden lg:flex items-center gap-3">
+              <select v-model="filters.sort" @change="fetchListings" class="input w-auto text-sm">
+                <option value="newest">Newest First</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+              </select>
+            </div>
           </div>
 
           <!-- Loading -->
           <div v-if="loading && !listings.length" class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div v-for="i in 9" :key="i" class="card p-3">
+            <div v-for="i in 6" :key="i" class="card p-3">
               <div class="skeleton aspect-square mb-2 rounded-lg"></div>
               <div class="skeleton h-4 w-16 mb-1"></div>
               <div class="skeleton h-4 w-full mb-1"></div>
@@ -182,9 +168,7 @@
             <MagnifyingGlassIcon class="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <h3 class="font-medium text-gray-900 mb-1">No results found</h3>
             <p class="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
-            <button @click="resetFilters" class="btn-primary">
-              Clear Filters
-            </button>
+            <button @click="resetFilters" class="btn-primary">Clear Filters</button>
           </div>
 
           <!-- Load More -->
@@ -205,9 +189,12 @@
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
           <h3 class="text-lg font-semibold">Filters</h3>
-          <button @click="showFilters = false" class="p-2 hover:bg-gray-100 rounded-full">
-            <XMarkIcon class="w-5 h-5" />
-          </button>
+          <div class="flex items-center gap-2">
+            <button @click="resetFilters" class="text-sm text-primary-600">Clear</button>
+            <button @click="showFilters = false" class="p-2 hover:bg-gray-100 rounded-full">
+              <XMarkIcon class="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <!-- Filter Options -->
@@ -215,19 +202,19 @@
           <!-- Category -->
           <div>
             <h4 class="font-medium text-gray-900 mb-3">Category</h4>
-            <div class="grid grid-cols-2 gap-2">
+            <div class="flex flex-wrap gap-2">
               <button
                 @click="filters.category = ''"
-                class="p-3 rounded-xl border text-sm text-left transition"
+                class="px-4 py-2 rounded-full border text-sm transition"
                 :class="!filters.category ? 'border-primary-500 bg-primary-50 text-primary-700' : 'hover:bg-gray-50'"
               >
-                All Categories
+                All
               </button>
               <button
-                v-for="category in categories.slice(0, 7)"
+                v-for="category in categories"
                 :key="category.id"
                 @click="filters.category = category.slug"
-                class="p-3 rounded-xl border text-sm text-left transition"
+                class="px-4 py-2 rounded-full border text-sm transition"
                 :class="filters.category === category.slug ? 'border-primary-500 bg-primary-50 text-primary-700' : 'hover:bg-gray-50'"
               >
                 {{ category.name }}
@@ -237,47 +224,28 @@
 
           <!-- Location -->
           <div>
-            <h4 class="font-medium text-gray-900 mb-3">Location</h4>
-            <input
-              v-model="filters.city"
-              type="text"
-              placeholder="Enter city name"
-              class="input"
-            />
+            <h4 class="font-medium text-gray-900 mb-3">City</h4>
+            <input v-model="filters.city" type="text" placeholder="Enter city name" class="input" />
           </div>
 
           <!-- Price Range -->
           <div>
             <h4 class="font-medium text-gray-900 mb-3">Price Range</h4>
-            <div class="flex items-center gap-3">
-              <div class="flex-1">
-                <input
-                  v-model="filters.min_price"
-                  type="number"
-                  placeholder="Min"
-                  class="input text-center"
-                />
-              </div>
-              <span class="text-gray-400">to</span>
-              <div class="flex-1">
-                <input
-                  v-model="filters.max_price"
-                  type="number"
-                  placeholder="Max"
-                  class="input text-center"
-                />
-              </div>
-            </div>
-            <!-- Quick Price Options -->
-            <div class="flex flex-wrap gap-2 mt-3">
+            <div class="flex flex-wrap gap-2 mb-3">
               <button
                 v-for="range in priceRanges"
                 :key="range.label"
                 @click="setPrice(range)"
-                class="px-3 py-1.5 text-sm border rounded-full hover:bg-gray-50"
+                class="px-3 py-2 text-sm border rounded-full transition"
+                :class="filters.min_price == range.min && filters.max_price == range.max ? 'border-primary-500 bg-primary-50 text-primary-700' : 'hover:bg-gray-50'"
               >
                 {{ range.label }}
               </button>
+            </div>
+            <div class="flex items-center gap-3">
+              <input v-model="filters.min_price" type="number" placeholder="Min" class="input text-center" />
+              <span class="text-gray-400">to</span>
+              <input v-model="filters.max_price" type="number" placeholder="Max" class="input text-center" />
             </div>
           </div>
 
@@ -299,12 +267,43 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex gap-3 p-4 border-t bg-gray-50 flex-shrink-0 safe-area-bottom">
-          <button @click="resetFilters" class="btn-secondary flex-1">
-            Clear All
-          </button>
-          <button @click="applyFilters" class="btn-primary flex-1">
-            Show {{ total }} Results
+        <div class="p-4 border-t bg-gray-50 flex-shrink-0 safe-area-bottom">
+          <div class="flex gap-3">
+            <button
+              v-if="isAuthenticated && hasActiveFilters"
+              @click="showSaveSearchModal = true; showFilters = false"
+              class="btn-secondary flex-1"
+            >
+              <BookmarkIcon class="w-4 h-4 mr-1" />
+              Save
+            </button>
+            <button @click="applyFilters" class="btn-primary flex-1">
+              Show {{ total }} Results
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Search Modal -->
+    <div v-if="showSaveSearchModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showSaveSearchModal = false"></div>
+      <div class="relative bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-2xl p-6 safe-area-bottom animate-slide-up">
+        <h3 class="text-lg font-semibold mb-4">Save This Search</h3>
+        <p class="text-sm text-gray-500 mb-4">Get notified when new listings match your search criteria.</p>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Search Name</label>
+          <input
+            v-model="saveSearchName"
+            type="text"
+            class="input"
+            placeholder="e.g., iPhone in Mumbai"
+          />
+        </div>
+        <div class="flex gap-3">
+          <button @click="showSaveSearchModal = false" class="btn-secondary flex-1">Cancel</button>
+          <button @click="saveSearch" :disabled="!saveSearchName || savingSearch" class="btn-primary flex-1">
+            {{ savingSearch ? 'Saving...' : 'Save Search' }}
           </button>
         </div>
       </div>
@@ -316,18 +315,23 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 import { useListingsStore } from '@/stores/listings'
+import { toast } from 'vue3-toastify'
+import api from '@/services/api'
 import ListingCard from '@/components/common/ListingCard.vue'
 import {
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
   XMarkIcon,
   ChevronDownIcon,
+  BookmarkIcon,
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const router = useRouter()
 const appStore = useAppStore()
+const authStore = useAuthStore()
 const listingsStore = useListingsStore()
 
 const loading = ref(false)
@@ -336,6 +340,9 @@ const total = ref(0)
 const currentPage = ref(1)
 const lastPage = ref(1)
 const showFilters = ref(false)
+const showSaveSearchModal = ref(false)
+const saveSearchName = ref('')
+const savingSearch = ref(false)
 
 const filters = reactive({
   q: '',
@@ -359,11 +366,11 @@ const priceRanges = [
   { label: 'Under ₹1K', min: '', max: 1000 },
   { label: '₹1K - ₹5K', min: 1000, max: 5000 },
   { label: '₹5K - ₹10K', min: 5000, max: 10000 },
-  { label: '₹10K - ₹50K', min: 10000, max: 50000 },
-  { label: 'Over ₹50K', min: 50000, max: '' },
+  { label: '₹10K+', min: 10000, max: '' },
 ]
 
 const categories = computed(() => appStore.categories)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 const searchQuery = computed(() => filters.q)
 const hasMore = computed(() => currentPage.value < lastPage.value)
 
@@ -374,6 +381,10 @@ const activeFilterCount = computed(() => {
   if (filters.min_price || filters.max_price) count++
   if (filters.condition) count++
   return count
+})
+
+const hasActiveFilters = computed(() => {
+  return filters.q || filters.category || filters.city || filters.min_price || filters.max_price || filters.condition
 })
 
 const getCategoryName = (slug) => {
@@ -402,7 +413,7 @@ const fetchListings = async (append = false) => {
 
   try {
     const params = { ...filters, page: append ? currentPage.value + 1 : 1 }
-    Object.keys(params).forEach(key => { if (!params[key]) delete params[key] })
+    Object.keys(params).forEach(key => { if (params[key] === '' || params[key] === null) delete params[key] })
 
     const response = await listingsStore.fetchListings(params, append)
 
@@ -417,6 +428,8 @@ const fetchListings = async (append = false) => {
     lastPage.value = response.meta.last_page
 
     router.replace({ query: params })
+  } catch (error) {
+    toast.error('Failed to fetch listings')
   } finally {
     loading.value = false
   }
@@ -430,11 +443,38 @@ const applyFilters = () => {
 }
 
 const resetFilters = () => {
-  Object.keys(filters).forEach(key => {
-    filters[key] = key === 'sort' ? 'newest' : ''
-  })
+  filters.category = ''
+  filters.city = ''
+  filters.min_price = ''
+  filters.max_price = ''
+  filters.condition = ''
+  filters.sort = 'newest'
   showFilters.value = false
   fetchListings()
+}
+
+const saveSearch = async () => {
+  if (!saveSearchName.value) return
+
+  savingSearch.value = true
+  try {
+    await api.post('/saved-searches', {
+      name: saveSearchName.value,
+      query: filters.q || null,
+      category_id: categories.value.find(c => c.slug === filters.category)?.id || null,
+      city: filters.city || null,
+      min_price: filters.min_price || null,
+      max_price: filters.max_price || null,
+      condition: filters.condition || null,
+    })
+    toast.success('Search saved! You\'ll be notified of new listings.')
+    showSaveSearchModal.value = false
+    saveSearchName.value = ''
+  } catch (error) {
+    toast.error('Failed to save search')
+  } finally {
+    savingSearch.value = false
+  }
 }
 
 onMounted(() => {
@@ -449,9 +489,9 @@ onMounted(() => {
   fetchListings()
 })
 
-watch(() => route.query, () => {
-  if (route.query.q !== filters.q) {
-    filters.q = route.query.q || ''
+watch(() => route.query.q, (newQ) => {
+  if (newQ !== filters.q) {
+    filters.q = newQ || ''
     fetchListings()
   }
 })
