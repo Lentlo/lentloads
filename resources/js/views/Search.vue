@@ -26,6 +26,7 @@
               @change="fetchListings"
               class="appearance-none px-4 py-2.5 pr-8 bg-white rounded-full border shadow-sm text-sm font-medium"
             >
+              <option value="nearest">Nearest</option>
               <option value="newest">Newest</option>
               <option value="price_low">Price: Low</option>
               <option value="price_high">Price: High</option>
@@ -141,6 +142,7 @@
 
             <div class="hidden lg:flex items-center gap-3">
               <select v-model="filters.sort" @change="fetchListings" class="input w-auto text-sm">
+                <option value="nearest">Nearest First</option>
                 <option value="newest">Newest First</option>
                 <option value="price_low">Price: Low to High</option>
                 <option value="price_high">Price: High to Low</option>
@@ -348,7 +350,9 @@ const filters = reactive({
   min_price: '',
   max_price: '',
   condition: '',
-  sort: 'newest',
+  sort: 'nearest', // Default to nearest when location is available
+  latitude: null,
+  longitude: null,
 })
 
 const conditions = [
@@ -422,6 +426,12 @@ const fetchListings = async (append = false) => {
     if (filters.max_price) params.max_price = filters.max_price
     if (filters.condition) params.condition = filters.condition
 
+    // Add location for nearest sorting
+    if (filters.latitude && filters.longitude) {
+      params.latitude = filters.latitude
+      params.longitude = filters.longitude
+    }
+
     const response = await api.get('/listings', { params })
 
     if (append) {
@@ -459,7 +469,8 @@ const resetFilters = () => {
   filters.min_price = ''
   filters.max_price = ''
   filters.condition = ''
-  filters.sort = 'newest'
+  // Keep nearest sort if we have location, otherwise use newest
+  filters.sort = (filters.latitude && filters.longitude) ? 'nearest' : 'newest'
   showFilters.value = false
   fetchListings()
 }
@@ -488,6 +499,43 @@ const saveSearch = async () => {
   }
 }
 
+// Get user's location for nearest sorting
+const getUserLocation = () => {
+  // First check if we have saved location in app store
+  if (appStore.currentLocation?.latitude && appStore.currentLocation?.longitude) {
+    filters.latitude = appStore.currentLocation.latitude
+    filters.longitude = appStore.currentLocation.longitude
+    return
+  }
+
+  // Try to get current location from browser
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        filters.latitude = position.coords.latitude
+        filters.longitude = position.coords.longitude
+        // Refetch listings with location if we're on default sort
+        if (filters.sort === 'nearest' && listings.value.length > 0) {
+          fetchListings()
+        }
+      },
+      (error) => {
+        console.log('Geolocation not available:', error.message)
+        // Fall back to newest sort if location not available
+        if (filters.sort === 'nearest') {
+          filters.sort = 'newest'
+        }
+      },
+      { timeout: 5000, maximumAge: 300000 } // 5s timeout, cache for 5 min
+    )
+  } else {
+    // Geolocation not supported, fall back to newest
+    if (filters.sort === 'nearest') {
+      filters.sort = 'newest'
+    }
+  }
+}
+
 onMounted(() => {
   const query = route.query
   if (query.q) filters.q = query.q
@@ -497,6 +545,10 @@ onMounted(() => {
   if (query.max_price) filters.max_price = query.max_price
   if (query.condition) filters.condition = query.condition
   if (query.sort) filters.sort = query.sort
+
+  // Get user location for nearest sorting
+  getUserLocation()
+
   fetchListings()
 })
 

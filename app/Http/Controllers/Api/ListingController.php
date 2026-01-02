@@ -90,15 +90,38 @@ class ListingController extends Controller
             $query->where('condition', $request->condition);
         }
 
-        // Nearby search
-        if ($request->filled('latitude') && $request->filled('longitude')) {
-            $radius = $request->input('radius', 50);
-            $query->nearby($request->latitude, $request->longitude, $radius);
+        // Location-based search with distance calculation
+        $hasLocation = $request->filled('latitude') && $request->filled('longitude');
+        if ($hasLocation) {
+            $lat = $request->latitude;
+            $lng = $request->longitude;
+            $radius = $request->input('radius', 100); // Default 100km radius
+
+            // Add distance calculation using Haversine formula
+            $haversine = "(6371 * acos(cos(radians($lat))
+                         * cos(radians(latitude))
+                         * cos(radians(longitude) - radians($lng))
+                         + sin(radians($lat))
+                         * sin(radians(latitude))))";
+
+            $query->selectRaw("listings.*, {$haversine} AS distance")
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->havingRaw("distance < ?", [$radius]);
         }
 
-        // Sorting
-        $sortBy = $request->input('sort', 'newest');
+        // Sorting - default to nearest when location is provided
+        $sortBy = $request->input('sort', $hasLocation ? 'nearest' : 'newest');
         switch ($sortBy) {
+            case 'nearest':
+                if ($hasLocation) {
+                    $query->orderBy('distance', 'asc');
+                } else {
+                    // Fallback to newest if no location
+                    $query->orderBy('is_featured', 'desc')
+                        ->orderBy('published_at', 'desc');
+                }
+                break;
             case 'price_low':
                 $query->orderBy('price', 'asc');
                 break;

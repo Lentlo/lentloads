@@ -14,7 +14,9 @@ export const useListingsStore = defineStore('listings', {
       min_price: null,
       max_price: null,
       condition: null,
-      sort: 'newest',
+      sort: 'nearest', // Default to nearest when location available
+      latitude: null,
+      longitude: null,
     },
     pagination: {
       current_page: 1,
@@ -157,6 +159,8 @@ export const useListingsStore = defineStore('listings', {
     },
 
     resetFilters() {
+      // Preserve location when resetting filters
+      const { latitude, longitude } = this.filters
       this.filters = {
         q: '',
         category: null,
@@ -164,12 +168,23 @@ export const useListingsStore = defineStore('listings', {
         min_price: null,
         max_price: null,
         condition: null,
-        sort: 'newest',
+        sort: latitude && longitude ? 'nearest' : 'newest',
+        latitude,
+        longitude,
       }
     },
 
     clearListing() {
       this.currentListing = null
+    },
+
+    setUserLocation(latitude, longitude) {
+      this.filters.latitude = latitude
+      this.filters.longitude = longitude
+      // Auto-switch to nearest sort when location is set
+      if (latitude && longitude && this.filters.sort === 'newest') {
+        this.filters.sort = 'nearest'
+      }
     }
   }
 })
