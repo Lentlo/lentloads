@@ -352,6 +352,69 @@
         </router-link>
       </div>
     </div>
+
+    <!-- System Health -->
+    <div class="mt-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold text-gray-900">System Health</h2>
+        <button
+          @click="fetchHealthCheck"
+          class="text-sm text-primary-600 hover:underline flex items-center gap-1"
+          :disabled="healthLoading"
+        >
+          <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': healthLoading }" />
+          Refresh
+        </button>
+      </div>
+      <div class="card p-6">
+        <div v-if="healthLoading" class="text-center py-4 text-gray-500">
+          Loading health checks...
+        </div>
+        <div v-else-if="healthError" class="text-center py-4 text-red-500">
+          {{ healthError }}
+        </div>
+        <div v-else>
+          <div class="flex items-center gap-3 mb-4">
+            <div
+              class="w-3 h-3 rounded-full"
+              :class="healthData.summary?.overall_status === 'healthy' ? 'bg-green-500' : 'bg-red-500'"
+            ></div>
+            <span class="font-medium" :class="healthData.summary?.overall_status === 'healthy' ? 'text-green-700' : 'text-red-700'">
+              {{ healthData.summary?.overall_status === 'healthy' ? 'All Systems Healthy' : 'Issues Detected' }}
+            </span>
+            <span class="text-xs text-gray-400 ml-auto">{{ healthData.summary?.checked_at }}</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div
+              v-for="(check, key) in healthData.checks"
+              :key="key"
+              class="p-3 rounded-lg text-center"
+              :class="{
+                'bg-green-50': check.status === 'ok',
+                'bg-yellow-50': check.status === 'warning',
+                'bg-red-50': check.status === 'error'
+              }"
+            >
+              <div class="text-lg mb-1">
+                {{ check.status === 'ok' ? '✓' : check.status === 'warning' ? '!' : '✗' }}
+              </div>
+              <p class="text-xs font-medium text-gray-700">{{ formatCheckName(key) }}</p>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t flex justify-between items-center">
+            <a
+              href="/health-check"
+              target="_blank"
+              class="text-sm text-primary-600 hover:underline flex items-center gap-1"
+            >
+              <ServerIcon class="w-4 h-4" />
+              Open Full Health Check Page
+            </a>
+            <span class="text-xs text-gray-400">PHP {{ healthData.checks?.php_version?.message?.replace('PHP ', '') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -370,6 +433,7 @@ import {
   FolderIcon,
   Cog6ToothIcon,
   ArrowPathIcon,
+  ServerIcon,
 } from '@heroicons/vue/24/outline'
 
 dayjs.extend(relativeTime)
@@ -380,6 +444,11 @@ const recentUsers = ref([])
 const recentReports = ref([])
 const chartPeriod = ref('7')
 const refreshing = ref(false)
+
+// Health check state
+const healthLoading = ref(false)
+const healthError = ref(null)
+const healthData = ref({ summary: {}, checks: {} })
 
 const chartData = reactive({
   listings: [],
@@ -452,14 +521,36 @@ const fetchStats = async () => {
   }
 }
 
+const fetchHealthCheck = async () => {
+  healthLoading.value = true
+  healthError.value = null
+  try {
+    const response = await fetch('/health-check/api')
+    if (!response.ok) throw new Error('Health check failed')
+    healthData.value = await response.json()
+  } catch (error) {
+    console.error('Failed to fetch health check', error)
+    healthError.value = 'Failed to fetch health status'
+  } finally {
+    healthLoading.value = false
+  }
+}
+
+const formatCheckName = (key) => {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
 const refreshAll = async () => {
   refreshing.value = true
-  await Promise.all([fetchDashboard(), fetchStats()])
+  await Promise.all([fetchDashboard(), fetchStats(), fetchHealthCheck()])
   refreshing.value = false
 }
 
 onMounted(() => {
   fetchDashboard()
   fetchStats()
+  fetchHealthCheck()
 })
 </script>
