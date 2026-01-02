@@ -1106,4 +1106,97 @@ const shortLocation = computed(() => {
 
 ---
 
-*Last Updated: January 2, 2026 (Major Page Redesigns)*
+### Session: January 2, 2026 (Swipe Images, SavedSearches & Chat Fix)
+
+**1. ListingDetail.vue - Swipable Images**
+- Added touch swipe gestures for mobile image navigation
+- Swipe left/right to change images
+- Added swipe dots indicator (shows current position)
+- Navigation arrows hidden on mobile, visible only on desktop
+- Smooth transitions with 50px threshold for swipe detection
+
+**Key Implementation:**
+```javascript
+// Swipe state
+const swipeOffset = ref(0)
+let swipeStartX = 0
+let isSwiping = false
+
+const handleSwipeStart = (e) => {
+  if (e.touches.length === 1) {
+    swipeStartX = e.touches[0].clientX
+    isSwiping = true
+  }
+}
+
+const handleSwipeEnd = () => {
+  if (!isSwiping) return
+  const threshold = 50
+  if (swipeOffset.value > threshold) prevImage()
+  else if (swipeOffset.value < -threshold) nextImage()
+  swipeOffset.value = 0
+  isSwiping = false
+}
+```
+
+**2. SavedSearches.vue - Complete Redesign**
+- Modern card-based UI with clean spacing
+- Toggle buttons for Push/Email notifications (styled as buttons, not checkboxes)
+- Both notifications enabled by default via null coalescing operator
+- Tags displaying search criteria: query, category, city, price range
+- Frequency dropdown (Instant/Daily/Weekly)
+- Action buttons: Run search, Edit, Delete
+- Edit modal for changing search name
+- Empty state with icon and CTA
+
+**Key Changes:**
+```javascript
+// Both notifications enabled by default
+searches.value = response.data.data.map(search => ({
+  ...search,
+  notify_push: search.notify_push ?? true,
+  notify_email: search.notify_email ?? true,
+}))
+```
+
+**3. Conversation.vue - Chat Hang Fix (Optimistic Updates)**
+- **Issue:** Chat UI would freeze for seconds after sending message
+- **Cause:** Textarea was disabled (`:disabled="sending"`) during API call
+- **Fix:** Implemented optimistic updates:
+  1. Removed `:disabled` from textarea
+  2. Show message immediately with temp ID
+  3. Display "Sending..." status for pending messages
+  4. Add subtle opacity (70%) for messages being sent
+  5. Replace temp message with real one after API success
+  6. Re-enable sending immediately after adding temp message
+
+**Key Changes:**
+```javascript
+// Optimistic update - show message immediately
+const tempId = 'temp-' + Date.now()
+const optimisticMessage = {
+  id: tempId,
+  body: messageText,
+  sender_id: currentUserId.value,
+  created_at: new Date().toISOString(),
+  is_read: false,
+  type: 'text',
+}
+messages.value.push(optimisticMessage)
+scrollToBottom()
+sending.value = false  // Re-enable immediately
+```
+
+**Files Modified:**
+- `resources/js/views/ListingDetail.vue` - Added swipe gestures, dots indicator
+- `resources/js/views/dashboard/SavedSearches.vue` - Complete rewrite
+- `resources/js/views/dashboard/Conversation.vue` - Optimistic message updates
+
+**Note:** SSH to server was timing out during this session. Code pushed to GitHub - deploy manually when server is accessible:
+```bash
+ssh lentlo@139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main"
+```
+
+---
+
+*Last Updated: January 2, 2026 (Swipe Images, SavedSearches & Chat Fix)*
