@@ -493,12 +493,28 @@ const openEditModal = (listing) => {
 
 const saveListing = async () => {
   try {
-    await api.put(`/admin/listings/${editingListing.value.id}`, editForm)
+    // Convert reactive editForm to plain object
+    const data = {
+      title: editForm.title,
+      description: editForm.description,
+      price: editForm.price,
+      price_type: editForm.price_type,
+      category_id: editForm.category_id,
+      condition: editForm.condition,
+      city: editForm.city,
+      state: editForm.state,
+      locality: editForm.locality,
+      postal_code: editForm.postal_code,
+      latitude: editForm.latitude,
+      longitude: editForm.longitude,
+    }
+    await api.put(`/admin/listings/${editingListing.value.id}`, data)
     toast.success('Listing updated')
     editingListing.value = null
     fetchListings()
   } catch (error) {
-    toast.error('Failed to update listing')
+    console.error('Save listing error:', error.response?.data || error)
+    toast.error(error.response?.data?.message || 'Failed to update listing')
   }
 }
 

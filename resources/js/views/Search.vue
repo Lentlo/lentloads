@@ -26,8 +26,9 @@
             :class="locationActive ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 hover:bg-gray-50'"
           >
             <MapPinIcon class="w-4 h-4" />
-            <span>{{ locationActive ? 'Near Me' : 'Near Me' }}</span>
+            <span>{{ locationActive && appStore.currentLocation?.city ? appStore.currentLocation.city : 'Near Me' }}</span>
             <span v-if="locationLoading" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <XMarkIcon v-if="locationActive && !locationLoading" class="w-4 h-4" />
           </button>
 
           <!-- Sort -->
@@ -166,8 +167,9 @@
                 :class="locationActive ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 hover:bg-gray-50'"
               >
                 <MapPinIcon class="w-4 h-4" />
-                <span>Near Me</span>
+                <span>{{ locationActive && appStore.currentLocation?.city ? appStore.currentLocation.city : 'Near Me' }}</span>
                 <span v-if="locationLoading" class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                <XMarkIcon v-if="locationActive && !locationLoading" class="w-4 h-4" />
               </button>
 
               <select v-model="filters.sort" @change="fetchListings" class="input w-auto text-sm">
@@ -583,6 +585,7 @@ const handleNearMeClick = () => {
     filters.latitude = null
     filters.longitude = null
     filters.sort = 'newest'
+    localStorage.removeItem('nearMeActive')
     fetchListings()
     return
   }
@@ -594,6 +597,7 @@ const handleNearMeClick = () => {
     filters.longitude = appStore.currentLocation.longitude
     filters.sort = 'nearest'
     locationActive.value = true
+    localStorage.setItem('nearMeActive', 'true')
     fetchListings()
     return
   }
@@ -627,6 +631,7 @@ const requestLocationPermission = () => {
         longitude: position.coords.longitude
       })
 
+      localStorage.setItem('nearMeActive', 'true')
       fetchListings()
       toast.success('Location enabled! Showing nearest listings.')
     },
@@ -670,8 +675,20 @@ onMounted(() => {
   if (query.condition) filters.condition = query.condition
   if (query.sort) filters.sort = query.sort
 
-  // Get IP-based location in background (doesn't require permission)
-  getLocationFromIP()
+  // Load saved location from store
+  appStore.loadSavedLocation()
+
+  // Restore Near Me state if it was active
+  const nearMeWasActive = localStorage.getItem('nearMeActive') === 'true'
+  if (nearMeWasActive && appStore.currentLocation?.latitude && appStore.currentLocation?.longitude) {
+    filters.latitude = appStore.currentLocation.latitude
+    filters.longitude = appStore.currentLocation.longitude
+    filters.sort = 'nearest'
+    locationActive.value = true
+  } else {
+    // Get IP-based location in background (doesn't require permission)
+    getLocationFromIP()
+  }
 
   fetchListings()
 })

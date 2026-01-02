@@ -25,6 +25,13 @@
         </div>
       </router-link>
 
+      <!-- Location Selector (Desktop) -->
+      <button @click="showLocationPicker = true" class="location-btn">
+        <MapPinIcon class="w-5 h-5" />
+        <span class="location-text">{{ currentLocationName }}</span>
+        <ChevronDownIcon class="w-4 h-4" />
+      </button>
+
       <!-- Search Bar - Desktop Only -->
       <div class="search-container">
         <div class="search-box" :class="{ focused: searchFocused }">
@@ -145,8 +152,13 @@
       </div>
     </div>
 
-    <!-- Mobile Search -->
+    <!-- Mobile Search with Location -->
     <div class="mobile-search">
+      <button @click="showLocationPicker = true" class="mobile-location-btn">
+        <MapPinIcon class="w-4 h-4" />
+        <span>{{ shortLocationName }}</span>
+        <ChevronDownIcon class="w-3 h-3" />
+      </button>
       <div class="mobile-search-inner">
         <MagnifyingGlassIcon class="w-5 h-5 text-gray-400 flex-shrink-0" />
         <input
@@ -163,6 +175,75 @@
         </button>
       </div>
     </div>
+
+    <!-- Location Picker Modal -->
+    <div v-if="showLocationPicker" class="location-picker-modal">
+      <div class="location-picker-backdrop" @click="showLocationPicker = false"></div>
+      <div class="location-picker-sheet">
+        <div class="location-picker-header">
+          <h3>Select Location</h3>
+          <button @click="showLocationPicker = false"><XMarkIcon class="w-6 h-6" /></button>
+        </div>
+
+        <!-- Search Cities -->
+        <div class="location-search">
+          <MagnifyingGlassIcon class="w-5 h-5 text-gray-400" />
+          <input
+            v-model="citySearch"
+            type="text"
+            placeholder="Search city, area or locality..."
+            @input="searchCities"
+          />
+        </div>
+
+        <!-- Use Current Location -->
+        <button @click="useCurrentLocation" class="use-location-btn" :disabled="detectingLocation">
+          <div class="use-location-icon">
+            <MapPinIcon class="w-5 h-5" />
+          </div>
+          <div>
+            <span class="use-location-title">{{ detectingLocation ? 'Detecting...' : 'Use current location' }}</span>
+            <span class="use-location-subtitle">Enable GPS for accurate location</span>
+          </div>
+        </button>
+
+        <!-- City Results or Popular Cities -->
+        <div class="location-list">
+          <template v-if="cityResults.length">
+            <div class="location-section-title">Search Results</div>
+            <button
+              v-for="city in cityResults"
+              :key="city.id"
+              @click="selectCity(city)"
+              class="location-item"
+            >
+              <MapPinIcon class="w-4 h-4 text-gray-400" />
+              <div>
+                <span class="location-name">{{ city.name }}</span>
+                <span class="location-state">{{ city.state }}</span>
+              </div>
+            </button>
+          </template>
+          <template v-else>
+            <div class="location-section-title">Popular Cities</div>
+            <div class="popular-cities-grid">
+              <button
+                v-for="city in popularCities"
+                :key="city.id"
+                @click="selectCity(city)"
+                class="popular-city-btn"
+              >
+                {{ city.name }}
+              </button>
+            </div>
+            <button @click="selectAllIndia" class="all-india-btn">
+              <GlobeAltIcon class="w-5 h-5" />
+              <span>All India</span>
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
   </header>
 </template>
 
@@ -170,7 +251,9 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useAppStore } from '@/stores/app'
 import api from '@/services/api'
+import debounce from 'lodash/debounce'
 import {
   PlusIcon,
   BellIcon,
@@ -178,6 +261,8 @@ import {
   ChevronDownIcon,
   Squares2X2Icon,
   ClipboardDocumentListIcon,
+  MapPinIcon,
+  GlobeAltIcon,
   HeartIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
@@ -189,6 +274,7 @@ import {
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const appStore = useAppStore()
 
 const showUserMenu = ref(false)
 const searchQuery = ref('')
@@ -199,9 +285,31 @@ const unreadNotifications = ref(0)
 const unreadMessages = ref(0)
 let searchTimeout = null
 
+// Location picker state
+const showLocationPicker = ref(false)
+const citySearch = ref('')
+const cityResults = ref([])
+const detectingLocation = ref(false)
+const selectedLocation = ref(null)
+
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isAdmin = computed(() => authStore.isAdmin)
 const user = computed(() => authStore.user)
+
+// Popular cities from store
+const popularCities = computed(() => appStore.popularCities?.slice(0, 12) || [])
+
+// Current location display
+const currentLocationName = computed(() => {
+  const loc = selectedLocation.value || appStore.currentLocation
+  if (loc?.city) return loc.city
+  return 'All India'
+})
+
+const shortLocationName = computed(() => {
+  const name = currentLocationName.value
+  return name.length > 12 ? name.substring(0, 12) + '...' : name
+})
 
 const fetchUnreadCounts = async () => {
   if (!isAuthenticated.value) return
@@ -277,9 +385,75 @@ const closeMenu = (e) => {
   }
 }
 
+// Location picker functions
+const searchCities = debounce(async () => {
+  if (citySearch.value.length < 2) {
+    cityResults.value = []
+    return
+  }
+  try {
+    const res = await api.get('/locations/search-cities', { params: { q: citySearch.value } })
+    cityResults.value = res.data.data || []
+  } catch (e) {
+    cityResults.value = []
+  }
+}, 300)
+
+const selectCity = (city) => {
+  selectedLocation.value = {
+    city: city.name,
+    state: city.state,
+    latitude: city.latitude,
+    longitude: city.longitude,
+  }
+  // Save to localStorage for persistence
+  localStorage.setItem('selectedCity', JSON.stringify(selectedLocation.value))
+  appStore.setLocation(selectedLocation.value)
+  showLocationPicker.value = false
+  citySearch.value = ''
+  cityResults.value = []
+  // Navigate to search with city filter
+  router.push({ path: '/search', query: { city: city.name } })
+}
+
+const selectAllIndia = () => {
+  selectedLocation.value = null
+  localStorage.removeItem('selectedCity')
+  showLocationPicker.value = false
+  router.push({ path: '/search' })
+}
+
+const useCurrentLocation = async () => {
+  detectingLocation.value = true
+  try {
+    await appStore.detectLocation()
+    if (appStore.currentLocation?.city) {
+      selectedLocation.value = appStore.currentLocation
+      localStorage.setItem('selectedCity', JSON.stringify(appStore.currentLocation))
+      showLocationPicker.value = false
+      router.push({ path: '/search', query: { city: appStore.currentLocation.city } })
+    }
+  } catch (e) {
+    console.error('Location detection failed:', e)
+  } finally {
+    detectingLocation.value = false
+  }
+}
+
+// Load saved city on init
+const loadSavedCity = () => {
+  const saved = localStorage.getItem('selectedCity')
+  if (saved) {
+    try {
+      selectedLocation.value = JSON.parse(saved)
+    } catch (e) {}
+  }
+}
+
 let countInterval = null
 
 onMounted(() => {
+  loadSavedCity()
   document.addEventListener('click', closeMenu)
   if (isAuthenticated.value) {
     fetchUnreadCounts()
@@ -786,5 +960,272 @@ watch(() => route.query.q, (newQ) => {
 
 .mobile-search-btn:active {
   background: #4f46e5;
+}
+
+/* Location Button (Desktop) */
+.location-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+@media (min-width: 768px) {
+  .location-btn {
+    display: flex;
+  }
+}
+
+.location-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.location-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile Location Button */
+.mobile-location-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.mobile-location-btn span {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Location Picker Modal */
+.location-picker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .location-picker-modal {
+    align-items: center;
+  }
+}
+
+.location-picker-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.location-picker-sheet {
+  position: relative;
+  background: white;
+  width: 100%;
+  max-height: 85vh;
+  border-radius: 1rem 1rem 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slide-up 0.3s ease-out;
+}
+
+@media (min-width: 640px) {
+  .location-picker-sheet {
+    max-width: 28rem;
+    max-height: 70vh;
+    border-radius: 1rem;
+  }
+}
+
+.location-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.location-picker-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.location-picker-header button {
+  padding: 4px;
+  color: #6b7280;
+}
+
+.location-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 1rem;
+  padding: 10px 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.location-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 15px;
+}
+
+.use-location-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 1rem;
+  padding: 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.use-location-btn:hover:not(:disabled) {
+  background: #dcfce7;
+}
+
+.use-location-btn:disabled {
+  opacity: 0.7;
+}
+
+.use-location-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #22c55e;
+  color: white;
+  border-radius: 50%;
+}
+
+.use-location-title {
+  display: block;
+  font-weight: 600;
+  color: #166534;
+  font-size: 14px;
+}
+
+.use-location-subtitle {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.location-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 16px));
+}
+
+.location-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.location-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  text-align: left;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.location-item:hover {
+  background: #f3f4f6;
+}
+
+.location-name {
+  display: block;
+  font-weight: 500;
+  color: #111827;
+}
+
+.location-state {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.popular-cities-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.popular-city-btn {
+  padding: 10px 8px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.popular-city-btn:hover {
+  background: #6366f1;
+  color: white;
+}
+
+.all-india-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.all-india-btn:hover {
+  background: #e5e7eb;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 </style>
