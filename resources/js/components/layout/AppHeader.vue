@@ -65,16 +65,16 @@
       <!-- Right Actions -->
       <div class="header-right">
         <!-- Notifications -->
-        <button
+        <router-link
           v-if="isAuthenticated"
-          @click="$router.push('/notifications')"
+          to="/notifications"
           class="icon-btn"
         >
           <BellIcon class="w-5 h-5" />
           <span v-if="unreadNotifications > 0" class="notif-badge">
             {{ unreadNotifications > 9 ? '9+' : unreadNotifications }}
           </span>
-        </button>
+        </router-link>
 
         <!-- Messages -->
         <router-link v-if="isAuthenticated" to="/messages" class="icon-btn">

@@ -48,6 +48,10 @@
                 </div>
                 <span class="rating-text">{{ user.rating || '0.0' }}</span>
                 <span class="reviews-count">• {{ user.reviews_count || 0 }} reviews</span>
+                <button v-if="!isOwnProfile && isAuthenticated" @click="showReviewModal = true" class="write-review-btn">
+                  <PencilSquareIcon class="w-4 h-4" />
+                  <span>Write Review</span>
+                </button>
                 <button v-if="!isOwnProfile" @click="showReportModal = true" class="report-user">
                   <FlagIcon class="w-4 h-4" />
                 </button>
@@ -149,6 +153,85 @@
 
     <!-- Report Modal -->
     <ReportModal v-if="showReportModal" type="user" :item-id="user?.id" @close="showReportModal = false" />
+
+    <!-- Review Modal -->
+    <Teleport to="body">
+      <div v-if="showReviewModal" class="review-modal-overlay" @click.self="showReviewModal = false">
+        <div class="review-modal">
+          <div class="review-modal-header">
+            <h3>Review {{ user?.name }}</h3>
+            <button @click="showReviewModal = false" class="close-btn">
+              <XMarkIcon class="w-5 h-5" />
+            </button>
+          </div>
+
+          <form @submit.prevent="submitReview" class="review-form">
+            <!-- Rating -->
+            <div class="form-group">
+              <label>Rating</label>
+              <div class="rating-input">
+                <button
+                  v-for="i in 5"
+                  :key="i"
+                  type="button"
+                  @click="reviewForm.rating = i"
+                  @mouseenter="hoverRating = i"
+                  @mouseleave="hoverRating = 0"
+                  class="star-btn"
+                >
+                  <StarIcon
+                    class="w-8 h-8"
+                    :class="i <= (hoverRating || reviewForm.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'"
+                  />
+                </button>
+              </div>
+              <span v-if="reviewForm.rating" class="rating-label">{{ ratingLabels[reviewForm.rating - 1] }}</span>
+            </div>
+
+            <!-- Review Type -->
+            <div class="form-group">
+              <label>I'm reviewing as a</label>
+              <div class="type-buttons">
+                <button
+                  type="button"
+                  @click="reviewForm.type = 'buyer'"
+                  :class="{ active: reviewForm.type === 'buyer' }"
+                >
+                  Buyer
+                </button>
+                <button
+                  type="button"
+                  @click="reviewForm.type = 'seller'"
+                  :class="{ active: reviewForm.type === 'seller' }"
+                >
+                  Seller
+                </button>
+              </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="form-group">
+              <label>Comment (optional)</label>
+              <textarea
+                v-model="reviewForm.comment"
+                placeholder="Share your experience with this user..."
+                rows="4"
+                maxlength="1000"
+              ></textarea>
+              <span class="char-count">{{ reviewForm.comment.length }}/1000</span>
+            </div>
+
+            <!-- Error Message -->
+            <p v-if="reviewError" class="error-message">{{ reviewError }}</p>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn" :disabled="!reviewForm.rating || submittingReview">
+              {{ submittingReview ? 'Submitting...' : 'Submit Review' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -168,6 +251,8 @@ import {
   CheckIcon,
   FlagIcon,
   ShoppingBagIcon,
+  PencilSquareIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -181,7 +266,18 @@ const listings = ref([])
 const reviews = ref([])
 const activeTab = ref('listings')
 const showReportModal = ref(false)
+const showReviewModal = ref(false)
+const hoverRating = ref(0)
+const submittingReview = ref(false)
+const reviewError = ref('')
+const reviewForm = ref({
+  rating: 0,
+  type: 'buyer',
+  comment: ''
+})
+const ratingLabels = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
 
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isOwnProfile = computed(() => authStore.user?.id === user.value?.id)
 const responseRate = computed(() => Math.round(user.value?.response_rate || 0))
 
@@ -228,6 +324,41 @@ const fetchReviews = async () => {
     reviews.value = response.data.data
   } finally {
     loadingReviews.value = false
+  }
+}
+
+const submitReview = async () => {
+  if (!reviewForm.value.rating) return
+
+  submittingReview.value = true
+  reviewError.value = ''
+
+  try {
+    await api.post('/reviews', {
+      reviewed_id: user.value.id,
+      rating: reviewForm.value.rating,
+      type: reviewForm.value.type,
+      comment: reviewForm.value.comment || null
+    })
+
+    // Reset form and close modal
+    showReviewModal.value = false
+    reviewForm.value = { rating: 0, type: 'buyer', comment: '' }
+
+    // Refresh reviews if on reviews tab
+    if (activeTab.value === 'reviews') {
+      fetchReviews()
+    } else {
+      // Clear cached reviews so they'll be fetched fresh
+      reviews.value = []
+    }
+
+    // Refresh user data to update rating
+    fetchUser()
+  } catch (error) {
+    reviewError.value = error.response?.data?.message || 'Failed to submit review. Please try again.'
+  } finally {
+    submittingReview.value = false
   }
 }
 
@@ -597,5 +728,208 @@ onMounted(() => {
   background: white;
   padding: 24px;
   border-radius: 12px;
+}
+
+/* Write Review Button */
+.write-review-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+
+.write-review-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 640px) {
+  .write-review-btn span {
+    display: none;
+  }
+  .write-review-btn {
+    padding: 6px;
+    margin-left: 4px;
+  }
+}
+
+/* Review Modal */
+.review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.review-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modal-enter 0.2s ease-out;
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.review-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.review-modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.close-btn {
+  padding: 4px;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #1f2937;
+}
+
+.review-form {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.rating-input {
+  display: flex;
+  gap: 4px;
+}
+
+.star-btn {
+  padding: 2px;
+  transition: transform 0.15s;
+}
+
+.star-btn:hover {
+  transform: scale(1.15);
+}
+
+.rating-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.type-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.type-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.type-buttons button:hover {
+  border-color: #d1d5db;
+}
+
+.type-buttons button.active {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.2s;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 14px;
+  margin-bottom: 16px;
+  padding: 10px;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
