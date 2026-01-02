@@ -281,15 +281,19 @@
               </select>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="label">City</label>
-              <input v-model="editForm.city" class="input" />
-            </div>
-            <div>
-              <label class="label">State</label>
-              <input v-model="editForm.state" class="input" />
-            </div>
+          <!-- Location Picker -->
+          <div>
+            <label class="label">Location</label>
+            <LocationPicker
+              v-model:latitude="editForm.latitude"
+              v-model:longitude="editForm.longitude"
+              v-model:locality="editForm.locality"
+              v-model:city="editForm.city"
+              v-model:state="editForm.state"
+              v-model:postalCode="editForm.postal_code"
+              :initialLatitude="editForm.latitude"
+              :initialLongitude="editForm.longitude"
+            />
           </div>
           <div class="flex gap-2 pt-4">
             <button @click="editingListing = null" class="btn-secondary flex-1">
@@ -359,6 +363,7 @@ import {
   HeartIcon,
   ArrowTopRightOnSquareIcon,
 } from '@heroicons/vue/24/outline'
+import LocationPicker from '@/components/common/LocationPicker.vue'
 
 const appStore = useAppStore()
 
@@ -382,6 +387,10 @@ const editForm = reactive({
   condition: '',
   city: '',
   state: '',
+  locality: '',
+  postal_code: '',
+  latitude: null,
+  longitude: null,
 })
 
 // Reject modal
@@ -474,8 +483,12 @@ const openEditModal = (listing) => {
   editForm.price_type = listing.price_type
   editForm.category_id = listing.category_id
   editForm.condition = listing.condition || ''
-  editForm.city = listing.city
+  editForm.city = listing.city || ''
   editForm.state = listing.state || ''
+  editForm.locality = listing.locality || ''
+  editForm.postal_code = listing.postal_code || ''
+  editForm.latitude = listing.latitude ? parseFloat(listing.latitude) : null
+  editForm.longitude = listing.longitude ? parseFloat(listing.longitude) : null
 }
 
 const saveListing = async () => {
