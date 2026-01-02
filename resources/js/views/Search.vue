@@ -3,8 +3,8 @@
     <div class="container-app py-4">
       <!-- Mobile Search Header -->
       <div class="lg:hidden mb-4">
-        <!-- Main controls row -->
-        <div class="flex items-center gap-2 mb-2">
+        <!-- Main controls row - horizontally scrollable -->
+        <div class="flex items-center gap-2 mb-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
           <!-- Filters Button -->
           <button
             @click="showFilters = true"
@@ -33,7 +33,7 @@
           </button>
 
           <!-- Sort -->
-          <div class="relative flex-shrink-0 ml-auto">
+          <div class="relative flex-shrink-0">
             <select
               v-model="filters.sort"
               @change="fetchListings"
