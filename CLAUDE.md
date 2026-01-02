@@ -1573,4 +1573,45 @@ ssh lentlo@139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && 
 
 ---
 
-*Last Updated: January 2, 2026 (Guest Listing Flow Fix)*
+### Session: January 2, 2026 (Auth Modal Z-Index Fix)
+
+**Issue Reported:**
+- Auth modal ("Almost Done!" popup) was appearing BEHIND the bottom action bar (Back/Post Ad buttons)
+- User couldn't see the Continue button in the modal because it was hidden by the fixed bottom buttons
+
+**Root Cause:**
+- Both the modal (`z-50`) and bottom action bar (`z-50`) had the same z-index
+- On mobile, the bottom bar was rendering on top of the modal
+
+**Fix Applied:**
+
+1. **AuthPromptModal.vue - Increased z-index to 9999**
+   ```css
+   .auth-modal-overlay {
+     position: fixed;
+     inset: 0;
+     z-index: 9999;  /* Much higher than bottom bar's z-50 */
+     display: flex;
+     align-items: flex-end;
+     justify-content: center;
+   }
+   ```
+
+2. **Custom CSS classes** replacing Tailwind inline classes:
+   - `.auth-modal-overlay` - Full screen overlay with z-index 9999
+   - `.auth-modal-backdrop` - Semi-transparent black background
+   - `.auth-modal-content` - White modal box with rounded corners
+
+**Z-Index Hierarchy:**
+- Auth Modal: `9999` (highest - always on top)
+- Bottom Action Bar: `50`
+- Header: `40`
+
+**Files Modified:**
+- `resources/js/components/common/AuthPromptModal.vue` - New CSS classes with z-index 9999
+
+**Deploy Status:** ✅ Deployed & Tested
+
+---
+
+*Last Updated: January 2, 2026 (Auth Modal Z-Index Fix)*
