@@ -956,4 +956,73 @@ POST /api/v1/auth/quick-register // Register new user with phone, email, passwor
 
 ---
 
-*Last Updated: January 2, 2026 (Mobile UX Restructure Session)*
+### Session: January 2, 2026 (UI Polish & Card Redesign)
+
+**Issues Fixed:**
+
+1. **Extra Gap After Keyboard Closes (Search Page)**
+   - **Issue:** Blue gap appearing after mobile keyboard closes
+   - **Fix:** Added `min-height: 100dvh` to search page container using new `.search-page` class
+   - **File:** `resources/js/views/Search.vue`
+
+2. **Chat Send Button Misaligned**
+   - **Issue:** Send button appeared slightly below the text input field
+   - **Fix:** Changed `items-end` to `items-center` in form flex container
+   - **Fix:** Made buttons fixed 44x44px (w-11 h-11) for consistent alignment
+   - **Fix:** Reduced textarea padding for visual alignment
+   - **File:** `resources/js/views/dashboard/Conversation.vue`
+
+3. **Removed Count from Filter Button**
+   - **Issue:** "Show 15 Results" was cluttered
+   - **Fix:** Changed to just "Show Results" (no dynamic count)
+   - **File:** `resources/js/views/Search.vue` line 279
+
+4. **Listing Cards Redesign (Major)**
+   - **Issues:**
+     - "(Negotiable)" text cluttered price display
+     - "Like_new" showed with underscore instead of "Like New"
+     - Location text overlapping, truncation issues
+     - Cards looked messy and unattractive
+
+   - **Fixes Applied:**
+     - Created new scoped CSS (no Tailwind utility classes spam)
+     - Square 1:1 aspect ratio images
+     - Clean price display without "(Negotiable)"
+     - Properly formatted condition badge: "Like New", "Good", etc.
+     - Shortened location (city only, max 15 chars)
+     - Better typography hierarchy
+     - Subtle hover effects with elevation change
+     - Featured/Urgent badges with gradient backgrounds
+     - Favorite button appears on hover
+
+   - **File:** `resources/js/components/common/ListingCard.vue` (complete rewrite)
+
+**ListingCard.vue Key Changes:**
+```javascript
+// Clean price (removes Negotiable text)
+const displayPrice = computed(() => {
+  const formatted = props.listing.formatted_price
+  return formatted.replace(/\s*\(Negotiable\)/gi, '').trim()
+})
+
+// Format condition properly
+const formattedCondition = computed(() => {
+  const conditionMap = {
+    'new': 'New',
+    'like_new': 'Like New',
+    'good': 'Good',
+    'fair': 'Fair'
+  }
+  return conditionMap[condition.toLowerCase()] || condition.replace(/_/g, ' ')
+})
+
+// Shorter location for cards
+const shortLocation = computed(() => {
+  const city = loc.split(',')[0].trim()
+  return city.length > 15 ? city.substring(0, 15) + '...' : city
+})
+```
+
+---
+
+*Last Updated: January 2, 2026 (UI Polish & Card Redesign)*
