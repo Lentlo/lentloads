@@ -52,7 +52,7 @@ class ReviewController extends Controller
         // Check if already reviewed
         $exists = Review::where('reviewer_id', auth()->id())
             ->where('reviewed_id', $validated['reviewed_id'])
-            ->when($validated['listing_id'], fn($q) => $q->where('listing_id', $validated['listing_id']))
+            ->when($validated['listing_id'] ?? null, fn($q) => $q->where('listing_id', $validated['listing_id']))
             ->where('type', $validated['type'])
             ->exists();
 
