@@ -136,8 +136,21 @@ class Listing extends Model
             ?? $this->images()->first();
 
         if ($image) {
-            return asset('storage/' . $image->path);
+            // Check which file exists and return the best available
+            $disk = \Illuminate\Support\Facades\Storage::disk('public');
+
+            // Try medium first (best for cards), then thumbnail, then original
+            if ($image->medium && $disk->exists($image->medium)) {
+                return asset('storage/' . $image->medium);
+            }
+            if ($image->thumbnail && $disk->exists($image->thumbnail)) {
+                return asset('storage/' . $image->thumbnail);
+            }
+            if ($image->path && $disk->exists($image->path)) {
+                return asset('storage/' . $image->path);
+            }
         }
+
         // Use placeholder with category color
         $colors = ['3B82F6', '10B981', 'F59E0B', 'EF4444', '8B5CF6', 'EC4899'];
         $color = $colors[$this->category_id % count($colors)] ?? '6B7280';
