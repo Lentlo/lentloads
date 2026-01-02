@@ -151,7 +151,7 @@ const submitReport = async () => {
 .report-modal {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 60;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -177,8 +177,10 @@ const submitReport = async () => {
   border-radius: 1rem 1rem 0 0;
   display: flex;
   flex-direction: column;
-  max-height: 80vh;
-  max-height: 80dvh;
+  max-height: 70vh;
+  max-height: 70dvh;
+  /* Position above mobile nav */
+  margin-bottom: calc(60px + env(safe-area-inset-bottom, 8px));
   animation: slide-up 0.3s ease-out;
 }
 
@@ -187,6 +189,14 @@ const submitReport = async () => {
     border-radius: 1rem;
     max-height: 85vh;
     max-height: 85dvh;
+    margin-bottom: 0;
+  }
+}
+
+/* Desktop - no mobile nav */
+@media (min-width: 768px) {
+  .report-sheet {
+    margin-bottom: 0;
   }
 }
 
@@ -213,15 +223,8 @@ const submitReport = async () => {
   padding: 1rem;
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
+  border-radius: 0 0 1rem 1rem;
   flex-shrink: 0;
-  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
-}
-
-@media (min-width: 640px) {
-  .report-actions {
-    border-radius: 0 0 1rem 1rem;
-    padding-bottom: 1rem;
-  }
 }
 
 @keyframes slide-up {

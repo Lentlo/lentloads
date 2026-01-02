@@ -31,7 +31,7 @@
       @authenticated="onAuthenticated"
     />
 
-    <div class="container-app py-4 pb-24 max-w-2xl">
+    <div class="container-app py-4 pb-20 max-w-2xl">
       <!-- Step 1: Category -->
       <div v-if="currentStep === 1" class="space-y-4">
         <div class="text-center mb-6">
@@ -458,8 +458,13 @@ onMounted(() => {
   right: 0;
   background: white;
   border-top: 1px solid #e5e7eb;
-  padding: 12px 0;
-  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
-  z-index: 40;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+}
+
+/* Ensure no extra padding from parent on this page */
+:deep(.main-content) {
+  padding-bottom: 0 !important;
 }
 </style>

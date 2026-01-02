@@ -1,6 +1,6 @@
 <template>
-  <div class="conversation-container">
-    <!-- Fixed Header -->
+  <div class="conversation-page">
+    <!-- Sticky Header -->
     <header class="conversation-header">
       <div class="flex items-center gap-3 px-4 py-3">
         <button @click="$router.push('/messages')" class="p-2 -ml-2 hover:bg-gray-100 rounded-full">
@@ -431,15 +431,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.conversation-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.conversation-page {
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  height: -webkit-fill-available;
   background: #f3f4f6;
+  overflow: hidden;
 }
 
 .conversation-header {
@@ -450,7 +449,6 @@ onUnmounted(() => {
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
-  padding-top: env(safe-area-inset-top, 0);
 }
 
 .messages-area {
@@ -459,6 +457,8 @@ onUnmounted(() => {
   overflow-x: hidden;
   padding: 16px;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  min-height: 0;
 }
 
 .conversation-input {
@@ -476,17 +476,10 @@ onUnmounted(() => {
   padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
 }
 
-/* Ensure the container uses full viewport height including dynamic parts */
-@supports (height: 100dvh) {
-  .conversation-container {
-    height: 100dvh;
-  }
-}
-
-@supports not (height: 100dvh) {
-  .conversation-container {
-    height: 100vh;
-    height: -webkit-fill-available;
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .conversation-page {
+    min-height: -webkit-fill-available;
   }
 }
 </style>

@@ -183,7 +183,7 @@
 
     <!-- Mobile Filters Modal -->
     <div v-if="showFilters" class="filter-modal lg:hidden">
-      <div class="filter-backdrop" @click="showFilters = false"></div>
+      <div class="filter-backdrop" @click="applyFilters"></div>
 
       <div class="filter-sheet">
         <!-- Header -->
@@ -191,7 +191,7 @@
           <h3 class="text-lg font-semibold">Filters</h3>
           <div class="flex items-center gap-2">
             <button @click="resetFilters" class="text-sm text-primary-600 font-medium">Clear all</button>
-            <button @click="showFilters = false" class="p-2 hover:bg-gray-100 rounded-full">
+            <button @click="applyFilters" class="p-2 hover:bg-gray-100 rounded-full">
               <XMarkIcon class="w-5 h-5" />
             </button>
           </div>
@@ -276,7 +276,7 @@
             <BookmarkIcon class="w-4 h-4" />
           </button>
           <button @click="applyFilters" class="btn-primary flex-1">
-            Show Results
+            Show {{ total > 0 ? total.toLocaleString() + ' ' : '' }}Results
           </button>
         </div>
       </div>
@@ -519,7 +519,7 @@ watch(() => route.query, (newQuery) => {
 .filter-modal {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 60;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -538,9 +538,18 @@ watch(() => route.query, (newQuery) => {
   border-radius: 1rem 1rem 0 0;
   display: flex;
   flex-direction: column;
-  max-height: 80vh;
-  max-height: 80dvh;
+  max-height: 70vh;
+  max-height: 70dvh;
+  /* Position above mobile nav */
+  margin-bottom: calc(60px + env(safe-area-inset-bottom, 8px));
   animation: slide-up 0.3s ease-out;
+}
+
+/* Desktop - no mobile nav */
+@media (min-width: 768px) {
+  .filter-sheet {
+    margin-bottom: 0;
+  }
 }
 
 .filter-header {
@@ -566,8 +575,8 @@ watch(() => route.query, (newQuery) => {
   padding: 1rem;
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
+  border-radius: 0 0 1rem 1rem;
   flex-shrink: 0;
-  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
 }
 
 @keyframes slide-up {

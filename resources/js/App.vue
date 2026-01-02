@@ -1,11 +1,11 @@
 <template>
-  <div id="app" class="min-h-screen flex flex-col">
+  <div id="app" class="min-h-screen flex flex-col" :class="{ 'has-mobile-nav': showMobileNav }">
     <!-- Header - hide on conversation/create-listing page for mobile -->
     <AppHeader v-if="!isAdminRoute && !((isConversationPage || isCreateListingPage) && isMobile)" />
     <AdminHeader v-else-if="isAuthenticated && isAdmin" />
 
     <!-- Main Content -->
-    <main class="flex-1" :class="showMobileNav ? 'pb-20' : ''">
+    <main class="flex-1 main-content">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -16,8 +16,8 @@
     <!-- Footer - hide on mobile (has bottom nav) and conversation page -->
     <AppFooter v-if="!isAdminRoute && !isConversationPage && !isMobile" />
 
-    <!-- Mobile Bottom Navigation - hide on conversation/create-listing page -->
-    <MobileNav v-if="!isAdminRoute && isMobile && !isConversationPage && !isCreateListingPage" />
+    <!-- Mobile Bottom Navigation -->
+    <MobileNav v-if="showMobileNav" />
 
     <!-- PWA Install Prompt -->
     <PWAInstallPrompt v-if="showInstallPrompt" @dismiss="showInstallPrompt = false" />
@@ -91,5 +91,15 @@ onMounted(async () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Mobile nav height CSS variable */
+:root {
+  --mobile-nav-height: calc(60px + env(safe-area-inset-bottom, 8px));
+}
+
+/* When mobile nav is present, add bottom padding to main content */
+.has-mobile-nav .main-content {
+  padding-bottom: var(--mobile-nav-height);
 }
 </style>

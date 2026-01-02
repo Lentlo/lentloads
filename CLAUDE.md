@@ -555,7 +555,173 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 
 ---
 
+## Mobile-First Design Patterns (CRITICAL REFERENCE)
+
+### Bottom Sheet Modal Pattern
+Used for: ReportModal, Search Filters, Offer Modal, Save Search Modal
+
+```css
+.modal-container {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;  /* Mobile: slides up from bottom */
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .modal-container { align-items: center; }  /* Desktop: centered */
+}
+
+.modal-sheet {
+  position: relative;
+  background: white;
+  width: 100%;
+  max-width: 28rem;
+  border-radius: 1rem 1rem 0 0;  /* Rounded top only on mobile */
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  max-height: 80dvh;  /* dvh = dynamic viewport height (handles iOS keyboard) */
+}
+
+.modal-header { flex-shrink: 0; }  /* Never shrink */
+.modal-content { flex: 1; overflow-y: auto; min-height: 0; }  /* Scrollable */
+.modal-actions {
+  flex-shrink: 0;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));  /* Safe area for iOS home bar */
+}
+```
+
+### Full-Screen Chat Layout (Conversation.vue)
+```css
+.conversation-container {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.conversation-header {
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  padding-top: env(safe-area-inset-top, 0);  /* iOS notch */
+}
+
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.conversation-input {
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));  /* iOS home bar */
+}
+
+/* Use dvh for proper mobile viewport */
+@supports (height: 100dvh) { .conversation-container { height: 100dvh; } }
+```
+
+### Fixed Bottom Action Bar Pattern (CreateListing, etc.)
+```css
+.bottom-actions {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 12px 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  z-index: 40;
+}
+```
+**IMPORTANT:** Content area needs `pb-24` to prevent overlap with fixed bottom bar.
+
+### MobileNav Visibility (App.vue)
+```javascript
+const showMobileNav = computed(() =>
+  !isAdminRoute.value &&
+  isMobile.value &&
+  !isConversationPage.value &&
+  !isCreateListingPage.value  // Hide nav on these pages
+)
+```
+When mobile nav is visible, main content needs `pb-20`:
+```vue
+<main class="flex-1" :class="showMobileNav ? 'pb-20' : ''">
+```
+
+### Safe Area CSS Reference
+```css
+/* iOS status bar (notch) */
+padding-top: env(safe-area-inset-top, 0);
+
+/* iOS home indicator bar */
+padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+
+/* Dynamic viewport height (handles iOS keyboard) */
+max-height: 80dvh;  /* With fallback: */
+max-height: 80vh;
+max-height: 80dvh;
+```
+
+---
+
 ## Session Notes
+
+### Session: January 2, 2026 (Mobile UX Restructure - MAJOR)
+
+**Issues Reported:**
+1. Chat message input not sticky at bottom (goes below sometimes)
+2. Search filters not being honored + button hidden in filter popup
+3. Report modal submit button impossible to click
+4. CreateListing continue button has abnormal space below
+
+**Complete Restructures Done:**
+
+**1. Conversation.vue - Full Rewrite**
+- Changed from flexbox hacks to proper fixed container with CSS layout
+- Uses `position: fixed; inset: 0;` as container
+- Header uses `position: sticky; top: 0;`
+- Input uses `position: sticky; bottom: 0;`
+- Messages area scrolls between with `flex: 1; overflow-y: auto;`
+- Uses `100dvh` for dynamic viewport height (handles iOS keyboard)
+- Added resize event listener to scroll to bottom on keyboard open
+
+**2. Search.vue - Filter Modal Rewrite**
+- Created new CSS classes: `.filter-modal`, `.filter-sheet`, `.filter-header`, `.filter-content`, `.filter-actions`
+- Uses `max-height: 80dvh` for proper mobile height
+- Actions always visible at bottom with safe-area-inset
+- Changed from calling store to calling API directly (fixed filter merging issue)
+- Fixed price range comparison using `String()` for proper comparison
+
+**3. ReportModal.vue - Complete Rewrite**
+- New CSS classes: `.report-modal`, `.report-sheet`, `.report-header`, `.report-content`, `.report-actions`
+- Responsive: bottom sheet on mobile, centered modal on desktop
+- Uses `max-height: 80dvh` with flex layout
+- Actions fixed at bottom with safe-area-inset support
+- Scrollable content area with `min-height: 0` for proper flex behavior
+
+**4. CreateListing.vue - Spacing Fix**
+- Removed 80px mobile padding (was assuming mobile nav exists, but it doesn't on this page)
+- Uses `.bottom-actions` CSS class with proper fixed positioning
+- Only uses safe-area-inset-bottom, no extra padding
+- Content has `pb-24` to prevent overlap with fixed bottom bar
+
+**Key CSS Patterns Established:**
+- Always use `flex-shrink: 0` on header/footer elements
+- Always use `flex: 1; min-height: 0; overflow-y: auto;` on scrollable content
+- Always use `max-height: 80dvh` (with vh fallback) for modals
+- Always use `padding-bottom: max(Xpx, env(safe-area-inset-bottom, Xpx))` for bottom elements
+- Use `position: fixed; inset: 0;` for full-screen layouts
+
+**Deploy:** Webhook at `https://phplaravel-1016958-6108537.cloudwaysapps.com/deploy.php?token=07d5b8cee9e561ce7305fa2a489d0aaa55b77734`
+
+---
 
 ### Session: January 2, 2026 (Guest Listing Flow & Auth Modal)
 
@@ -790,4 +956,4 @@ POST /api/v1/auth/quick-register // Register new user with phone, email, passwor
 
 ---
 
-*Last Updated: January 2, 2026*
+*Last Updated: January 2, 2026 (Mobile UX Restructure Session)*
