@@ -25,6 +25,7 @@
             :alt="listing.title"
             class="main-image"
             :style="{ transform: `translateX(${swipeOffset}px)` }"
+            @error="handleImageError"
           />
 
           <!-- Image Counter -->
@@ -235,6 +236,7 @@
           :alt="listing.title"
           class="lightbox-image"
           :style="{ transform: `scale(${zoomLevel}) translate(${panX}px, ${panY}px)` }"
+          @error="handleImageError"
           @touchstart="handleTouchStart"
           @touchmove="handleTouchMove"
           @touchend="handleTouchEnd"
@@ -398,6 +400,22 @@ const nextImage = () => {
     ? currentImageIndex.value + 1
     : 0
   resetZoom()
+}
+
+// Handle broken images - fallback to thumbnail or placeholder
+const handleImageError = (e) => {
+  const img = e.target
+  const currentImg = listing.value?.images?.[currentImageIndex.value]
+
+  // Try medium_url first, then thumbnail_url, then a placeholder
+  if (currentImg?.medium_url && img.src !== currentImg.medium_url) {
+    img.src = currentImg.medium_url
+  } else if (currentImg?.thumbnail_url && img.src !== currentImg.thumbnail_url) {
+    img.src = currentImg.thumbnail_url
+  } else {
+    // Final fallback - placeholder
+    img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#f3f4f6" width="400" height="300"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-size="16">Image not available</text></svg>')
+  }
 }
 
 const openLightbox = () => {
