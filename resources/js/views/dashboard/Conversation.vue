@@ -229,7 +229,13 @@ const formatDate = (d) => {
 const scrollDown = () => {
   nextTick(() => {
     if (messagesArea.value) {
-      messagesArea.value.scrollTop = messagesArea.value.scrollHeight
+      // Use requestAnimationFrame to ensure DOM is fully rendered
+      requestAnimationFrame(() => {
+        messagesArea.value.scrollTo({
+          top: messagesArea.value.scrollHeight,
+          behavior: 'auto'
+        })
+      })
     }
   })
 }
@@ -360,31 +366,30 @@ onMounted(load)
   bottom: 0;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #f3f4f6;
   z-index: 50;
+  overflow: hidden;
 }
 
-/* ==================== STUNNING HEADER ==================== */
+/* ==================== HEADER - FIXED AT TOP ==================== */
 .chat-header {
   position: relative;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+  background: white;
   padding-top: env(safe-area-inset-top, 0);
-  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
 }
 
 .header-bg {
-  position: absolute;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  display: none;
 }
 
 .header-content {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 16px;
 }
 
 .back-btn {
@@ -393,17 +398,13 @@ onMounted(load)
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  color: white;
+  color: #374151;
+  border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s;
 }
 
 .back-btn:active {
-  transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.3);
+  background: #f3f4f6;
 }
 
 .user-section {
@@ -418,9 +419,7 @@ onMounted(load)
 
 .avatar-ring {
   position: relative;
-  padding: 3px;
-  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
-  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .avatar {
@@ -428,19 +427,18 @@ onMounted(load)
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  display: block;
+  border: 2px solid #e5e7eb;
 }
 
 .online-indicator {
   position: absolute;
-  bottom: 3px;
-  right: 3px;
-  width: 14px;
-  height: 14px;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
   background: #22c55e;
-  border: 3px solid white;
+  border: 2px solid white;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5);
 }
 
 .user-details {
@@ -448,13 +446,12 @@ onMounted(load)
 }
 
 .user-details h1 {
-  font-size: 17px;
-  font-weight: 700;
-  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .status {
@@ -465,27 +462,21 @@ onMounted(load)
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
-  background: #4ade80;
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
   border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.1); }
 }
 
 .status span {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #22c55e;
   font-weight: 500;
 }
 
 .header-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .header-btn {
@@ -494,27 +485,22 @@ onMounted(load)
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  color: white;
+  color: #6b7280;
+  border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s;
 }
 
 .header-btn:active {
-  transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.3);
+  background: #f3f4f6;
 }
 
 .header-btn.phone {
-  background: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
 }
 
 /* Product Strip */
 .product-strip {
-  position: relative;
-  padding: 0 16px 12px;
+  padding: 0 16px 10px;
 }
 
 .product-card {
@@ -522,25 +508,21 @@ onMounted(load)
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 14px;
+  background: #f3f4f6;
+  border-radius: 12px;
   text-decoration: none;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.2s;
 }
 
 .product-card:active {
-  transform: scale(0.98);
+  background: #e5e7eb;
 }
 
 .product-img {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
   object-fit: cover;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .product-info {
@@ -550,29 +532,22 @@ onMounted(load)
 
 .product-name {
   font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
+  font-weight: 500;
+  color: #374151;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .product-price {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: #7c3aed;
+  color: #6366f1;
   margin-top: 2px;
 }
 
 .product-arrow {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f3f4f6;
-  border-radius: 8px;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 /* ==================== DROPDOWN MENU ==================== */
@@ -705,10 +680,9 @@ onMounted(load)
 }
 
 .msg-wrapper.sent .msg-bubble {
-  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  background: #6366f1;
   color: white;
-  border-bottom-right-radius: 6px;
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+  border-bottom-right-radius: 4px;
 }
 
 .msg-wrapper.received .msg-bubble {
@@ -862,49 +836,49 @@ onMounted(load)
 /* ==================== INPUT AREA ==================== */
 .input-area {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  padding: 12px 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
   background: white;
-  border-top: 1px solid #f3f4f6;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+  border-top: 1px solid #e5e7eb;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0));
+  flex-shrink: 0;
 }
 
 .offer-trigger {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
-  color: #7c3aed;
-  border-radius: 14px;
+  background: #f3f4f6;
+  color: #6366f1;
+  border-radius: 12px;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.2s;
 }
 
 .offer-trigger:active {
-  transform: scale(0.95);
+  background: #e5e7eb;
 }
 
 .input-wrapper {
   flex: 1;
+  min-width: 0;
 }
 
 .input-wrapper textarea {
   width: 100%;
-  padding: 12px 16px;
+  padding: 11px 16px;
   background: #f3f4f6;
   border: none;
-  border-radius: 24px;
+  border-radius: 22px;
   font-size: 15px;
   line-height: 1.4;
   resize: none;
   max-height: 100px;
   outline: none;
   -webkit-appearance: none;
-  transition: background 0.2s;
 }
 
 .input-wrapper textarea:focus {
@@ -912,18 +886,17 @@ onMounted(load)
 }
 
 .send-trigger {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  background: #6366f1;
   color: white;
-  border-radius: 14px;
+  border-radius: 12px;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .send-trigger:active {
@@ -936,8 +909,8 @@ onMounted(load)
 }
 
 .send-spinner {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;

@@ -4,116 +4,94 @@
       <!-- Logo -->
       <router-link to="/" class="logo-link">
         <div class="logo-icon">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Gradient definitions -->
+          <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#7c3aed" />
-                <stop offset="50%" stop-color="#a855f7" />
-                <stop offset="100%" stop-color="#ec4899" />
-              </linearGradient>
-              <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#ffffff" />
-                <stop offset="100%" stop-color="#f0f0f0" />
+              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6366f1" />
+                <stop offset="100%" stop-color="#8b5cf6" />
               </linearGradient>
             </defs>
-            <!-- Background circle -->
-            <circle cx="20" cy="20" r="20" fill="url(#logoGradient)"/>
-            <!-- Letter L -->
-            <path d="M14 10V26H26V23H17V10H14Z" fill="white"/>
-            <!-- Upload arrow -->
-            <path d="M26 18L22 14L22 21L24 21L24 14L26 18Z" fill="white" opacity="0.9"/>
-            <path d="M22 14L20 16L24 16L22 14Z" fill="white" opacity="0.9"/>
+            <!-- Rounded square background -->
+            <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#logoGrad)"/>
+            <!-- L shape -->
+            <path d="M14 12V28H28V24H18V12H14Z" fill="white"/>
+            <!-- Dot/circle accent -->
+            <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
           </svg>
         </div>
         <div class="logo-text">
-          <span class="logo-name">Lentloads</span>
-          <span class="logo-tagline">Post anything. Find everything.</span>
+          <span class="logo-name">Lentlo <span class="logo-accent">Ads</span></span>
+          <span class="logo-tagline">Post Free. Sell Fast.</span>
         </div>
       </router-link>
 
-      <!-- Search Bar - Desktop -->
+      <!-- Search Bar - Desktop Only -->
       <div class="search-container">
-        <div class="search-box" :class="{ 'search-focused': searchFocused }">
+        <div class="search-box" :class="{ focused: searchFocused }">
           <MagnifyingGlassIcon class="search-icon" />
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search for mobiles, cars, jobs..."
+            placeholder="Search for cars, mobiles, jobs..."
             @focus="searchFocused = true"
             @blur="handleSearchBlur"
             @keyup.enter="handleSearch"
             @input="handleSearchInput"
           />
-          <button
-            v-if="searchQuery"
-            @click="searchQuery = ''; suggestions = []"
-            class="search-clear"
-            aria-label="Clear search"
-          >
-            <XMarkIcon class="w-5 h-5" />
+          <button v-if="searchQuery" @click="clearSearch" class="clear-btn">
+            <XMarkIcon class="w-4 h-4" />
           </button>
-          <button @click="handleSearch" class="search-btn">
-            Search
+          <button @click="handleSearch" class="search-submit">
+            <MagnifyingGlassIcon class="w-5 h-5" />
           </button>
         </div>
 
-        <!-- Search Suggestions Dropdown -->
-        <div v-if="showSuggestions && suggestions.length" class="suggestions-dropdown">
+        <!-- Suggestions -->
+        <div v-if="showSuggestions && suggestions.length" class="suggestions">
           <div
-            v-for="(item, index) in suggestions"
-            :key="index"
-            class="suggestion-item"
+            v-for="(item, i) in suggestions"
+            :key="i"
+            class="suggestion"
             @mousedown="selectSuggestion(item)"
           >
-            <MagnifyingGlassIcon class="w-4 h-4 text-gray-400" />
+            <MagnifyingGlassIcon class="w-4 h-4" />
             <span>{{ item.text }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Actions -->
-      <div class="header-actions">
+      <!-- Right Actions -->
+      <div class="header-right">
         <!-- Notifications -->
         <button
           v-if="isAuthenticated"
           @click="$router.push('/notifications')"
-          class="action-btn"
-          aria-label="View notifications"
+          class="icon-btn"
         >
-          <BellIcon class="action-icon" />
-          <span v-if="unreadNotifications > 0" class="badge">
+          <BellIcon class="w-6 h-6" />
+          <span v-if="unreadNotifications > 0" class="notif-badge">
             {{ unreadNotifications > 9 ? '9+' : unreadNotifications }}
           </span>
         </button>
 
         <!-- Messages -->
-        <router-link
-          v-if="isAuthenticated"
-          to="/messages"
-          class="action-btn"
-          aria-label="View messages"
-        >
-          <ChatBubbleLeftRightIcon class="action-icon" />
-          <span v-if="unreadMessages > 0" class="badge">
+        <router-link v-if="isAuthenticated" to="/messages" class="icon-btn">
+          <ChatBubbleLeftRightIcon class="w-6 h-6" />
+          <span v-if="unreadMessages > 0" class="notif-badge">
             {{ unreadMessages > 9 ? '9+' : unreadMessages }}
           </span>
         </router-link>
 
         <!-- User Menu -->
-        <div v-if="isAuthenticated" class="user-menu-container">
+        <div v-if="isAuthenticated" class="user-menu">
           <button @click="showUserMenu = !showUserMenu" class="user-btn">
-            <div class="user-avatar">
-              {{ user?.name?.charAt(0) || 'U' }}
-            </div>
-            <span class="user-name">{{ user?.name?.split(' ')[0] }}</span>
-            <ChevronDownIcon class="w-4 h-4" />
+            <div class="avatar">{{ user?.name?.charAt(0) || 'U' }}</div>
+            <ChevronDownIcon class="w-4 h-4 chevron" />
           </button>
 
-          <!-- Dropdown -->
-          <Transition name="dropdown">
-            <div v-if="showUserMenu" class="user-dropdown">
-              <div class="dropdown-header">
+          <Transition name="menu">
+            <div v-if="showUserMenu" class="dropdown">
+              <div class="dropdown-user">
                 <div class="dropdown-avatar">{{ user?.name?.charAt(0) || 'U' }}</div>
                 <div>
                   <p class="dropdown-name">{{ user?.name }}</p>
@@ -121,30 +99,30 @@
                 </div>
               </div>
 
-              <div class="dropdown-links">
-                <router-link v-if="isAdmin" to="/admin" class="dropdown-link admin" @click="showUserMenu = false">
+              <div class="dropdown-body">
+                <router-link v-if="isAdmin" to="/admin" class="dropdown-item admin" @click="showUserMenu = false">
                   <ShieldCheckIcon class="w-5 h-5" />
                   Admin Panel
                 </router-link>
-                <router-link to="/dashboard" class="dropdown-link" @click="showUserMenu = false">
+                <router-link to="/dashboard" class="dropdown-item" @click="showUserMenu = false">
                   <Squares2X2Icon class="w-5 h-5" />
                   Dashboard
                 </router-link>
-                <router-link to="/my-listings" class="dropdown-link" @click="showUserMenu = false">
+                <router-link to="/my-listings" class="dropdown-item" @click="showUserMenu = false">
                   <ClipboardDocumentListIcon class="w-5 h-5" />
                   My Ads
                 </router-link>
-                <router-link to="/favorites" class="dropdown-link" @click="showUserMenu = false">
+                <router-link to="/favorites" class="dropdown-item" @click="showUserMenu = false">
                   <HeartIcon class="w-5 h-5" />
                   Favorites
                 </router-link>
-                <router-link to="/settings" class="dropdown-link" @click="showUserMenu = false">
+                <router-link to="/settings" class="dropdown-item" @click="showUserMenu = false">
                   <Cog6ToothIcon class="w-5 h-5" />
                   Settings
                 </router-link>
               </div>
 
-              <div class="dropdown-footer">
+              <div class="dropdown-foot">
                 <button @click="handleLogout" class="logout-btn">
                   <ArrowRightOnRectangleIcon class="w-5 h-5" />
                   Logout
@@ -154,22 +132,22 @@
           </Transition>
         </div>
 
-        <!-- Login Button -->
-        <router-link v-if="!isAuthenticated" to="/login" class="login-btn">
+        <!-- Login -->
+        <router-link v-if="!isAuthenticated" to="/login" class="login-link">
           Login
         </router-link>
 
-        <!-- Sell Button -->
-        <router-link to="/sell" class="sell-btn">
+        <!-- Post Ad Button -->
+        <router-link to="/sell" class="post-btn">
           <PlusIcon class="w-5 h-5" />
-          <span>SELL</span>
+          <span class="post-text">Post Free Ad</span>
         </router-link>
       </div>
     </div>
 
     <!-- Mobile Search -->
     <div class="mobile-search">
-      <div class="mobile-search-box">
+      <div class="mobile-search-inner">
         <MagnifyingGlassIcon class="w-5 h-5 text-gray-400" />
         <input
           v-model="searchQuery"
@@ -221,15 +199,13 @@ const user = computed(() => authStore.user)
 const fetchUnreadCounts = async () => {
   if (!isAuthenticated.value) return
   try {
-    const [messagesRes, notificationsRes] = await Promise.all([
+    const [msgRes, notifRes] = await Promise.all([
       api.get('/conversations/unread-count'),
       api.get('/notifications/unread-count')
     ])
-    unreadMessages.value = messagesRes.data.data?.count || 0
-    unreadNotifications.value = notificationsRes.data.data?.count || 0
-  } catch (e) {
-    // Silently fail
-  }
+    unreadMessages.value = msgRes.data.data?.count || 0
+    unreadNotifications.value = notifRes.data.data?.count || 0
+  } catch (e) {}
 }
 
 const handleSearch = () => {
@@ -237,6 +213,11 @@ const handleSearch = () => {
     router.push({ path: '/search', query: { q: searchQuery.value } })
     showSuggestions.value = false
   }
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  suggestions.value = []
 }
 
 const handleSearchInput = () => {
@@ -278,7 +259,7 @@ const handleLogout = async () => {
 }
 
 const closeMenu = (e) => {
-  if (showUserMenu.value && !e.target.closest('.user-menu-container')) {
+  if (showUserMenu.value && !e.target.closest('.user-menu')) {
     showUserMenu.value = false
   }
 }
@@ -299,8 +280,8 @@ onUnmounted(() => {
   if (searchTimeout) clearTimeout(searchTimeout)
 })
 
-watch(isAuthenticated, (newVal) => {
-  if (newVal) {
+watch(isAuthenticated, (val) => {
+  if (val) {
     fetchUnreadCounts()
     countInterval = setInterval(fetchUnreadCounts, 30000)
   } else {
@@ -312,22 +293,22 @@ watch(isAuthenticated, (newVal) => {
 </script>
 
 <style scoped>
-/* Header Container */
 .app-header {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #a855f7 100%);
-  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.25);
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 12px 16px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* Logo */
@@ -340,14 +321,13 @@ watch(isAuthenticated, (newVal) => {
 }
 
 .logo-icon {
-  width: 42px;
-  height: 42px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-  transition: transform 0.3s ease;
+  width: 40px;
+  height: 40px;
 }
 
-.logo-link:hover .logo-icon {
-  transform: scale(1.05) rotate(-5deg);
+.logo-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .logo-text {
@@ -362,16 +342,19 @@ watch(isAuthenticated, (newVal) => {
 }
 
 .logo-name {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
-  color: white;
+  color: #1f2937;
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo-accent {
+  color: #6366f1;
 }
 
 .logo-tagline {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.85);
+  color: #6b7280;
   font-weight: 500;
   margin-top: -2px;
 }
@@ -379,7 +362,7 @@ watch(isAuthenticated, (newVal) => {
 /* Search */
 .search-container {
   flex: 1;
-  max-width: 600px;
+  max-width: 500px;
   position: relative;
   display: none;
 }
@@ -393,18 +376,17 @@ watch(isAuthenticated, (newVal) => {
 .search-box {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  padding: 4px 4px 4px 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  background: #f3f4f6;
   border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 0 4px 0 12px;
+  transition: all 0.2s;
 }
 
-.search-box.search-focused {
+.search-box.focused {
   background: white;
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .search-icon {
@@ -416,341 +398,318 @@ watch(isAuthenticated, (newVal) => {
 
 .search-box input {
   flex: 1;
-  padding: 10px 12px;
+  padding: 10px 8px;
   border: none;
   background: transparent;
-  font-size: 15px;
+  font-size: 14px;
   color: #1f2937;
   outline: none;
-  min-width: 0;
 }
 
 .search-box input::placeholder {
   color: #9ca3af;
 }
 
-.search-clear {
-  padding: 8px;
+.clear-btn {
+  padding: 6px;
   color: #9ca3af;
-  transition: color 0.2s;
 }
 
-.search-clear:hover {
-  color: #4b5563;
+.clear-btn:hover {
+  color: #6b7280;
 }
 
-.search-btn {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+.search-submit {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #6366f1;
   color: white;
-  font-weight: 600;
-  font-size: 14px;
   border-radius: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+  transition: background 0.2s;
 }
 
-.search-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+.search-submit:hover {
+  background: #4f46e5;
 }
 
 /* Suggestions */
-.suggestions-dropdown {
+.suggestions {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  margin-top: 8px;
+  margin-top: 6px;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   z-index: 100;
 }
 
-.suggestion-item {
+.suggestion {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 10px 14px;
+  color: #374151;
+  font-size: 14px;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
-.suggestion-item:hover {
+.suggestion:hover {
   background: #f3f4f6;
 }
 
-.suggestion-item span {
-  color: #374151;
-  font-size: 14px;
-}
-
-/* Actions */
-.header-actions {
+/* Right Actions */
+.header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  margin-left: auto;
 }
 
-.action-btn {
+.icon-btn {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  color: white;
-  transition: all 0.2s ease;
+  color: #4b5563;
+  border-radius: 10px;
+  transition: all 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
+.icon-btn:hover {
+  background: #f3f4f6;
+  color: #6366f1;
 }
 
-.action-icon {
-  width: 24px;
-  height: 24px;
-}
-
-.badge {
+.notif-badge {
   position: absolute;
   top: 4px;
   right: 4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: #ef4444;
   color: white;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  border-radius: 9px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.4);
-  animation: bounceIn 0.3s ease;
-}
-
-@keyframes bounceIn {
-  0% { transform: scale(0); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
 }
 
 /* User Menu */
-.user-menu-container {
+.user-menu {
   position: relative;
 }
 
 .user-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px 6px 6px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 50px;
-  color: white;
-  transition: all 0.2s ease;
+  gap: 4px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 20px;
+  transition: background 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 
 .user-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: #f3f4f6;
 }
 
-.user-avatar {
+.avatar {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.user-name {
-  font-weight: 600;
-  font-size: 14px;
-  display: none;
-}
-
-@media (min-width: 640px) {
-  .user-name {
-    display: block;
-  }
-}
-
-/* Dropdown */
-.user-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 280px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  z-index: 100;
-}
-
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: all 0.2s ease;
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-10px) scale(0.95);
-}
-
-.dropdown-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f8f5ff 0%, #fdf2f8 100%);
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.dropdown-avatar {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 700;
-  font-size: 18px;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  font-size: 14px;
+}
+
+.chevron {
+  color: #6b7280;
+}
+
+/* Dropdown */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 260px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.menu-enter-active,
+.menu-leave-active {
+  transition: all 0.2s ease;
+}
+
+.menu-enter-from,
+.menu-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.dropdown-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #f9fafb;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dropdown-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .dropdown-name {
   font-weight: 600;
   color: #1f2937;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .dropdown-email {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
-.dropdown-links {
-  padding: 8px;
+.dropdown-body {
+  padding: 6px;
 }
 
-.dropdown-link {
+.dropdown-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 10px 12px;
   color: #374151;
   text-decoration: none;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.15s ease;
+  transition: all 0.15s;
 }
 
-.dropdown-link:hover {
+.dropdown-item:hover {
   background: #f3f4f6;
-  color: #7c3aed;
+  color: #6366f1;
 }
 
-.dropdown-link.admin {
-  color: #7c3aed;
-  background: #f3e8ff;
+.dropdown-item.admin {
+  color: #6366f1;
+  background: #eef2ff;
 }
 
-.dropdown-link.admin:hover {
-  background: #ede9fe;
+.dropdown-item.admin:hover {
+  background: #e0e7ff;
 }
 
-.dropdown-footer {
-  padding: 8px;
+.dropdown-foot {
+  padding: 6px;
   border-top: 1px solid #f3f4f6;
 }
 
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 12px;
+  padding: 10px 12px;
   color: #dc2626;
   font-size: 14px;
-  font-weight: 500;
-  border-radius: 10px;
-  transition: background 0.15s ease;
+  border-radius: 8px;
+  transition: background 0.15s;
 }
 
 .logout-btn:hover {
   background: #fef2f2;
 }
 
-/* Login & Sell Buttons */
-.login-btn {
-  padding: 10px 20px;
-  color: white;
+/* Login */
+.login-link {
+  padding: 8px 16px;
+  color: #374151;
   font-weight: 600;
   font-size: 14px;
   text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.login-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-}
-
-.sell-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
-  background: white;
-  color: #7c3aed;
-  font-weight: 700;
-  font-size: 14px;
-  text-decoration: none;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-.sell-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.sell-btn span {
+  transition: all 0.2s;
   display: none;
 }
 
 @media (min-width: 480px) {
-  .sell-btn span {
+  .login-link {
+    display: block;
+  }
+}
+
+.login-link:hover {
+  background: #f3f4f6;
+  color: #6366f1;
+}
+
+/* Post Ad Button */
+.post-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.post-btn:hover {
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
+}
+
+.post-text {
+  display: none;
+}
+
+@media (min-width: 400px) {
+  .post-text {
     display: inline;
   }
 }
 
 /* Mobile Search */
 .mobile-search {
-  padding: 0 16px 12px;
+  padding: 0 16px 10px;
   display: block;
 }
 
@@ -760,26 +719,25 @@ watch(isAuthenticated, (newVal) => {
   }
 }
 
-.mobile-search-box {
+.mobile-search-inner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.95);
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f3f4f6;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.mobile-search-box input {
+.mobile-search-inner input {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 15px;
+  font-size: 14px;
   color: #1f2937;
   outline: none;
 }
 
-.mobile-search-box input::placeholder {
+.mobile-search-inner input::placeholder {
   color: #9ca3af;
 }
 </style>

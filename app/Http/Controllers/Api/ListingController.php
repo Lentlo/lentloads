@@ -25,37 +25,34 @@ class ListingController extends Controller
         if ($request->filled('q')) {
             $search = trim($request->q);
             $searchTerms = $this->generateSearchTerms($search);
+            $words = preg_split('/\s+/', $search);
 
-            $query->where(function ($q) use ($search, $searchTerms) {
-                // Strategy 1: Exact match (highest priority)
+            $query->where(function ($q) use ($search, $searchTerms, $words) {
+                // Strategy 1: Exact match
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
 
-                // Strategy 2: FULLTEXT search (natural language mode)
-                try {
-                    $q->orWhereRaw("MATCH(title, description) AGAINST(? IN NATURAL LANGUAGE MODE)", [$search]);
-                } catch (\Exception $e) {
-                    // FULLTEXT index might not exist yet
-                }
-
-                // Strategy 3: Word-by-word matching
-                $words = preg_split('/\s+/', $search);
+                // Strategy 2: Word-by-word matching (for partial words)
                 foreach ($words as $word) {
-                    if (strlen($word) >= 3) {
+                    if (strlen($word) >= 2) {
+                        // Partial match - catches "mobil" in "mobile"
                         $q->orWhere('title', 'like', "%{$word}%");
+                        $q->orWhere('description', 'like', "%{$word}%");
                     }
                 }
 
-                // Strategy 4: SOUNDEX phonetic matching
+                // Strategy 3: SOUNDEX phonetic matching per word in title
                 foreach ($words as $word) {
                     if (strlen($word) >= 3) {
-                        $q->orWhereRaw("SOUNDEX(title) = SOUNDEX(?)", [$word]);
+                        // Match any word in title that sounds similar
+                        $q->orWhereRaw("SOUNDEX(SUBSTRING_INDEX(title, ' ', 1)) = SOUNDEX(?)", [$word]);
+                        $q->orWhereRaw("SOUNDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(title, ' ', 2), ' ', -1)) = SOUNDEX(?)", [$word]);
                     }
                 }
 
-                // Strategy 5: Common misspellings/typos
+                // Strategy 4: Generated typo variations
                 foreach ($searchTerms as $term) {
-                    if ($term !== $search) {
+                    if ($term !== strtolower($search) && strlen($term) >= 3) {
                         $q->orWhere('title', 'like', "%{$term}%");
                     }
                 }
