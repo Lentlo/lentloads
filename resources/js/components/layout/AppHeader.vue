@@ -427,14 +427,22 @@ const useCurrentLocation = async () => {
   detectingLocation.value = true
   try {
     await appStore.detectLocation()
+    selectedLocation.value = appStore.currentLocation
+    localStorage.setItem('selectedCity', JSON.stringify(appStore.currentLocation))
+    showLocationPicker.value = false
     if (appStore.currentLocation?.city) {
-      selectedLocation.value = appStore.currentLocation
-      localStorage.setItem('selectedCity', JSON.stringify(appStore.currentLocation))
-      showLocationPicker.value = false
       router.push({ path: '/search', query: { city: appStore.currentLocation.city } })
+    } else {
+      // No city found but we have coordinates - enable Near Me mode
+      localStorage.setItem('nearMeActive', 'true')
+      router.push({ path: '/search' })
     }
   } catch (e) {
     console.error('Location detection failed:', e)
+    // Show error to user
+    import('vue3-toastify').then(({ toast }) => {
+      toast.error('Could not detect location. Please try again.')
+    })
   } finally {
     detectingLocation.value = false
   }
@@ -1044,12 +1052,14 @@ watch(() => route.query.q, (newQ) => {
   position: relative;
   background: white;
   width: 100%;
-  max-height: 85vh;
+  max-height: 70vh;
   border-radius: 1rem 1rem 0 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: slide-up 0.3s ease-out;
+  /* Position above mobile nav */
+  margin-bottom: calc(60px + env(safe-area-inset-bottom, 8px));
 }
 
 @media (min-width: 640px) {
@@ -1057,6 +1067,7 @@ watch(() => route.query.q, (newQ) => {
     max-width: 28rem;
     max-height: 70vh;
     border-radius: 1rem;
+    margin-bottom: 0;
   }
 }
 

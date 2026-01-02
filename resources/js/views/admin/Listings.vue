@@ -493,18 +493,18 @@ const openEditModal = (listing) => {
 
 const saveListing = async () => {
   try {
-    // Convert reactive editForm to plain object
+    // Convert reactive editForm to plain object, converting empty strings to null for optional fields
     const data = {
       title: editForm.title,
       description: editForm.description,
       price: editForm.price,
       price_type: editForm.price_type,
       category_id: editForm.category_id,
-      condition: editForm.condition,
-      city: editForm.city,
-      state: editForm.state,
-      locality: editForm.locality,
-      postal_code: editForm.postal_code,
+      condition: editForm.condition || null,
+      city: editForm.city || null,
+      state: editForm.state || null,
+      locality: editForm.locality || null,
+      postal_code: editForm.postal_code || null,
       latitude: editForm.latitude,
       longitude: editForm.longitude,
     }

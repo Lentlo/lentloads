@@ -125,7 +125,14 @@ class LocationController extends Controller
             ]);
         }
 
-        return $this->errorResponse('Location not found', 404);
+        // No city found within 100km, return the coordinates anyway
+        return $this->successResponse([
+            'city' => null,
+            'state' => null,
+            'country' => 'India',
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
     }
 
     /**

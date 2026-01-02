@@ -3,7 +3,8 @@
     <div class="container-app py-4">
       <!-- Mobile Search Header -->
       <div class="lg:hidden mb-4">
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <!-- Main controls row -->
+        <div class="flex items-center gap-2 mb-2">
           <!-- Filters Button -->
           <button
             @click="showFilters = true"
@@ -32,45 +33,46 @@
           </button>
 
           <!-- Sort -->
-          <div class="relative flex-shrink-0">
+          <div class="relative flex-shrink-0 ml-auto">
             <select
               v-model="filters.sort"
               @change="fetchListings"
               class="appearance-none px-4 py-2.5 pr-8 bg-white rounded-full border shadow-sm text-sm font-medium"
             >
               <option value="newest">Newest</option>
-              <option v-if="locationActive" value="nearest">Nearest</option>
               <option value="price_low">Price: Low</option>
               <option value="price_high">Price: High</option>
             </select>
             <ChevronDownIcon class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
+        </div>
 
-          <!-- Active Filter Tags -->
+        <!-- Active Filter Tags - wrap to show all -->
+        <div v-if="filters.q || filters.category || filters.city || filters.min_price || filters.max_price" class="flex flex-wrap gap-2">
           <span
             v-if="filters.q"
-            class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
+            class="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1"
           >
             "{{ filters.q }}"
             <button @click="clearSearchQuery"><XMarkIcon class="w-4 h-4" /></button>
           </span>
           <span
             v-if="filters.category"
-            class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
+            class="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1"
           >
             {{ getCategoryName(filters.category) }}
             <button @click="clearFilter('category')"><XMarkIcon class="w-4 h-4" /></button>
           </span>
           <span
             v-if="filters.city"
-            class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
+            class="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1"
           >
             {{ filters.city }}
             <button @click="clearFilter('city')"><XMarkIcon class="w-4 h-4" /></button>
           </span>
           <span
             v-if="filters.min_price || filters.max_price"
-            class="px-3 py-2 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1 flex-shrink-0"
+            class="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm flex items-center gap-1"
           >
             ₹{{ filters.min_price || 0 }} - {{ filters.max_price || '∞' }}
             <button @click="clearPriceFilter"><XMarkIcon class="w-4 h-4" /></button>
@@ -174,7 +176,6 @@
 
               <select v-model="filters.sort" @change="fetchListings" class="input w-auto text-sm">
                 <option value="newest">Newest First</option>
-                <option v-if="locationActive" value="nearest">Nearest First</option>
                 <option value="price_low">Price: Low to High</option>
                 <option value="price_high">Price: High to Low</option>
               </select>
@@ -618,22 +619,43 @@ const requestLocationPermission = () => {
   }
 
   navigator.geolocation.getCurrentPosition(
-    (position) => {
+    async (position) => {
       filters.latitude = position.coords.latitude
       filters.longitude = position.coords.longitude
       filters.sort = 'nearest'
       locationActive.value = true
+
+      // Reverse geocode to get city name
+      try {
+        const response = await api.post('/locations/detect', {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        })
+        const locationData = response.data.data
+        // Save to app store with city name
+        appStore.setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          city: locationData.city,
+          state: locationData.state,
+        })
+        if (locationData.city) {
+          toast.success(`Location set to ${locationData.city}`)
+        } else {
+          toast.success('Location enabled! Showing nearest listings.')
+        }
+      } catch (e) {
+        // Save without city name if reverse geocode fails
+        appStore.setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        })
+        toast.success('Location enabled! Showing nearest listings.')
+      }
+
       locationLoading.value = false
-
-      // Save to app store for reuse
-      appStore.setLocation({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      })
-
       localStorage.setItem('nearMeActive', 'true')
       fetchListings()
-      toast.success('Location enabled! Showing nearest listings.')
     },
     (error) => {
       locationLoading.value = false
