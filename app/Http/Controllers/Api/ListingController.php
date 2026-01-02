@@ -21,12 +21,44 @@ class ListingController extends Controller
             ->active()
             ->notExpired();
 
-        // Search
+        // Fuzzy Search with multiple strategies
         if ($request->filled('q')) {
-            $search = $request->q;
-            $query->where(function ($q) use ($search) {
+            $search = trim($request->q);
+            $searchTerms = $this->generateSearchTerms($search);
+
+            $query->where(function ($q) use ($search, $searchTerms) {
+                // Strategy 1: Exact match (highest priority)
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
+
+                // Strategy 2: FULLTEXT search (natural language mode)
+                try {
+                    $q->orWhereRaw("MATCH(title, description) AGAINST(? IN NATURAL LANGUAGE MODE)", [$search]);
+                } catch (\Exception $e) {
+                    // FULLTEXT index might not exist yet
+                }
+
+                // Strategy 3: Word-by-word matching
+                $words = preg_split('/\s+/', $search);
+                foreach ($words as $word) {
+                    if (strlen($word) >= 3) {
+                        $q->orWhere('title', 'like', "%{$word}%");
+                    }
+                }
+
+                // Strategy 4: SOUNDEX phonetic matching
+                foreach ($words as $word) {
+                    if (strlen($word) >= 3) {
+                        $q->orWhereRaw("SOUNDEX(title) = SOUNDEX(?)", [$word]);
+                    }
+                }
+
+                // Strategy 5: Common misspellings/typos
+                foreach ($searchTerms as $term) {
+                    if ($term !== $search) {
+                        $q->orWhere('title', 'like', "%{$term}%");
+                    }
+                }
             });
         }
 
@@ -417,6 +449,128 @@ class ListingController extends Controller
             'mime_type' => $file->getMimeType(),
             'order' => $listing->images()->count(),
             'is_primary' => $isPrimary,
+        ]);
+    }
+
+    /**
+     * Generate fuzzy search terms from input query
+     * Handles common typos and variations
+     */
+    protected function generateSearchTerms(string $query): array
+    {
+        $terms = [$query];
+        $words = preg_split('/\s+/', strtolower($query));
+
+        // Common character substitutions (keyboard adjacency)
+        $substitutions = [
+            'a' => ['s', 'q', 'z'],
+            'e' => ['w', 'r', '3'],
+            'i' => ['u', 'o', '8', '9'],
+            'o' => ['i', 'p', '0'],
+            'u' => ['y', 'i'],
+            's' => ['a', 'd', 'z'],
+            'n' => ['m', 'b'],
+            'm' => ['n'],
+            'c' => ['v', 'x', 'k'],
+            'k' => ['c', 'l'],
+            't' => ['r', 'y'],
+            'ph' => ['f'],
+            'f' => ['ph'],
+        ];
+
+        // Common Indian English variations
+        $indianVariations = [
+            'mobile' => ['phone', 'cell', 'handset'],
+            'phone' => ['mobile', 'cell'],
+            'car' => ['vehicle', 'auto'],
+            'bike' => ['motorcycle', 'two wheeler', 'scooter'],
+            'flat' => ['apartment', 'house'],
+            'apartment' => ['flat', 'house'],
+            'sofa' => ['couch', 'settee'],
+            'ac' => ['air conditioner', 'air conditioning'],
+            'tv' => ['television', 'led'],
+            'fridge' => ['refrigerator', 'freezer'],
+            'laptop' => ['notebook', 'computer'],
+        ];
+
+        foreach ($words as $word) {
+            // Add variations for common words
+            if (isset($indianVariations[$word])) {
+                foreach ($indianVariations[$word] as $variation) {
+                    $newTerms = str_replace($word, $variation, strtolower($query));
+                    $terms[] = $newTerms;
+                }
+            }
+
+            // Generate typo variations (single character substitutions)
+            if (strlen($word) >= 4) {
+                for ($i = 0; $i < strlen($word); $i++) {
+                    $char = $word[$i];
+                    if (isset($substitutions[$char])) {
+                        foreach ($substitutions[$char] as $sub) {
+                            $typoWord = substr_replace($word, $sub, $i, 1);
+                            $terms[] = str_replace($word, $typoWord, strtolower($query));
+                        }
+                    }
+                }
+            }
+
+            // Missing/doubled character variations
+            if (strlen($word) >= 4) {
+                // Missing character
+                for ($i = 0; $i < strlen($word); $i++) {
+                    $missingChar = substr($word, 0, $i) . substr($word, $i + 1);
+                    if (strlen($missingChar) >= 3) {
+                        $terms[] = str_replace($word, $missingChar, strtolower($query));
+                    }
+                }
+            }
+        }
+
+        return array_unique(array_slice($terms, 0, 20)); // Limit to 20 variations
+    }
+
+    /**
+     * Get search suggestions (autocomplete)
+     */
+    public function searchSuggestions(Request $request)
+    {
+        $query = trim($request->input('q', ''));
+        if (strlen($query) < 2) {
+            return $this->successResponse(['suggestions' => []]);
+        }
+
+        // Get matching titles
+        $suggestions = Listing::active()
+            ->where('title', 'like', "%{$query}%")
+            ->select('title')
+            ->distinct()
+            ->limit(10)
+            ->pluck('title')
+            ->map(function ($title) use ($query) {
+                // Highlight matching part
+                return [
+                    'text' => $title,
+                    'highlight' => stripos($title, $query) !== false,
+                ];
+            });
+
+        // Get matching categories
+        $categories = Category::where('name', 'like', "%{$query}%")
+            ->active()
+            ->limit(5)
+            ->get(['name', 'slug'])
+            ->map(function ($cat) {
+                return [
+                    'text' => $cat->name,
+                    'type' => 'category',
+                    'slug' => $cat->slug,
+                ];
+            });
+
+        return $this->successResponse([
+            'suggestions' => $suggestions,
+            'categories' => $categories,
         ]);
     }
 }
