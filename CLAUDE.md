@@ -314,15 +314,95 @@ Staging (staging.lentloads.com) → Test data, separate database
 - **Collapsible search**: Search bar shows on scroll up, hides on scroll down
 - **White text/icons**: Mobile header uses white text to contrast with gradient
 
-### Scroll Behavior
+### Scroll Behavior (Updated 2026-01-03)
 - Search bar visible by default at top of page
-- Scrolling **down**: Search bar collapses (hidden)
-- Scrolling **up**: Search bar expands (visible)
-- Smooth animation transitions
+- Scrolling **down**: Search bar collapses (hidden) after 120px scroll
+- Scrolling **up**: Search bar expands (visible) after 120px scroll
+- **Scroll accumulator pattern**: Prevents flicker from small/bouncy scrolls
+- **Cooldown period**: 900ms between toggles to prevent rapid flickering
+- **Near-bottom detection**: Ignores scroll within 100px of page bottom (prevents bounce flicker)
+- **Smooth transitions**: 0.5s cubic-bezier animation with GPU acceleration
+
+### Key Parameters (AppHeader.vue)
+```javascript
+// Scroll threshold - pixels needed to toggle
+scrollAccumulator > 120
+
+// Cooldown between toggles (milliseconds)
+now - lastToggleTime > 900
+
+// Near-bottom threshold (pixels from bottom)
+scrollY + windowHeight >= documentHeight - 100
+```
+
+### Overflow Fix (2026-01-03)
+- `.app-header`: `overflow-x: hidden; max-width: 100vw;`
+- `.mobile-search`: `max-width: 100%; box-sizing: border-box;`
+- `.mobile-search-inner`: `min-width: 0; overflow: hidden;`
 
 ### Desktop vs Mobile
 - Mobile: Gradient background, compact layout, collapsible search
 - Desktop (768px+): White background, full layout
+
+## PWA & Service Worker
+
+### Service Worker Configuration (vite.config.js)
+Updated 2026-01-03 for better SPA handling:
+
+```javascript
+workbox: {
+  // SPA fallback - all navigation to index.html
+  navigateFallback: 'index.html',
+  navigateFallbackDenylist: [
+    /^\/api\//, /^\/v1\//, /^\/storage\//, /^\/build\//, /\.\w+$/
+  ],
+
+  // Navigation requests use NetworkFirst with 3s timeout
+  runtimeCaching: [{
+    urlPattern: ({ request }) => request.mode === 'navigate',
+    handler: 'NetworkFirst',
+    options: { networkTimeoutSeconds: 3 }
+  }],
+
+  // Faster SW updates
+  skipWaiting: true,
+  clientsClaim: true
+}
+```
+
+### Tab Suspension Recovery (main.js)
+Added 2026-01-03 to fix "links stop working after idle" issue:
+
+**Problem:** Mobile browsers suspend inactive tabs to save memory. When resumed, Vue's JavaScript state can be lost, causing links to do nothing when clicked.
+
+**Solution:** Auto-detect broken state and reload:
+```javascript
+// On visibility change (tab becomes active)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    // If idle > 5 minutes, check if Vue app still works
+    if (timeSuspended > 5 * 60 * 1000) {
+      const hasVueApp = appEl && appEl.__vue_app__
+      if (!hasVueApp) {
+        window.location.reload() // App broken, reload
+      }
+    }
+  }
+})
+```
+
+**Performance Impact:** Minimal
+- 2 passive event listeners (update timestamp on click/touch)
+- 1 visibility check (only when returning after 5+ min idle)
+- No continuous loops or timers
+
+### Service Worker Update Detection
+```javascript
+// Auto-reload when new SW takes control
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  window.location.reload()
+})
+```
 
 ## LocationPicker Component
 
