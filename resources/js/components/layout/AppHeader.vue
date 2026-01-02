@@ -1066,23 +1066,26 @@ watch(() => route.query.q, (newQ) => {
   }
 }
 
-/* Mobile Search - GPU accelerated animation */
+/* Mobile Search - smooth slide animation */
 .mobile-search {
   padding: 0 12px 10px;
   display: flex;
   align-items: center;
   gap: 8px;
-  transform: translateY(0);
+  max-height: 60px;
   opacity: 1;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  will-change: transform, opacity;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobile-search:not(.search-visible) {
-  transform: translateY(-100%);
+  max-height: 0;
   opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
   pointer-events: none;
-  position: absolute;
 }
 
 @media (min-width: 768px) {
