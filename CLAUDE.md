@@ -94,3 +94,55 @@ expect eof
 2. Commit and push to GitHub
 3. Run the automated deployment command above
 4. Clear OPcache
+
+## Mobile Header Design
+
+### Features
+- **Gradient background**: Purple gradient (`#667eea` to `#764ba2`) on mobile for visual appeal
+- **Compact design**: Reduced height on mobile to save space
+- **Collapsible search**: Search bar shows on scroll up, hides on scroll down
+- **White text/icons**: Mobile header uses white text to contrast with gradient
+
+### Scroll Behavior
+- Search bar visible by default at top of page
+- Scrolling **down**: Search bar collapses (hidden)
+- Scrolling **up**: Search bar expands (visible)
+- Smooth animation transitions
+
+### Desktop vs Mobile
+- Mobile: Gradient background, compact layout, collapsible search
+- Desktop (768px+): White background, full layout
+
+## LocationPicker Component
+
+### Props
+The LocationPicker supports both v-model bindings and legacy initial* props:
+
+**v-model props** (preferred for forms):
+- `v-model:latitude`, `v-model:longitude`
+- `v-model:city`, `v-model:state`, `v-model:locality`, `v-model:postalCode`
+
+**Legacy props** (backward compatibility):
+- `initialLatitude`, `initialLongitude`
+- `initialCity`, `initialState`, `initialLocality`, `initialPostalCode`
+
+### Usage in Admin/Edit Forms
+```vue
+<LocationPicker
+  :key="editingItem?.id"
+  v-model:latitude="form.latitude"
+  v-model:longitude="form.longitude"
+  v-model:city="form.city"
+  v-model:state="form.state"
+  v-model:locality="form.locality"
+  v-model:postalCode="form.postal_code"
+  :initialLatitude="form.latitude"
+  :initialLongitude="form.longitude"
+  :initialCity="form.city"
+  :initialState="form.state"
+  :initialLocality="form.locality"
+  :initialPostalCode="form.postal_code"
+/>
+```
+
+**Important**: Use `:key` to force component recreation when editing different items.

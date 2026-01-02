@@ -107,6 +107,32 @@ L.Icon.Default.mergeOptions({
 })
 
 const props = defineProps({
+  // v-model props
+  latitude: {
+    type: Number,
+    default: null
+  },
+  longitude: {
+    type: Number,
+    default: null
+  },
+  city: {
+    type: String,
+    default: ''
+  },
+  state: {
+    type: String,
+    default: ''
+  },
+  locality: {
+    type: String,
+    default: ''
+  },
+  postalCode: {
+    type: String,
+    default: ''
+  },
+  // Legacy initial* props for backward compatibility
   initialLatitude: {
     type: Number,
     default: null
@@ -152,12 +178,12 @@ let map = null
 let marker = null
 
 const locationData = reactive({
-  latitude: props.initialLatitude,
-  longitude: props.initialLongitude,
-  locality: props.initialLocality,
-  city: props.initialCity,
-  state: props.initialState,
-  postal_code: props.initialPostalCode,
+  latitude: props.latitude ?? props.initialLatitude,
+  longitude: props.longitude ?? props.initialLongitude,
+  locality: props.locality || props.initialLocality || '',
+  city: props.city || props.initialCity || '',
+  state: props.state || props.initialState || '',
+  postal_code: props.postalCode || props.initialPostalCode || '',
   address: ''
 })
 
@@ -187,9 +213,10 @@ const initMap = () => {
   if (!mapContainer.value) return
 
   // Default center: India (or initial coordinates if provided)
-  const defaultLat = props.initialLatitude || 20.5937
-  const defaultLng = props.initialLongitude || 78.9629
-  const defaultZoom = props.initialLatitude ? 15 : 5
+  const hasInitialCoords = props.latitude ?? props.initialLatitude
+  const defaultLat = props.latitude ?? props.initialLatitude ?? 20.5937
+  const defaultLng = props.longitude ?? props.initialLongitude ?? 78.9629
+  const defaultZoom = hasInitialCoords ? 15 : 5
 
   map = L.map(mapContainer.value, {
     // Disable scroll zoom to prevent page scroll hijacking on mobile
@@ -206,8 +233,10 @@ const initMap = () => {
   }).addTo(map)
 
   // Add marker if initial coordinates exist
-  if (props.initialLatitude && props.initialLongitude) {
-    addMarker(props.initialLatitude, props.initialLongitude)
+  const initLat = props.latitude ?? props.initialLatitude
+  const initLng = props.longitude ?? props.initialLongitude
+  if (initLat && initLng) {
+    addMarker(initLat, initLng)
   }
 
   // Click handler to place marker
@@ -350,7 +379,8 @@ const emitLocation = () => {
 // Auto-detect user's location on mount
 const autoDetectLocation = async () => {
   // Skip if we already have initial coordinates (edit mode)
-  if (props.initialLatitude && props.initialLongitude) {
+  const hasCoords = (props.latitude ?? props.initialLatitude) && (props.longitude ?? props.initialLongitude)
+  if (hasCoords) {
     return
   }
 
@@ -415,8 +445,8 @@ const tryGPSLocation = () => {
   )
 }
 
-// Watch for prop changes (useful for edit mode)
-watch(() => [props.initialLatitude, props.initialLongitude], ([newLat, newLng]) => {
+// Watch for v-model prop changes (useful for edit mode)
+watch(() => [props.latitude, props.longitude], ([newLat, newLng]) => {
   if (newLat && newLng && map) {
     map.setView([newLat, newLng], 15)
     addMarker(newLat, newLng)
@@ -425,14 +455,37 @@ watch(() => [props.initialLatitude, props.initialLongitude], ([newLat, newLng]) 
   }
 }, { immediate: false })
 
-// Watch for all initial props to sync locationData (for edit mode)
+// Watch for initial* prop changes (backward compatibility)
+watch(() => [props.initialLatitude, props.initialLongitude], ([newLat, newLng]) => {
+  if (newLat && newLng && map && !props.latitude && !props.longitude) {
+    map.setView([newLat, newLng], 15)
+    addMarker(newLat, newLng)
+    locationData.latitude = newLat
+    locationData.longitude = newLng
+  }
+}, { immediate: false })
+
+// Watch for v-model text props to sync locationData
+watch(
+  () => [props.city, props.state, props.locality, props.postalCode],
+  ([city, state, locality, postalCode]) => {
+    if (city !== undefined && city !== null) locationData.city = city || ''
+    if (state !== undefined && state !== null) locationData.state = state || ''
+    if (locality !== undefined && locality !== null) locationData.locality = locality || ''
+    if (postalCode !== undefined && postalCode !== null) locationData.postal_code = postalCode || ''
+  },
+  { immediate: true }
+)
+
+// Watch for initial* text props (backward compatibility)
 watch(
   () => [props.initialCity, props.initialState, props.initialLocality, props.initialPostalCode],
   ([city, state, locality, postalCode]) => {
-    if (city !== undefined) locationData.city = city || ''
-    if (state !== undefined) locationData.state = state || ''
-    if (locality !== undefined) locationData.locality = locality || ''
-    if (postalCode !== undefined) locationData.postal_code = postalCode || ''
+    // Only apply if v-model props are not set
+    if (!props.city && city) locationData.city = city
+    if (!props.state && state) locationData.state = state
+    if (!props.locality && locality) locationData.locality = locality
+    if (!props.postalCode && postalCode) locationData.postal_code = postalCode
   },
   { immediate: true }
 )

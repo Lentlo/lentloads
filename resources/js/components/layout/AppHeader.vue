@@ -1,5 +1,6 @@
 <template>
-  <header class="app-header">
+  <header class="app-header" :class="{ 'header-scrolled': isScrolled, 'search-hidden': !showMobileSearch }">
+    <!-- Main Header Bar -->
     <div class="header-inner">
       <!-- Logo -->
       <router-link to="/" class="logo-link">
@@ -11,29 +12,23 @@
                 <stop offset="100%" stop-color="#8b5cf6" />
               </linearGradient>
             </defs>
-            <!-- Rounded square background -->
             <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#logoGrad)"/>
-            <!-- L shape -->
             <path d="M14 12V28H28V24H18V12H14Z" fill="white"/>
-            <!-- Dot/circle accent -->
             <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
           </svg>
         </div>
-        <div class="logo-text">
-          <span class="logo-name">Lentlo <span class="logo-accent">Ads</span></span>
-          <span class="logo-tagline">Post Free. Sell Fast.</span>
-        </div>
+        <span class="logo-name-mobile">Lentlo</span>
       </router-link>
 
       <!-- Location Selector (Desktop) -->
-      <button @click="showLocationPicker = true" class="location-btn">
+      <button @click="showLocationPicker = true" class="location-btn desktop-only">
         <MapPinIcon class="w-5 h-5" />
         <span class="location-text">{{ currentLocationName }}</span>
         <ChevronDownIcon class="w-4 h-4" />
       </button>
 
       <!-- Search Bar - Desktop Only -->
-      <div class="search-container">
+      <div class="search-container desktop-only">
         <div class="search-box" :class="{ focused: searchFocused }">
           <MagnifyingGlassIcon class="search-icon" />
           <input
@@ -75,7 +70,7 @@
           @click="$router.push('/notifications')"
           class="icon-btn"
         >
-          <BellIcon class="w-6 h-6" />
+          <BellIcon class="w-5 h-5" />
           <span v-if="unreadNotifications > 0" class="notif-badge">
             {{ unreadNotifications > 9 ? '9+' : unreadNotifications }}
           </span>
@@ -83,7 +78,7 @@
 
         <!-- Messages -->
         <router-link v-if="isAuthenticated" to="/messages" class="icon-btn">
-          <ChatBubbleLeftRightIcon class="w-6 h-6" />
+          <ChatBubbleLeftRightIcon class="w-5 h-5" />
           <span v-if="unreadMessages > 0" class="notif-badge">
             {{ unreadMessages > 9 ? '9+' : unreadMessages }}
           </span>
@@ -93,7 +88,7 @@
         <div v-if="isAuthenticated" class="user-menu">
           <button @click="showUserMenu = !showUserMenu" class="user-btn">
             <div class="avatar">{{ user?.name?.charAt(0) || 'U' }}</div>
-            <ChevronDownIcon class="w-4 h-4 chevron" />
+            <ChevronDownIcon class="w-4 h-4 chevron desktop-only" />
           </button>
 
           <Transition name="menu">
@@ -140,38 +135,35 @@
         </div>
 
         <!-- Login -->
-        <router-link v-if="!isAuthenticated" to="/login" class="login-link">
+        <router-link v-if="!isAuthenticated" to="/login" class="login-link desktop-only">
           Login
         </router-link>
 
         <!-- Post Ad Button -->
         <router-link to="/sell" class="post-btn">
-          <PlusIcon class="w-5 h-5" />
+          <PlusIcon class="w-4 h-4" />
           <span class="post-text">Post Free Ad</span>
         </router-link>
       </div>
     </div>
 
-    <!-- Mobile Search with Location -->
-    <div class="mobile-search">
+    <!-- Mobile Search Bar (Collapsible) -->
+    <div class="mobile-search" :class="{ 'search-visible': showMobileSearch }">
       <button @click="showLocationPicker = true" class="mobile-location-btn">
         <MapPinIcon class="w-4 h-4" />
         <span>{{ shortLocationName }}</span>
         <ChevronDownIcon class="w-3 h-3" />
       </button>
       <div class="mobile-search-inner">
-        <MagnifyingGlassIcon class="w-5 h-5 text-gray-400 flex-shrink-0" />
+        <MagnifyingGlassIcon class="w-4 h-4 text-white/60 flex-shrink-0" />
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search..."
+          placeholder="Search for anything..."
           @keyup.enter="handleSearch"
         />
         <button v-if="searchQuery" @click="clearSearch" class="mobile-clear-btn">
-          <XMarkIcon class="w-5 h-5" />
-        </button>
-        <button @click="handleSearch" class="mobile-search-btn">
-          <MagnifyingGlassIcon class="w-5 h-5" />
+          <XMarkIcon class="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -285,12 +277,40 @@ const unreadNotifications = ref(0)
 const unreadMessages = ref(0)
 let searchTimeout = null
 
+// Scroll-based header state
+const isScrolled = ref(false)
+const showMobileSearch = ref(true)
+let lastScrollY = 0
+let scrollTimeout = null
+
 // Location picker state
 const showLocationPicker = ref(false)
 const citySearch = ref('')
 const cityResults = ref([])
 const detectingLocation = ref(false)
 const selectedLocation = ref(null)
+
+// Handle scroll for showing/hiding mobile search
+const handleScroll = () => {
+  const currentScrollY = window.scrollY
+
+  // Add scrolled class when past threshold
+  isScrolled.value = currentScrollY > 10
+
+  // Show search on scroll up, hide on scroll down
+  if (currentScrollY < 50) {
+    // Always show search at top of page
+    showMobileSearch.value = true
+  } else if (currentScrollY > lastScrollY + 5) {
+    // Scrolling down - hide search
+    showMobileSearch.value = false
+  } else if (currentScrollY < lastScrollY - 5) {
+    // Scrolling up - show search
+    showMobileSearch.value = true
+  }
+
+  lastScrollY = currentScrollY
+}
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isAdmin = computed(() => authStore.isAdmin)
@@ -465,6 +485,7 @@ let countInterval = null
 onMounted(() => {
   loadSavedCity()
   document.addEventListener('click', closeMenu)
+  window.addEventListener('scroll', handleScroll, { passive: true })
   if (isAuthenticated.value) {
     fetchUnreadCounts()
     countInterval = setInterval(fetchUnreadCounts, 30000)
@@ -473,6 +494,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', closeMenu)
+  window.removeEventListener('scroll', handleScroll)
   if (countInterval) clearInterval(countInterval)
   if (searchTimeout) clearTimeout(searchTimeout)
 })
@@ -501,37 +523,93 @@ watch(() => route.query.q, (newQ) => {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .app-header {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.app-header.header-scrolled {
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+@media (min-width: 768px) {
+  .app-header.header-scrolled {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .header-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 10px 16px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .header-inner {
+    padding: 10px 16px;
+    gap: 16px;
+  }
+}
+
+/* Desktop only elements */
+.desktop-only {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .desktop-only {
+    display: flex !important;
+  }
 }
 
 /* Logo */
 .logo-link {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-decoration: none;
   flex-shrink: 0;
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
+}
+
+@media (min-width: 768px) {
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .logo-icon svg {
   width: 100%;
   height: 100%;
+}
+
+.logo-name-mobile {
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+}
+
+@media (min-width: 768px) {
+  .logo-name-mobile {
+    color: #1f2937;
+  }
 }
 
 .logo-text {
@@ -671,43 +749,70 @@ watch(() => route.query.q, (newQ) => {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   margin-left: auto;
+}
+
+@media (min-width: 768px) {
+  .header-right {
+    gap: 6px;
+  }
 }
 
 .icon-btn {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4b5563;
+  color: rgba(255, 255, 255, 0.9);
   border-radius: 10px;
   transition: all 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 
+@media (min-width: 768px) {
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    color: #4b5563;
+  }
+}
+
 .icon-btn:hover {
-  background: #f3f4f6;
-  color: #6366f1;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@media (min-width: 768px) {
+  .icon-btn:hover {
+    background: #f3f4f6;
+    color: #6366f1;
+  }
 }
 
 .notif-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 2px;
+  right: 2px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  background: #ef4444;
-  color: white;
+  background: #fbbf24;
+  color: #1f2937;
   font-size: 10px;
   font-weight: 700;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .notif-badge {
+    background: #ef4444;
+    color: white;
+  }
 }
 
 /* User Menu */
@@ -719,27 +824,50 @@ watch(() => route.query.q, (newQ) => {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px 4px 4px;
+  padding: 2px;
   border-radius: 20px;
   transition: background 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 
+@media (min-width: 768px) {
+  .user-btn {
+    padding: 4px 8px 4px 4px;
+  }
+}
+
 .user-btn:hover {
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@media (min-width: 768px) {
+  .user-btn:hover {
+    background: #f3f4f6;
+  }
 }
 
 .avatar {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
+}
+
+@media (min-width: 768px) {
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+  }
 }
 
 .chevron {
@@ -883,22 +1011,40 @@ watch(() => route.query.q, (newQ) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  font-weight: 600;
-  font-size: 13px;
+  gap: 4px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #667eea;
+  font-weight: 700;
+  font-size: 12px;
   text-decoration: none;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
   transition: all 0.2s;
   white-space: nowrap;
 }
 
+@media (min-width: 768px) {
+  .post-btn {
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  }
+}
+
 .post-btn:hover {
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-  transform: translateY(-1px);
+  background: white;
+  transform: scale(1.02);
+}
+
+@media (min-width: 768px) {
+  .post-btn:hover {
+    background: linear-gradient(135deg, #5558e8 0%, #7c4daf 100%);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+  }
 }
 
 .post-text {
@@ -913,63 +1059,83 @@ watch(() => route.query.q, (newQ) => {
 
 /* Mobile Search */
 .mobile-search {
-  padding: 0 16px 10px;
-  display: block;
+  padding: 0 12px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-height: 52px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  opacity: 1;
+}
+
+.mobile-search:not(.search-visible) {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
 }
 
 @media (min-width: 768px) {
   .mobile-search {
-    display: none;
+    display: none !important;
   }
 }
 
+.mobile-location-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+
+.mobile-location-btn span {
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mobile-search-inner {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  background: #f3f4f6;
-  border-radius: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
 }
 
 .mobile-search-inner input {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 16px;
-  color: #1f2937;
+  font-size: 14px;
+  color: white;
   outline: none;
+  min-width: 0;
 }
 
 .mobile-search-inner input::placeholder {
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .mobile-clear-btn {
   padding: 4px;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.7);
   flex-shrink: 0;
 }
 
 .mobile-clear-btn:hover {
-  color: #6b7280;
-}
-
-.mobile-search-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #6366f1;
   color: white;
-  border-radius: 8px;
-  flex-shrink: 0;
-  margin-left: 4px;
-}
-
-.mobile-search-btn:active {
-  background: #4f46e5;
 }
 
 /* Location Button (Desktop) */
