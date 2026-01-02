@@ -1,15 +1,9 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 overflow-x-hidden">
     <div class="max-w-md w-full">
-      <!-- Logo -->
+      <!-- Page Title -->
       <div class="text-center mb-8">
-        <router-link to="/" class="inline-flex items-center space-x-2">
-          <div class="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
-            <span class="text-white font-bold text-2xl">L</span>
-          </div>
-          <span class="text-2xl font-bold text-gray-900">Lentloads</span>
-        </router-link>
-        <h2 class="mt-6 text-3xl font-bold text-gray-900">Create an account</h2>
+        <h2 class="text-3xl font-bold text-gray-900">Create an account</h2>
         <p class="mt-2 text-gray-600">Join thousands of buyers and sellers</p>
       </div>
 

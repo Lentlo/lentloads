@@ -282,6 +282,9 @@ const isScrolled = ref(false)
 const showMobileSearch = ref(true)
 let lastScrollY = 0
 let ticking = false
+let lastToggleTime = 0
+let scrollDirection = null
+let scrollAccumulator = 0
 
 // Location picker state
 const showLocationPicker = ref(false)
@@ -291,12 +294,15 @@ const detectingLocation = ref(false)
 const selectedLocation = ref(null)
 
 // Handle scroll for showing/hiding mobile search - optimized with RAF
+// Uses accumulator pattern to prevent flicker from small scroll movements
 const handleScroll = () => {
   if (ticking) return
 
   ticking = true
   requestAnimationFrame(() => {
     const currentScrollY = window.scrollY
+    const now = Date.now()
+    const scrollDelta = currentScrollY - lastScrollY
 
     // Only process on mobile (< 768px)
     if (window.innerWidth < 768) {
@@ -306,13 +312,52 @@ const handleScroll = () => {
         isScrolled.value = shouldBeScrolled
       }
 
-      // Show search on scroll up, hide on scroll down
-      if (currentScrollY < 50) {
+      // Always show search at top of page
+      if (currentScrollY < 60) {
         if (!showMobileSearch.value) showMobileSearch.value = true
-      } else if (currentScrollY > lastScrollY + 10) {
-        if (showMobileSearch.value) showMobileSearch.value = false
-      } else if (currentScrollY < lastScrollY - 10) {
-        if (!showMobileSearch.value) showMobileSearch.value = true
+        scrollAccumulator = 0
+        lastScrollY = currentScrollY
+        ticking = false
+        return
+      }
+
+      // Check if we're near bottom of page (within 100px) - prevent flicker from bounce
+      const documentHeight = document.documentElement.scrollHeight
+      const windowHeight = window.innerHeight
+      const nearBottom = currentScrollY + windowHeight >= documentHeight - 100
+
+      if (nearBottom) {
+        // At bottom - don't toggle, just maintain current state
+        lastScrollY = currentScrollY
+        ticking = false
+        return
+      }
+
+      // Determine scroll direction
+      const currentDirection = scrollDelta > 0 ? 'down' : scrollDelta < 0 ? 'up' : null
+
+      // If direction changed, reset accumulator
+      if (currentDirection && currentDirection !== scrollDirection) {
+        scrollDirection = currentDirection
+        scrollAccumulator = 0
+      }
+
+      // Accumulate scroll distance in current direction
+      scrollAccumulator += Math.abs(scrollDelta)
+
+      // Only toggle after accumulating enough scroll (50px) and cooldown period (300ms)
+      const canToggle = now - lastToggleTime > 300
+
+      if (canToggle && scrollAccumulator > 50) {
+        if (scrollDirection === 'down' && showMobileSearch.value) {
+          showMobileSearch.value = false
+          lastToggleTime = now
+          scrollAccumulator = 0
+        } else if (scrollDirection === 'up' && !showMobileSearch.value) {
+          showMobileSearch.value = true
+          lastToggleTime = now
+          scrollAccumulator = 0
+        }
       }
     }
 
@@ -1066,7 +1111,7 @@ watch(() => route.query.q, (newQ) => {
   }
 }
 
-/* Mobile Search - smooth slide animation */
+/* Mobile Search - smooth slide animation with GPU acceleration */
 .mobile-search {
   padding: 0 12px 10px;
   display: flex;
@@ -1075,14 +1120,18 @@ watch(() => route.query.q, (newQ) => {
   max-height: 60px;
   opacity: 1;
   overflow: hidden;
-  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+  will-change: max-height, opacity, transform;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobile-search:not(.search-visible) {
   max-height: 0;
   opacity: 0;
+  transform: translateY(-10px);
   padding-top: 0;
   padding-bottom: 0;
   pointer-events: none;
