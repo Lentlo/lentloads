@@ -256,10 +256,17 @@
         <button
           v-else
           @click="handleSubmit"
-          :disabled="!isFormValid || loading"
+          :disabled="!isFormValid || loading || submitting"
           class="btn-primary flex-1"
         >
-          {{ loading ? 'Posting...' : 'Post Ad' }}
+          <span v-if="loading || submitting" class="flex items-center justify-center gap-2">
+            <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Posting...
+          </span>
+          <span v-else>Post Ad</span>
         </button>
       </div>
     </div>
@@ -267,7 +274,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
@@ -297,6 +304,7 @@ const authStore = useAuthStore()
 const listingsStore = useListingsStore()
 
 const loading = ref(false)
+const submitting = ref(false) // Prevents double submission
 const showAuthModal = ref(false)
 const currentStep = ref(1)
 const expandedCategory = ref(null)
@@ -412,6 +420,8 @@ const nextStep = () => {
 }
 
 const handleSubmit = async () => {
+  // Prevent double submission
+  if (submitting.value || loading.value) return
   if (!isFormValid.value) return
 
   if (!authStore.isAuthenticated) {
@@ -423,15 +433,21 @@ const handleSubmit = async () => {
 }
 
 const submitListing = async () => {
+  // Double-check to prevent multiple submissions
+  if (submitting.value) return
+  submitting.value = true
   loading.value = true
 
   try {
     const data = { ...form, images: images.value }
     await listingsStore.createListing(data)
     toast.success('Your ad has been submitted for review!')
-    router.push('/my-listings')
+    // Navigate to my-listings page
+    await router.push('/my-listings')
   } catch (error) {
     toast.error(error.response?.data?.message || 'Failed to create listing')
+    // Only reset submitting on error so user can try again
+    submitting.value = false
   } finally {
     loading.value = false
   }
@@ -439,6 +455,8 @@ const submitListing = async () => {
 
 const onAuthenticated = async () => {
   showAuthModal.value = false
+  // Small delay to ensure auth state is fully updated
+  await new Promise(resolve => setTimeout(resolve, 100))
   await submitListing()
 }
 

@@ -39,9 +39,12 @@
                 placeholder="Enter 10 digit number"
                 class="input rounded-l-none flex-1"
                 :disabled="loading"
+                @input="error = ''"
               />
             </div>
           </div>
+
+          <p v-if="error" class="text-red-500 text-sm mb-4">{{ error }}</p>
 
           <button
             type="submit"
@@ -236,7 +239,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { XMarkIcon, PhoneIcon, UserIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
@@ -264,8 +267,25 @@ const name = ref('')
 const email = ref('')
 const password = ref('')
 
+// Reset modal state when it opens
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) {
+    // Reset to initial state
+    step.value = 'phone'
+    loading.value = false
+    error.value = ''
+    showPassword.value = false
+    phone.value = ''
+    userName.value = ''
+    name.value = ''
+    email.value = ''
+    password.value = ''
+  }
+})
+
 const checkPhone = async () => {
   if (phone.value.length !== 10) return
+  if (loading.value) return // Prevent double click
 
   loading.value = true
   error.value = ''
@@ -275,20 +295,22 @@ const checkPhone = async () => {
       phone: '+91' + phone.value
     })
 
-    if (response.data.data.exists) {
-      userName.value = response.data.data.name
+    if (response.data?.data?.exists) {
+      userName.value = response.data.data.name || ''
       step.value = 'login'
     } else {
       step.value = 'register'
     }
   } catch (err) {
-    error.value = err.response?.data?.message || 'Something went wrong. Please try again.'
+    console.error('Phone check error:', err)
+    error.value = err.response?.data?.message || 'Network error. Please check your connection and try again.'
   } finally {
     loading.value = false
   }
 }
 
 const login = async () => {
+  if (loading.value) return // Prevent double click
   loading.value = true
   error.value = ''
 
@@ -300,6 +322,7 @@ const login = async () => {
 
     emit('authenticated')
   } catch (err) {
+    console.error('Login error:', err)
     error.value = err.response?.data?.message || 'Invalid password. Please try again.'
   } finally {
     loading.value = false
@@ -307,6 +330,7 @@ const login = async () => {
 }
 
 const register = async () => {
+  if (loading.value) return // Prevent double click
   loading.value = true
   error.value = ''
 
@@ -323,6 +347,7 @@ const register = async () => {
 
     emit('authenticated')
   } catch (err) {
+    console.error('Registration error:', err)
     error.value = err.response?.data?.message || 'Registration failed. Please try again.'
   } finally {
     loading.value = false
