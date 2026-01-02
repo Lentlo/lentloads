@@ -613,8 +613,15 @@ watch(() => route.query.q, (newQ) => {
 
 @media (min-width: 768px) {
   .header-inner {
-    padding: 10px 16px;
-    gap: 16px;
+    padding: 12px 24px;
+    gap: 20px;
+    min-height: 70px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header-inner {
+    padding: 12px 32px;
   }
 }
 
@@ -700,7 +707,7 @@ watch(() => route.query.q, (newQ) => {
 /* Search */
 .search-container {
   flex: 1;
-  max-width: 500px;
+  max-width: 520px;
   position: relative;
   display: none;
 }
@@ -714,63 +721,80 @@ watch(() => route.query.q, (newQ) => {
 .search-box {
   display: flex;
   align-items: center;
-  background: #f3f4f6;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  padding: 0 4px 0 12px;
-  transition: all 0.2s;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 6px 0 14px;
+  transition: all 0.25s ease;
+  height: 46px;
+}
+
+.search-box:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
 }
 
 .search-box.focused {
   background: white;
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), 0 4px 12px rgba(99, 102, 241, 0.08);
 }
 
 .search-icon {
   width: 20px;
   height: 20px;
-  color: #9ca3af;
+  color: #94a3b8;
   flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.search-box.focused .search-icon {
+  color: #6366f1;
 }
 
 .search-box input {
   flex: 1;
-  padding: 10px 8px;
+  padding: 12px 10px;
   border: none;
   background: transparent;
-  font-size: 16px;
-  color: #1f2937;
+  font-size: 15px;
+  color: #1e293b;
   outline: none;
+  min-width: 0;
 }
 
 .search-box input::placeholder {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 .clear-btn {
   padding: 6px;
-  color: #9ca3af;
+  color: #94a3b8;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
 .clear-btn:hover {
-  color: #6b7280;
+  color: #64748b;
+  background: #f1f5f9;
 }
 
 .search-submit {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #6366f1;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
-  border-radius: 8px;
-  transition: background 0.2s;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
 }
 
 .search-submit:hover {
-  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
 
 /* Suggestions */
@@ -874,37 +898,48 @@ watch(() => route.query.q, (newQ) => {
 /* User Menu */
 .user-menu {
   position: relative;
+  z-index: 60;
 }
 
 .user-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px;
-  border-radius: 20px;
-  transition: background 0.2s;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 24px;
+  transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  border: none;
+  background: transparent;
 }
 
 @media (min-width: 768px) {
   .user-btn {
-    padding: 4px 8px 4px 4px;
+    padding: 4px 10px 4px 4px;
+    border: 1px solid #e5e7eb;
+    background: white;
+  }
+
+  .user-btn:hover {
+    border-color: #6366f1;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
   }
 }
 
 .user-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 @media (min-width: 768px) {
   .user-btn:hover {
-    background: #f3f4f6;
+    background: #f9fafb;
   }
 }
 
 .avatar {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   background: rgba(255, 255, 255, 0.25);
   border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 50%;
@@ -913,21 +948,28 @@ watch(() => route.query.q, (newQ) => {
   justify-content: center;
   color: white;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 @media (min-width: 768px) {
   .avatar {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     font-size: 14px;
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    border: none;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
   }
 }
 
 .chevron {
   color: #6b7280;
+  transition: transform 0.2s;
+}
+
+.user-btn:hover .chevron {
+  color: #6366f1;
 }
 
 /* Dropdown */
@@ -1209,18 +1251,19 @@ watch(() => route.query.q, (newQ) => {
 .location-btn {
   display: none;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 10px 14px;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   white-space: nowrap;
-  max-width: 180px;
+  max-width: 200px;
+  height: 46px;
 }
 
 @media (min-width: 768px) {
@@ -1232,12 +1275,18 @@ watch(() => route.query.q, (newQ) => {
 .location-btn:hover {
   border-color: #6366f1;
   color: #6366f1;
+  background: #f8fafc;
+}
+
+.location-btn svg:first-child {
+  color: #6366f1;
 }
 
 .location-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 120px;
 }
 
 /* Mobile Location Button */
