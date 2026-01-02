@@ -338,9 +338,9 @@
     </div>
 
     <!-- Location Permission Modal -->
-    <div v-if="showLocationModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div class="absolute inset-0 bg-black/50" @click="showLocationModal = false"></div>
-      <div class="relative bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-2xl p-6 safe-area-bottom animate-slide-up">
+    <div v-if="showLocationModal" class="location-modal">
+      <div class="location-backdrop" @click="showLocationModal = false"></div>
+      <div class="location-sheet">
         <div class="text-center mb-4">
           <div class="w-16 h-16 mx-auto mb-4 bg-primary-100 rounded-full flex items-center justify-center">
             <MapPinIcon class="w-8 h-8 text-primary-600" />
@@ -366,7 +366,7 @@
             </li>
           </ul>
         </div>
-        <div class="flex gap-3">
+        <div class="location-actions">
           <button @click="showLocationModal = false" class="btn-secondary flex-1">Not Now</button>
           <button @click="requestLocationPermission" class="btn-primary flex-1">
             Allow Location
@@ -771,4 +771,50 @@ watch(() => route.query, (newQuery) => {
 .safe-area-bottom { padding-bottom: max(env(safe-area-inset-bottom, 0), 16px); }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Location Permission Modal */
+.location-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .location-modal {
+    align-items: center;
+  }
+}
+
+.location-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.location-sheet {
+  position: relative;
+  background: white;
+  width: 100%;
+  border-radius: 1rem 1rem 0 0;
+  padding: 1.5rem;
+  /* Position above mobile nav */
+  margin-bottom: calc(70px + env(safe-area-inset-bottom, 8px));
+  animation: slide-up 0.3s ease-out;
+}
+
+@media (min-width: 640px) {
+  .location-sheet {
+    max-width: 24rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0;
+  }
+}
+
+.location-actions {
+  display: flex;
+  gap: 0.75rem;
+}
 </style>
