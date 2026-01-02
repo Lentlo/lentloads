@@ -432,23 +432,25 @@ onUnmounted(() => {
 
 <style scoped>
 .conversation-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  height: -webkit-fill-available;
   background: #f3f4f6;
   overflow: hidden;
+  z-index: 40;
 }
 
 .conversation-header {
-  position: sticky;
-  top: 0;
-  z-index: 30;
   background: white;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
+  /* Safe area for notch */
+  padding-top: env(safe-area-inset-top, 0);
 }
 
 .messages-area {
@@ -462,24 +464,14 @@ onUnmounted(() => {
 }
 
 .conversation-input {
-  position: sticky;
-  bottom: 0;
-  z-index: 30;
   background: white;
   border-top: 1px solid #e5e7eb;
   padding: 12px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   flex-shrink: 0;
 }
 
 .pb-safe {
   padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
-}
-
-/* iOS specific fixes */
-@supports (-webkit-touch-callout: none) {
-  .conversation-page {
-    min-height: -webkit-fill-available;
-  }
 }
 </style>
