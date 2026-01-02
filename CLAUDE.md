@@ -1199,4 +1199,53 @@ ssh lentlo@139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && 
 
 ---
 
-*Last Updated: January 2, 2026 (Swipe Images, SavedSearches & Chat Fix)*
+### Session: January 2, 2026 (Chat Sending Overlay + SavedSearch Defaults)
+
+**1. SavedSearch Model - Default Notifications**
+- Added `$attributes` array to set defaults when creating new saved search:
+  - `notify_push` = true
+  - `notify_email` = true
+  - `notify_frequency` = 'instant'
+- File: `app/Models/SavedSearch.php`
+
+**2. Conversation.vue - Complete Rewrite with Sending Overlay**
+- **Problem:** Chat was hanging after sending, couldn't scroll, input wouldn't work
+- **Solution:** Added blocking "Sending..." overlay popup
+  - Full-screen overlay with spinner while message sends
+  - User waits for message to complete, then can send next
+  - Clear visual feedback prevents confusion
+  - Input and buttons disabled during send
+  - Refocuses input after send completes
+
+**Key Features:**
+```vue
+<!-- Sending Overlay -->
+<div v-if="sending" class="sending-overlay">
+  <div class="sending-popup">
+    <div class="sending-spinner"></div>
+    <p>Sending...</p>
+  </div>
+</div>
+```
+
+```css
+.sending-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+```
+
+**Why This Approach:**
+- Optimistic updates caused race conditions and glitches
+- Blocking overlay ensures one message at a time
+- Clear feedback that something is happening
+- After overlay closes, user can immediately type next message
+
+---
+
+*Last Updated: January 2, 2026 (Chat Sending Overlay + SavedSearch Defaults)*
