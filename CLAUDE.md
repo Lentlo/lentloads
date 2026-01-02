@@ -1614,4 +1614,62 @@ ssh lentlo@139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && 
 
 ---
 
-*Last Updated: January 2, 2026 (Auth Modal Z-Index Fix)*
+### Session: January 2, 2026 (Nearest Listings First)
+
+**Feature Request:**
+- Show nearest listings first to the user based on their location
+
+**Implementation:**
+
+1. **Backend - ListingController.php**
+   - Added distance calculation using Haversine formula when lat/lng provided
+   - Added 'nearest' sort option that orders by calculated distance
+   - Auto-defaults to 'nearest' sort when location coordinates are passed
+   - Uses 100km default radius
+
+   ```php
+   // Location-based search with distance calculation
+   if ($hasLocation) {
+       $haversine = "(6371 * acos(cos(radians($lat))
+                    * cos(radians(latitude))
+                    * cos(radians(longitude) - radians($lng))
+                    + sin(radians($lat))
+                    * sin(radians(latitude))))";
+
+       $query->selectRaw("listings.*, {$haversine} AS distance")
+           ->whereNotNull('latitude')
+           ->whereNotNull('longitude')
+           ->havingRaw("distance < ?", [$radius]);
+   }
+   ```
+
+2. **Frontend - Search.vue**
+   - Added "Nearest" option to sort dropdowns (both mobile and desktop)
+   - Gets user's geolocation on page mount using browser API
+   - Passes latitude/longitude to API when fetching listings
+   - Falls back to "Newest" sort if location unavailable
+   - Caches location for 5 minutes to avoid repeated prompts
+
+3. **Frontend - listings.js store**
+   - Added latitude/longitude to filters state
+   - Added `setUserLocation()` action
+   - Preserves location when resetting filters
+
+**How It Works:**
+1. User opens search page
+2. Browser requests geolocation permission
+3. If granted, coordinates are sent to API
+4. Backend calculates distance for each listing using Haversine formula
+5. Results sorted by distance (nearest first)
+6. If location denied, falls back to "Newest" sort
+
+**Files Modified:**
+- `app/Http/Controllers/Api/ListingController.php` - Distance calculation & sorting
+- `resources/js/views/Search.vue` - Geolocation & nearest option
+- `resources/js/stores/listings.js` - Location state management
+
+**Deploy Status:** ✅ Deployed
+
+---
+
+*Last Updated: January 2, 2026 (Nearest Listings First)*
