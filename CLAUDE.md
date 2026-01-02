@@ -56,21 +56,41 @@ All API routes are prefixed with `/v1/`
 ### Production Server
 - **URL**: https://phplaravel-1016958-6108537.cloudwaysapps.com
 - **Server IP**: 139.59.24.36
-- **SSH User**: lentlo
+- **SSH User**: lentlo@12
+- **SSH Password**: 789-=uioP
 - **App Path**: /home/master/applications/bpadwztsjg/public_html
 
-### Deploy Commands (via SSH)
+### Deploy Commands
+
+**Automated deployment (use this):**
 ```bash
-cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main
+expect -c '
+set timeout 120
+spawn ssh -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36" "cd /home/master/applications/bpadwztsjg/public_html && git clean -fd && git checkout . && git pull origin main && php artisan config:clear && php artisan cache:clear"
+expect "password:"
+send "789-=uioP\r"
+expect eof
+'
 ```
 
-### Clear OPcache
+**Clear OPcache:**
 ```bash
 curl -s 'https://phplaravel-1016958-6108537.cloudwaysapps.com/opcache-clear.php'
+```
+
+**Run migrations/seeders (if needed):**
+```bash
+expect -c '
+set timeout 120
+spawn ssh -o StrictHostKeyChecking=no "lentlo@12@139.59.24.36" "cd /home/master/applications/bpadwztsjg/public_html && php artisan migrate --force"
+expect "password:"
+send "789-=uioP\r"
+expect eof
+'
 ```
 
 ### After Code Changes
 1. Run `npm run build` locally
 2. Commit and push to GitHub
-3. SSH to server and pull changes
+3. Run the automated deployment command above
 4. Clear OPcache

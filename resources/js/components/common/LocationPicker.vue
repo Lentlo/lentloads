@@ -420,8 +420,22 @@ watch(() => [props.initialLatitude, props.initialLongitude], ([newLat, newLng]) 
   if (newLat && newLng && map) {
     map.setView([newLat, newLng], 15)
     addMarker(newLat, newLng)
+    locationData.latitude = newLat
+    locationData.longitude = newLng
   }
-})
+}, { immediate: false })
+
+// Watch for all initial props to sync locationData (for edit mode)
+watch(
+  () => [props.initialCity, props.initialState, props.initialLocality, props.initialPostalCode],
+  ([city, state, locality, postalCode]) => {
+    if (city !== undefined) locationData.city = city || ''
+    if (state !== undefined) locationData.state = state || ''
+    if (locality !== undefined) locationData.locality = locality || ''
+    if (postalCode !== undefined) locationData.postal_code = postalCode || ''
+  },
+  { immediate: true }
+)
 </script>
 
 <style>

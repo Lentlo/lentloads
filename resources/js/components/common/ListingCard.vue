@@ -147,7 +147,9 @@ const toggleFavorite = async () => {
 }
 
 const formatDate = (date) => {
-  return dayjs(date).fromNow()
+  if (!date) return 'Recently'
+  const d = dayjs(date)
+  return d.isValid() ? d.fromNow() : 'Recently'
 }
 
 const handleImageError = (e) => {

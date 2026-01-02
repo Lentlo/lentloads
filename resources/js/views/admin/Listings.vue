@@ -285,6 +285,7 @@
           <div>
             <label class="label">Location</label>
             <LocationPicker
+              :key="editingListing?.id"
               v-model:latitude="editForm.latitude"
               v-model:longitude="editForm.longitude"
               v-model:locality="editForm.locality"
@@ -293,6 +294,10 @@
               v-model:postalCode="editForm.postal_code"
               :initialLatitude="editForm.latitude"
               :initialLongitude="editForm.longitude"
+              :initialCity="editForm.city"
+              :initialState="editForm.state"
+              :initialLocality="editForm.locality"
+              :initialPostalCode="editForm.postal_code"
             />
           </div>
           <div class="flex gap-2 pt-4">

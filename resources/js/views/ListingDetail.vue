@@ -375,7 +375,11 @@ const sellerAvatar = computed(() => {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(listing.value?.user?.name || 'U') + '&background=7c3aed&color=fff&size=120'
 })
 
-const formatDate = (date) => dayjs(date).format('MMM D, YYYY')
+const formatDate = (date) => {
+  if (!date) return 'Recently'
+  const d = dayjs(date)
+  return d.isValid() ? d.format('MMM D, YYYY') : 'Recently'
+}
 
 const formatCondition = (condition) => {
   const map = { 'new': 'New', 'like_new': 'Like New', 'good': 'Good', 'fair': 'Fair', 'poor': 'Poor' }
