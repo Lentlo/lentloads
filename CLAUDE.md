@@ -170,11 +170,24 @@ expect eof
 - [ ] Using SAFE deploy command (no `git clean`)
 
 ### Critical Data Protection
-| Data | Location | Backed Up? | Recovery Plan |
-|------|----------|------------|---------------|
-| User uploads | `storage/app/public/` | ⚠️ SETUP NEEDED | Need Cloudways backup |
-| Database | MySQL | ⚠️ SETUP NEEDED | Need daily dumps |
-| Environment | `.env` | ⚠️ SETUP NEEDED | Copy to secure location |
+
+**Two types of user data - BOTH need protection:**
+
+| Data Type | Location | Contains | Backup Method |
+|-----------|----------|----------|---------------|
+| **Files** | `storage/app/public/` | Images, uploads | Cloudways backup / S3 |
+| **Database** | MySQL | Users, listings, messages, reviews, categories | Daily DB dumps |
+| **Config** | `.env` | Passwords, API keys | Manual copy to secure location |
+
+**What can destroy each:**
+| Threat | Files | Database |
+|--------|-------|----------|
+| `git clean -fd` | ❌ DELETES | ✅ Safe |
+| `rm -rf storage/` | ❌ DELETES | ✅ Safe |
+| Bad migration (DROP TABLE) | ✅ Safe | ❌ DELETES |
+| `DELETE FROM users` query | ✅ Safe | ❌ DELETES |
+| Server disk failure | ❌ LOST | ❌ LOST |
+| No backups + any disaster | ❌ GONE FOREVER | ❌ GONE FOREVER |
 
 ### Recommended Production Setup
 
@@ -199,7 +212,14 @@ AWS_BUCKET=lentlo-uploads
 0 2 * * * mysqldump -u user -p'pass' database > /backups/db_$(date +\%Y\%m\%d).sql
 ```
 
-**4. Error Monitoring**
+**4. Safe Database Practices**
+- NEVER run `DROP TABLE` or `DELETE FROM` without WHERE clause
+- ALWAYS backup before running migrations: `php artisan migrate`
+- Test migrations on staging/local first
+- Use `php artisan migrate:status` to check pending migrations
+- Keep migrations reversible with `down()` methods
+
+**5. Error Monitoring**
 Consider adding:
 - Sentry for error tracking
 - Laravel Telescope for debugging
