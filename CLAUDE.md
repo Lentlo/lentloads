@@ -150,26 +150,41 @@ expect eof
 5. **TEST the live site immediately** (see checklist below)
 6. **ALERT user immediately if anything is broken**
 
+### Health Check Page (Live Testing)
+
+**URL:** https://phplaravel-1016958-6108537.cloudwaysapps.com/health-check
+
+This page automatically tests:
+- ✅ Database connection
+- ✅ Users table (count)
+- ✅ Listings table (total & active count)
+- ✅ Categories table (count)
+- ✅ Storage directory & permissions
+- ✅ Storage symlink
+- ✅ Cache read/write
+- ✅ Recent listings with images
+- ✅ PHP version & environment
+
+**Use this page to:**
+1. Verify system is working after deployment
+2. Periodic health monitoring
+3. Debug issues quickly
+
 ### Post-Deployment Testing Checklist
 
-**MUST TEST after every deployment:**
+**After every deployment, visit the health check page:**
+```
+/health-check → Shows all system checks with status
+```
+
+**Additional manual checks if needed:**
 ```
 □ Homepage loads correctly
 □ Listings display with images
 □ Search works
 □ User can login (if auth changes)
-□ User can register (if auth changes)
 □ Create listing works (if listing changes)
 □ Image upload works (if storage/image changes)
-□ Mobile view works (if UI changes)
-```
-
-**How to test:**
-```bash
-# Quick check - homepage loads
-curl -s -o /dev/null -w "%{http_code}" https://lentloads.com
-
-# Should return 200
 ```
 
 **If ANY test fails:**

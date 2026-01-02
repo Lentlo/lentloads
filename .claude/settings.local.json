@@ -26,7 +26,9 @@
       "Bash(grep:*)",
       "Bash(chmod:*)",
       "Bash(ls:*)",
-      "Bash(nc:*)"
+      "Bash(nc:*)",
+      "WebFetch(domain:lentloads.com)",
+      "Bash(# Test Cloudways URL echo \"\"=== Testing Cloudways Production URL ===\"\" echo \"\"\"\" echo \"\"1. Homepage \\(should be 200\\):\"\" curl -s -o /dev/null -w \"\" Status: %{http_code}\\\\n\"\" https://phplaravel-1016958-6108537.cloudwaysapps.com echo \"\"\"\" echo \"\"2. API Categories \\(should be 200\\):\"\" curl -s -o /dev/null -w \"\" Status: %{http_code}\\\\n\"\" https://phplaravel-1016958-6108537.cloudwaysapps.com/v1/categories echo \"\"\"\" echo \"\"3. API Listings \\(should be 200\\):\"\" curl -s -o /dev/null -w \"\" Status: %{http_code}\\\\n\"\" https://phplaravel-1016958-6108537.cloudwaysapps.com/v1/listings echo \"\"\"\" echo \"\"4. Check if listings return data:\"\" curl -s https://phplaravel-1016958-6108537.cloudwaysapps.com/v1/listings)"
     ]
   }
 }

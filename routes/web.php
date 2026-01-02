@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HealthCheckController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+// Health Check Routes (must be before the catch-all)
+Route::get('/health-check', [HealthCheckController::class, 'page']);
+Route::get('/health-check/api', [HealthCheckController::class, 'index']);
 
 // Serve the Vue.js SPA for all routes
 Route::get('/{any?}', function () {
