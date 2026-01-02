@@ -112,7 +112,9 @@ class ListingController extends Controller
         switch ($sortBy) {
             case 'nearest':
                 if ($hasLocation) {
-                    $query->orderBy('distance', 'asc');
+                    // Put NULL distances (listings without location) at the end
+                    $query->orderByRaw('CASE WHEN latitude IS NULL OR longitude IS NULL THEN 1 ELSE 0 END ASC')
+                        ->orderBy('distance', 'asc');
                 } else {
                     // Fallback to newest if no location
                     $query->orderBy('is_featured', 'desc')

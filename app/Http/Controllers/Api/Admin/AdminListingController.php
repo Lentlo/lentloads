@@ -143,6 +143,10 @@ class AdminListingController extends Controller
             'category_id' => 'sometimes|exists:categories,id',
             'city' => 'sometimes|string|max:100',
             'state' => 'nullable|string|max:100',
+            'locality' => 'nullable|string|max:200',
+            'postal_code' => 'nullable|string|max:20',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'status' => 'sometimes|in:active,pending,rejected,sold,expired',
         ]);
 
