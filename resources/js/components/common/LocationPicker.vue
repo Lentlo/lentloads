@@ -435,7 +435,7 @@ const tryGPSLocation = () => {
     },
     (error) => {
       // Silent fail - user can still click on map or use the button
-      console.log('GPS not available or denied:', error.message)
+      // GPS not available or denied, but map interaction still works
     },
     {
       enableHighAccuracy: false, // Use low accuracy for faster response

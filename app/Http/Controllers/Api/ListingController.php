@@ -17,6 +17,15 @@ class ListingController extends Controller
 {
     public function index(Request $request)
     {
+        // Validate query parameters
+        $request->validate([
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'min_price' => 'nullable|numeric|min:0',
+            'max_price' => 'nullable|numeric|min:0',
+            'per_page' => 'nullable|integer|min:1|max:50',
+        ]);
+
         $query = Listing::with(['user:id,name,avatar,city,rating', 'category:id,name,slug', 'primaryImage'])
             ->active()
             ->notExpired();
@@ -201,8 +210,8 @@ class ListingController extends Controller
             'locality' => 'nullable|string|max:100',
             'address' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'attributes' => 'nullable|array',
             'images' => 'required|array|min:1|max:10',
             'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
@@ -280,8 +289,8 @@ class ListingController extends Controller
             'locality' => 'nullable|string|max:100',
             'address' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'attributes' => 'nullable|array',
         ]);
 
@@ -446,6 +455,18 @@ class ListingController extends Controller
 
     protected function storeImage(Listing $listing, $file, bool $isPrimary = false): ListingImage
     {
+        // Verify the file is actually an image by checking its content
+        $imageInfo = @getimagesize($file->getPathname());
+        if ($imageInfo === false) {
+            throw new \Exception('Invalid image file');
+        }
+
+        // Check allowed image types (IMAGETYPE_* constants)
+        $allowedTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_GIF];
+        if (!in_array($imageInfo[2], $allowedTypes)) {
+            throw new \Exception('Unsupported image type');
+        }
+
         // Increase memory limit temporarily for image processing
         $originalMemory = ini_get('memory_limit');
         ini_set('memory_limit', '256M');
@@ -483,12 +504,16 @@ class ListingController extends Controller
             Storage::disk('public')->put($thumbnailPath, $thumbEncoded);
             $thumbnail->destroy();
 
+            // Sanitize original filename (remove path traversal, special chars)
+            $originalName = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($file->getClientOriginalName()));
+            $originalName = Str::limit($originalName, 100, '');
+
             return ListingImage::create([
                 'listing_id' => $listing->id,
                 'path' => $mainPath,
                 'thumbnail' => $thumbnailPath,
                 'medium' => $mainPath, // Point to main image for backwards compatibility
-                'original_name' => $file->getClientOriginalName(),
+                'original_name' => $originalName,
                 'size' => $compressedSize, // Store compressed size
                 'mime_type' => 'image/webp',
                 'order' => $listing->images()->count(),

@@ -31,11 +31,11 @@ app.mount('#app')
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('SW registered:', registration)
+      .then(() => {
+        // Service worker registered successfully
       })
-      .catch((error) => {
-        console.log('SW registration failed:', error)
+      .catch(() => {
+        // Service worker registration failed - app will work without offline support
       })
   })
 }

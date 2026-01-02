@@ -18,6 +18,34 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Strict rate limiting for login attempts - 5 per minute per IP + email
+        RateLimiter::for('login', function (Request $request) {
+            $email = strtolower($request->input('email', ''));
+            return [
+                Limit::perMinute(5)->by($request->ip()),
+                Limit::perMinute(5)->by($email),
+            ];
+        });
+
+        // Strict rate limiting for registration - 3 per minute per IP
+        RateLimiter::for('register', function (Request $request) {
+            return Limit::perMinute(3)->by($request->ip());
+        });
+
+        // Very strict for password reset - 3 per minute per IP + email
+        RateLimiter::for('password-reset', function (Request $request) {
+            $email = strtolower($request->input('email', ''));
+            return [
+                Limit::perMinute(3)->by($request->ip()),
+                Limit::perMinute(3)->by('reset:' . $email),
+            ];
+        });
+
+        // Strict rate limiting for phone check - prevents enumeration
+        RateLimiter::for('phone-check', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')

@@ -31,19 +31,20 @@ use App\Http\Controllers\Api\Admin\AdminConversationController;
 // Public routes
 Route::prefix('v1')->group(function () {
 
-    // Auth routes - with rate limiting to prevent brute force attacks
-    Route::prefix('auth')->middleware('throttle:5,1')->group(function () {
-        Route::post('register', [AuthController::class, 'register']);
-        Route::post('login', [AuthController::class, 'login']);
-        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
-        Route::post('reset-password', [AuthController::class, 'resetPassword']);
-        Route::get('verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
+    // Auth routes - with strict rate limiting to prevent brute force attacks
+    Route::prefix('auth')->group(function () {
+        Route::post('register', [AuthController::class, 'register'])->middleware('throttle:register');
+        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:password-reset');
+        Route::post('reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:password-reset');
+        Route::get('verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify')->middleware('throttle:6,1');
     });
 
-    // Auth routes for listing flow (less strict rate limiting)
-    Route::prefix('auth')->middleware('throttle:10,1')->group(function () {
-        Route::post('check-phone', [AuthController::class, 'checkPhone']);
-        Route::post('quick-register', [AuthController::class, 'quickRegister']);
+    // Auth routes for listing flow - stricter rate limiting to prevent enumeration
+    Route::prefix('auth')->group(function () {
+        Route::post('check-phone', [AuthController::class, 'checkPhone'])->middleware('throttle:phone-check');
+        Route::post('check-user', [AuthController::class, 'checkUser'])->middleware('throttle:phone-check');
+        Route::post('quick-register', [AuthController::class, 'quickRegister'])->middleware('throttle:register');
     });
 
     // Categories

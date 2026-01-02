@@ -683,7 +683,7 @@ const getLocationFromIP = async () => {
       })
     }
   } catch (error) {
-    console.log('IP location detection failed:', error)
+    // IP location detection failed silently - search will work without location
   }
 }
 

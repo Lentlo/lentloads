@@ -32,17 +32,17 @@ class Review extends Model
     // Relationships
     public function reviewer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'reviewer_id');
+        return $this->belongsTo(User::class, 'reviewer_id')->withTrashed();
     }
 
     public function reviewed(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'reviewed_id');
+        return $this->belongsTo(User::class, 'reviewed_id')->withTrashed();
     }
 
     public function listing(): BelongsTo
     {
-        return $this->belongsTo(Listing::class);
+        return $this->belongsTo(Listing::class)->withTrashed();
     }
 
     // Scopes

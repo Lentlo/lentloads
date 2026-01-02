@@ -139,8 +139,8 @@ class AuthController extends Controller
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'notification_preferences' => 'nullable|array',
         ]);
 
@@ -155,6 +155,19 @@ class AuthController extends Controller
             'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
+        // Verify the file is actually an image by checking its content
+        $file = $request->file('avatar');
+        $imageInfo = @getimagesize($file->getPathname());
+        if ($imageInfo === false) {
+            return $this->errorResponse('Invalid image file', 422);
+        }
+
+        // Check allowed image types
+        $allowedTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_GIF];
+        if (!in_array($imageInfo[2], $allowedTypes)) {
+            return $this->errorResponse('Unsupported image type', 422);
+        }
+
         $user = $request->user();
 
         // Delete old avatar
@@ -166,7 +179,7 @@ class AuthController extends Controller
         $filename = Str::uuid() . '.webp';
         $path = "avatars/{$filename}";
 
-        $avatar = Image::make($request->file('avatar'))
+        $avatar = Image::make($file)
             ->fit(400, 400)
             ->encode('webp', 80);
 
@@ -301,6 +314,35 @@ class AuthController extends Controller
         return $this->successResponse([
             'exists' => $user !== null,
             'name' => $user ? $user->name : null,
+        ]);
+    }
+
+    /**
+     * Check if a user exists by phone or email
+     * Used for two-step login flow
+     */
+    public function checkUser(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string|min:5|max:255',
+        ]);
+
+        $login = $request->login;
+        $user = null;
+
+        // Check if it's an email
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            $user = User::where('email', $login)->first();
+        } else {
+            // Treat as phone number
+            $normalizedPhone = $this->normalizePhone($login);
+            $user = $this->findUserByPhone($normalizedPhone);
+        }
+
+        return $this->successResponse([
+            'exists' => $user !== null,
+            'name' => $user ? $user->name : null,
+            'type' => filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone',
         ]);
     }
 

@@ -33,7 +33,8 @@ class Conversation extends Model
         'is_blocked' => 'boolean',
     ];
 
-    protected $appends = ['unread_count'];
+    // Note: unread_count is NOT in appends to avoid N+1 queries
+    // Use ->withUnreadCount() scope when loading conversations
 
     protected static function boot()
     {
@@ -52,12 +53,12 @@ class Conversation extends Model
 
     public function buyer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'buyer_id');
+        return $this->belongsTo(User::class, 'buyer_id')->withTrashed();
     }
 
     public function seller(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'seller_id');
+        return $this->belongsTo(User::class, 'seller_id')->withTrashed();
     }
 
     public function messages(): HasMany
@@ -78,6 +79,12 @@ class Conversation extends Model
     // Accessors
     public function getUnreadCountAttribute(): int
     {
+        // If loaded via withUnreadCount scope, use the preloaded value
+        if (array_key_exists('unread_count', $this->attributes)) {
+            return (int) $this->attributes['unread_count'];
+        }
+
+        // Fallback to query (avoid using this in loops - use withUnreadCount scope)
         return $this->messages()
             ->where('is_read', false)
             ->where('sender_id', '!=', auth()->id())
@@ -85,6 +92,21 @@ class Conversation extends Model
     }
 
     // Scopes
+    /**
+     * Efficiently load unread_count using a subquery to avoid N+1 queries
+     */
+    public function scopeWithUnreadCount($query, $userId = null)
+    {
+        $userId = $userId ?? auth()->id();
+
+        return $query->addSelect([
+            'unread_count' => Message::selectRaw('COUNT(*)')
+                ->whereColumn('conversation_id', 'conversations.id')
+                ->where('is_read', false)
+                ->where('sender_id', '!=', $userId)
+        ]);
+    }
+
     public function scopeForUser($query, $userId)
     {
         return $query->where(function ($q) use ($userId) {

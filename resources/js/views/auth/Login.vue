@@ -9,156 +9,259 @@
           </div>
           <span class="text-2xl font-bold text-gray-900">Lentloads</span>
         </router-link>
-        <h2 class="mt-6 text-3xl font-bold text-gray-900">Welcome back</h2>
-        <p class="mt-2 text-gray-600">Sign in to your account</p>
+        <h2 class="mt-6 text-3xl font-bold text-gray-900">
+          {{ step === 'login' ? 'Welcome back' : step === 'register' ? 'Create account' : 'Sign in or Register' }}
+        </h2>
+        <p class="mt-2 text-gray-600">
+          {{ step === 'login' ? `Welcome back, ${userName}!` : step === 'register' ? 'Create your account to get started' : 'Enter your phone number or email' }}
+        </p>
       </div>
 
       <!-- Form -->
       <div class="card p-8">
-        <!-- Login Method Toggle -->
-        <div class="flex mb-6 bg-gray-100 rounded-lg p-1">
-          <button
-            type="button"
-            @click="loginMethod = 'phone'"
-            class="flex-1 py-2 text-sm font-medium rounded-md transition"
-            :class="loginMethod === 'phone' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'"
-          >
-            Phone
-          </button>
-          <button
-            type="button"
-            @click="loginMethod = 'email'"
-            class="flex-1 py-2 text-sm font-medium rounded-md transition"
-            :class="loginMethod === 'email' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'"
-          >
-            Email
-          </button>
-        </div>
-
-        <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Phone Input -->
-          <div v-if="loginMethod === 'phone'">
-            <label for="phone" class="label">Phone number</label>
-            <input
-              id="phone"
-              v-model="form.phone"
-              type="tel"
-              autocomplete="tel"
-              required
-              class="input"
-              :class="{ 'input-error': errors.login }"
-              placeholder="Enter your phone number"
-            />
-            <p class="mt-1 text-xs text-gray-500">Works with or without country code (e.g., 8122116594 or +91 8122116594)</p>
-            <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
-          </div>
-
-          <!-- Email Input -->
-          <div v-else>
-            <label for="email" class="label">Email address</label>
-            <input
-              id="email"
-              v-model="form.email"
-              type="email"
-              autocomplete="email"
-              required
-              class="input"
-              :class="{ 'input-error': errors.login }"
-              placeholder="you@example.com"
-            />
-            <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
-          </div>
-
-          <!-- Password -->
-          <div>
-            <div class="flex items-center justify-between">
-              <label for="password" class="label">Password</label>
-              <router-link to="/forgot-password" class="text-sm text-primary-600 hover:underline">
-                Forgot password?
-              </router-link>
-            </div>
-            <div class="relative">
+        <!-- Step 1: Enter Phone/Email -->
+        <div v-if="step === 'identify'">
+          <form @submit.prevent="checkUser" class="space-y-6">
+            <div>
+              <label for="login" class="label">Phone number or Email</label>
               <input
-                id="password"
-                v-model="form.password"
-                :type="showPassword ? 'text' : 'password'"
-                autocomplete="current-password"
+                id="login"
+                ref="loginInput"
+                v-model="form.login"
+                type="text"
+                autocomplete="email tel"
                 required
-                class="input pr-10"
-                :class="{ 'input-error': errors.password }"
+                class="input"
+                :class="{ 'input-error': errors.login }"
+                placeholder="Enter phone or email"
               />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-              >
-                <EyeIcon v-if="!showPassword" class="w-5 h-5" />
-                <EyeSlashIcon v-else class="w-5 h-5" />
-              </button>
+              <p class="mt-1 text-xs text-gray-500">Example: 8122116594 or you@example.com</p>
+              <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
             </div>
-            <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password }}</p>
-          </div>
 
-          <!-- Remember me -->
-          <div class="flex items-center">
-            <input
-              id="remember"
-              v-model="form.remember"
-              type="checkbox"
-              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-            />
-            <label for="remember" class="ml-2 text-sm text-gray-600">
-              Remember me
-            </label>
-          </div>
-
-          <!-- Submit -->
-          <button
-            type="submit"
-            :disabled="loading"
-            class="btn-primary w-full"
-          >
-            <span v-if="loading">Signing in...</span>
-            <span v-else>Sign in</span>
-          </button>
-        </form>
-
-        <!-- Divider -->
-        <div class="my-6 flex items-center">
-          <div class="flex-1 border-t border-gray-300"></div>
-          <span class="px-4 text-sm text-gray-500">or continue with</span>
-          <div class="flex-1 border-t border-gray-300"></div>
+            <button
+              type="submit"
+              :disabled="loading"
+              class="btn-primary w-full"
+            >
+              <span v-if="loading" class="flex items-center justify-center">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Checking...
+              </span>
+              <span v-else>Continue</span>
+            </button>
+          </form>
         </div>
 
-        <!-- Social Login -->
-        <div class="grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            class="btn-secondary flex items-center justify-center"
-          >
-            <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Google
-          </button>
-          <button
-            type="button"
-            class="btn-secondary flex items-center justify-center"
-          >
-            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-            </svg>
-            Facebook
-          </button>
+        <!-- Step 2a: Login (User Exists) -->
+        <div v-else-if="step === 'login'">
+          <!-- Back Button & User Info -->
+          <div class="mb-6">
+            <button
+              type="button"
+              @click="goBack"
+              class="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeftIcon class="w-4 h-4 mr-1" />
+              Change
+            </button>
+            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                <UserIcon class="w-5 h-5 text-primary-600" />
+              </div>
+              <div class="ml-3">
+                <p class="font-medium text-gray-900">{{ userName }}</p>
+                <p class="text-sm text-gray-500">{{ form.login }}</p>
+              </div>
+            </div>
+          </div>
+
+          <form @submit.prevent="handleLogin" class="space-y-6">
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="password" class="label">Password</label>
+                <router-link to="/forgot-password" class="text-sm text-primary-600 hover:underline">
+                  Forgot password?
+                </router-link>
+              </div>
+              <div class="relative">
+                <input
+                  id="password"
+                  ref="passwordInput"
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  required
+                  class="input pr-10"
+                  :class="{ 'input-error': errors.password }"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  @click="showPassword = !showPassword"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  <EyeIcon v-if="!showPassword" class="w-5 h-5" />
+                  <EyeSlashIcon v-else class="w-5 h-5" />
+                </button>
+              </div>
+              <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password }}</p>
+            </div>
+
+            <!-- Remember me -->
+            <div class="flex items-center">
+              <input
+                id="remember"
+                v-model="form.remember"
+                type="checkbox"
+                class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              <label for="remember" class="ml-2 text-sm text-gray-600">
+                Remember me
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              :disabled="loading"
+              class="btn-primary w-full"
+            >
+              <span v-if="loading">Signing in...</span>
+              <span v-else>Sign in</span>
+            </button>
+          </form>
         </div>
 
-        <!-- Need Help -->
+        <!-- Step 2b: Register (User Doesn't Exist) -->
+        <div v-else-if="step === 'register'">
+          <!-- Back Button -->
+          <div class="mb-6">
+            <button
+              type="button"
+              @click="goBack"
+              class="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeftIcon class="w-4 h-4 mr-1" />
+              Change
+            </button>
+            <div class="flex items-center p-3 bg-blue-50 rounded-lg">
+              <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <UserPlusIcon class="w-5 h-5 text-blue-600" />
+              </div>
+              <div class="ml-3">
+                <p class="font-medium text-gray-900">New account</p>
+                <p class="text-sm text-gray-500">{{ form.login }}</p>
+              </div>
+            </div>
+          </div>
+
+          <form @submit.prevent="handleRegister" class="space-y-4">
+            <div>
+              <label for="name" class="label">Full Name</label>
+              <input
+                id="name"
+                ref="nameInput"
+                v-model="registerForm.name"
+                type="text"
+                autocomplete="name"
+                required
+                class="input"
+                :class="{ 'input-error': errors.name }"
+                placeholder="Enter your full name"
+              />
+              <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
+            </div>
+
+            <!-- Email field (if user entered phone) -->
+            <div v-if="loginType === 'phone'">
+              <label for="email" class="label">Email address</label>
+              <input
+                id="email"
+                v-model="registerForm.email"
+                type="email"
+                autocomplete="email"
+                required
+                class="input"
+                :class="{ 'input-error': errors.email }"
+                placeholder="you@example.com"
+              />
+              <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
+            </div>
+
+            <!-- Phone field (if user entered email) -->
+            <div v-else>
+              <label for="phone" class="label">Phone number</label>
+              <input
+                id="phone"
+                v-model="registerForm.phone"
+                type="tel"
+                autocomplete="tel"
+                required
+                class="input"
+                :class="{ 'input-error': errors.phone }"
+                placeholder="Enter your phone number"
+              />
+              <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone }}</p>
+            </div>
+
+            <div>
+              <label for="reg-password" class="label">Create Password</label>
+              <div class="relative">
+                <input
+                  id="reg-password"
+                  v-model="registerForm.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  required
+                  class="input pr-10"
+                  :class="{ 'input-error': errors.password }"
+                  placeholder="Min 8 characters"
+                />
+                <button
+                  type="button"
+                  @click="showPassword = !showPassword"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  <EyeIcon v-if="!showPassword" class="w-5 h-5" />
+                  <EyeSlashIcon v-else class="w-5 h-5" />
+                </button>
+              </div>
+              <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password }}</p>
+            </div>
+
+            <div>
+              <label for="password-confirm" class="label">Confirm Password</label>
+              <input
+                id="password-confirm"
+                v-model="registerForm.password_confirmation"
+                :type="showPassword ? 'text' : 'password'"
+                autocomplete="new-password"
+                required
+                class="input"
+                :class="{ 'input-error': errors.password_confirmation }"
+                placeholder="Confirm your password"
+              />
+              <p v-if="errors.password_confirmation" class="mt-1 text-sm text-red-600">{{ errors.password_confirmation }}</p>
+            </div>
+
+            <button
+              type="submit"
+              :disabled="loading"
+              class="btn-primary w-full"
+            >
+              <span v-if="loading">Creating account...</span>
+              <span v-else>Create Account</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Need Help (show on all steps) -->
         <div class="mt-6 pt-6 border-t">
           <p class="text-sm text-gray-500 text-center mb-3">
-            Need help logging in? Contact us
+            Need help? Contact us
           </p>
           <div class="flex justify-center gap-3">
             <a
@@ -169,7 +272,7 @@
               Call Us
             </a>
             <a
-              href="https://wa.me/918122116594?text=Hi,%20I%20need%20help%20logging%20into%20my%20Lentloads%20account"
+              href="https://wa.me/918122116594?text=Hi,%20I%20need%20help%20with%20my%20Lentloads%20account"
               target="_blank"
               class="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 rounded-lg text-sm text-green-700 transition"
             >
@@ -181,24 +284,17 @@
           </div>
         </div>
       </div>
-
-      <!-- Register link -->
-      <p class="mt-6 text-center text-gray-600">
-        Don't have an account?
-        <router-link to="/register" class="text-primary-600 font-medium hover:underline">
-          Sign up
-        </router-link>
-      </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, nextTick, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 import { toast } from 'vue3-toastify'
-import { EyeIcon, EyeSlashIcon, PhoneIcon } from '@heroicons/vue/24/outline'
+import { EyeIcon, EyeSlashIcon, PhoneIcon, ArrowLeftIcon, UserIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const route = useRoute()
@@ -206,31 +302,88 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const showPassword = ref(false)
-const loginMethod = ref('phone') // 'phone' or 'email'
+const step = ref('identify') // 'identify', 'login', 'register'
+const userName = ref('')
+const loginType = ref('') // 'phone' or 'email'
+
+// Refs for input focus
+const loginInput = ref(null)
+const passwordInput = ref(null)
+const nameInput = ref(null)
 
 const form = reactive({
+  login: '',
+  password: '',
+  remember: false,
+})
+
+const registerForm = reactive({
+  name: '',
   email: '',
   phone: '',
   password: '',
-  remember: false,
+  password_confirmation: '',
 })
 
 const errors = reactive({
   login: '',
   password: '',
+  name: '',
+  email: '',
+  phone: '',
+  password_confirmation: '',
 })
 
-const handleSubmit = async () => {
-  // Reset errors
-  errors.login = ''
-  errors.password = ''
+const clearErrors = () => {
+  Object.keys(errors).forEach(key => errors[key] = '')
+}
 
-  // Validate based on login method
-  const loginValue = loginMethod.value === 'email' ? form.email : form.phone
-  if (!loginValue) {
-    errors.login = loginMethod.value === 'email' ? 'Email is required' : 'Phone number is required'
+const checkUser = async () => {
+  clearErrors()
+
+  if (!form.login || form.login.length < 5) {
+    errors.login = 'Please enter a valid phone number or email'
     return
   }
+
+  loading.value = true
+
+  try {
+    const response = await api.post('/auth/check-user', { login: form.login })
+    const { exists, name, type } = response.data.data
+
+    loginType.value = type
+    userName.value = name || 'User'
+
+    if (exists) {
+      step.value = 'login'
+      await nextTick()
+      passwordInput.value?.focus()
+    } else {
+      step.value = 'register'
+      // Pre-fill the appropriate field
+      if (type === 'email') {
+        registerForm.email = form.login
+      } else {
+        registerForm.phone = form.login
+      }
+      await nextTick()
+      nameInput.value?.focus()
+    }
+  } catch (error) {
+    if (error.response?.status === 429) {
+      errors.login = 'Too many attempts. Please try again later.'
+    } else {
+      errors.login = 'Something went wrong. Please try again.'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleLogin = async () => {
+  clearErrors()
+
   if (!form.password) {
     errors.password = 'Password is required'
     return
@@ -240,7 +393,7 @@ const handleSubmit = async () => {
 
   try {
     await authStore.login({
-      login: loginValue,
+      login: form.login,
       password: form.password,
       remember: form.remember,
     })
@@ -248,19 +401,97 @@ const handleSubmit = async () => {
 
     // Redirect - validate to prevent open redirect attacks
     const redirect = route.query.redirect
-    // Only allow internal paths (starting with /) and not protocol-relative URLs (//)
     const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
       ? redirect
       : '/dashboard'
     router.push(safeRedirect)
   } catch (error) {
     if (error.response?.status === 401) {
-      errors.password = loginMethod.value === 'email'
-        ? 'Invalid email or password'
-        : 'Invalid phone number or password'
+      errors.password = 'Incorrect password. Please try again.'
+    } else if (error.response?.status === 403) {
+      errors.password = 'Your account has been suspended.'
+    } else {
+      errors.password = 'Something went wrong. Please try again.'
     }
   } finally {
     loading.value = false
   }
 }
+
+const handleRegister = async () => {
+  clearErrors()
+
+  // Validation
+  if (!registerForm.name) {
+    errors.name = 'Name is required'
+    return
+  }
+
+  if (loginType.value === 'phone' && !registerForm.email) {
+    errors.email = 'Email is required'
+    return
+  }
+
+  if (loginType.value === 'email' && !registerForm.phone) {
+    errors.phone = 'Phone number is required'
+    return
+  }
+
+  if (!registerForm.password || registerForm.password.length < 8) {
+    errors.password = 'Password must be at least 8 characters'
+    return
+  }
+
+  if (registerForm.password !== registerForm.password_confirmation) {
+    errors.password_confirmation = 'Passwords do not match'
+    return
+  }
+
+  loading.value = true
+
+  try {
+    // Prepare registration data
+    const data = {
+      name: registerForm.name,
+      email: loginType.value === 'phone' ? registerForm.email : form.login,
+      phone: loginType.value === 'phone' ? form.login : registerForm.phone,
+      password: registerForm.password,
+      password_confirmation: registerForm.password_confirmation,
+    }
+
+    await authStore.register(data)
+    toast.success('Account created successfully!')
+
+    // Redirect
+    const redirect = route.query.redirect
+    const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+      ? redirect
+      : '/dashboard'
+    router.push(safeRedirect)
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      const serverErrors = error.response.data.errors
+      if (serverErrors.email) errors.email = serverErrors.email[0]
+      if (serverErrors.phone) errors.phone = serverErrors.phone[0]
+      if (serverErrors.password) errors.password = serverErrors.password[0]
+      if (serverErrors.name) errors.name = serverErrors.name[0]
+    } else {
+      errors.password = 'Something went wrong. Please try again.'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+const goBack = () => {
+  step.value = 'identify'
+  form.password = ''
+  Object.keys(registerForm).forEach(key => registerForm[key] = '')
+  clearErrors()
+  nextTick(() => loginInput.value?.focus())
+}
+
+onMounted(() => {
+  loginInput.value?.focus()
+})
 </script>
