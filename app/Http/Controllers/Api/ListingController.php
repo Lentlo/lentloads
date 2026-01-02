@@ -446,33 +446,58 @@ class ListingController extends Controller
 
     protected function storeImage(Listing $listing, $file, bool $isPrimary = false): ListingImage
     {
-        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path = "listings/{$listing->id}/{$filename}";
+        // Increase memory limit temporarily for image processing
+        $originalMemory = ini_get('memory_limit');
+        ini_set('memory_limit', '256M');
 
-        // Store original
-        Storage::disk('public')->put($path, file_get_contents($file));
+        try {
+            $uuid = Str::uuid();
 
-        // Create thumbnail
-        $thumbnailPath = "listings/{$listing->id}/thumb_{$filename}";
-        $thumbnail = Image::make($file)->fit(300, 300);
-        Storage::disk('public')->put($thumbnailPath, $thumbnail->encode());
+            // Use WebP for better compression (30-50% smaller than JPEG)
+            $mainFilename = $uuid . '.webp';
+            $thumbFilename = 'thumb_' . $uuid . '.webp';
 
-        // Create medium size
-        $mediumPath = "listings/{$listing->id}/medium_{$filename}";
-        $medium = Image::make($file)->fit(800, 600);
-        Storage::disk('public')->put($mediumPath, $medium->encode());
+            $mainPath = "listings/{$listing->id}/{$mainFilename}";
+            $thumbnailPath = "listings/{$listing->id}/{$thumbFilename}";
 
-        return ListingImage::create([
-            'listing_id' => $listing->id,
-            'path' => $path,
-            'thumbnail' => $thumbnailPath,
-            'medium' => $mediumPath,
-            'original_name' => $file->getClientOriginalName(),
-            'size' => $file->getSize(),
-            'mime_type' => $file->getMimeType(),
-            'order' => $listing->images()->count(),
-            'is_primary' => $isPrimary,
-        ]);
+            // Create main image: max 1200px, WebP, 80% quality
+            $mainImage = Image::make($file);
+
+            // Resize to max 1200px maintaining aspect ratio
+            $mainImage->resize(1200, 1200, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize(); // Don't upscale smaller images
+            });
+
+            // Encode as WebP with 80% quality
+            $mainEncoded = $mainImage->encode('webp', 80);
+            Storage::disk('public')->put($mainPath, $mainEncoded);
+            $compressedSize = strlen($mainEncoded);
+
+            // Free memory before creating thumbnail
+            $mainImage->destroy();
+
+            // Create thumbnail: 300x300, WebP, 80% quality
+            $thumbnail = Image::make($file)->fit(300, 300);
+            $thumbEncoded = $thumbnail->encode('webp', 80);
+            Storage::disk('public')->put($thumbnailPath, $thumbEncoded);
+            $thumbnail->destroy();
+
+            return ListingImage::create([
+                'listing_id' => $listing->id,
+                'path' => $mainPath,
+                'thumbnail' => $thumbnailPath,
+                'medium' => $mainPath, // Point to main image for backwards compatibility
+                'original_name' => $file->getClientOriginalName(),
+                'size' => $compressedSize, // Store compressed size
+                'mime_type' => 'image/webp',
+                'order' => $listing->images()->count(),
+                'is_primary' => $isPrimary,
+            ]);
+        } finally {
+            // Restore original memory limit
+            ini_set('memory_limit', $originalMemory);
+        }
     }
 
     /**

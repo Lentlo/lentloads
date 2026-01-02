@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password as PasswordRule;
+use Intervention\Image\Facades\Image;
 
 class AuthController extends Controller
 {
@@ -155,11 +157,22 @@ class AuthController extends Controller
 
         $user = $request->user();
 
+        // Delete old avatar
         if ($user->avatar) {
-            \Storage::disk('public')->delete($user->avatar);
+            Storage::disk('public')->delete($user->avatar);
         }
 
-        $path = $request->file('avatar')->store('avatars', 'public');
+        // Compress avatar: 400x400 max, WebP, 80% quality
+        $filename = Str::uuid() . '.webp';
+        $path = "avatars/{$filename}";
+
+        $avatar = Image::make($request->file('avatar'))
+            ->fit(400, 400)
+            ->encode('webp', 80);
+
+        Storage::disk('public')->put($path, $avatar);
+        $avatar->destroy();
+
         $user->update(['avatar' => $path]);
 
         return $this->successResponse([
