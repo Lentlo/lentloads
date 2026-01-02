@@ -1118,7 +1118,7 @@ watch(() => route.query.q, (newQ) => {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 16px; /* Must be 16px+ to prevent iOS zoom */
   color: white;
   outline: none;
   min-width: 0;
