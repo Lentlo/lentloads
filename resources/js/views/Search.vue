@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="search-page bg-gray-50">
     <div class="container-app py-4">
       <!-- Mobile Search Header -->
       <div class="lg:hidden mb-4">
@@ -276,7 +276,7 @@
             <BookmarkIcon class="w-4 h-4" />
           </button>
           <button @click="applyFilters" class="btn-primary flex-1">
-            Show {{ total > 0 ? total.toLocaleString() + ' ' : '' }}Results
+            Show Results
           </button>
         </div>
       </div>
@@ -515,6 +515,13 @@ watch(() => route.query, (newQuery) => {
 </script>
 
 <style scoped>
+/* Page container - fix for iOS viewport issues */
+.search-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
 /* Filter Modal Styles */
 .filter-modal {
   position: fixed;

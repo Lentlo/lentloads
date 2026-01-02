@@ -179,22 +179,22 @@
 
     <!-- Fixed Input Area -->
     <div class="conversation-input">
-      <form @submit.prevent="sendMessage" class="flex items-end gap-2">
+      <form @submit.prevent="sendMessage" class="flex items-center gap-2">
         <button
           type="button"
           @click="showOfferModal = true"
-          class="p-3 text-primary-600 hover:bg-primary-50 rounded-full flex-shrink-0"
+          class="w-11 h-11 text-primary-600 hover:bg-primary-50 rounded-full flex-shrink-0 flex items-center justify-center"
           title="Make an offer"
         >
           <CurrencyRupeeIcon class="w-6 h-6" />
         </button>
 
-        <div class="flex-1 relative">
+        <div class="flex-1">
           <textarea
             ref="messageInput"
             v-model="newMessage"
             placeholder="Type a message..."
-            class="w-full px-4 py-3 bg-gray-100 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+            class="w-full px-4 py-2.5 bg-gray-100 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 leading-normal"
             rows="1"
             :disabled="sending"
             @input="autoResize"
@@ -206,7 +206,7 @@
         <button
           type="submit"
           :disabled="!newMessage.trim() || sending"
-          class="p-3 bg-primary-600 text-white rounded-full flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-700 transition"
+          class="w-11 h-11 bg-primary-600 text-white rounded-full flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-700 transition flex items-center justify-center"
         >
           <PaperAirplaneIcon class="w-5 h-5" />
         </button>
