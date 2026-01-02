@@ -1504,13 +1504,73 @@ ssh lentlo@139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && 
 - `resources/js/assets/css/app.css` - Global iOS zoom prevention
 - `resources/js/views/dashboard/Conversation.vue` - Chat textarea 16px
 
-**Deploy Status:**
-- Code pushed to GitHub
-- SSH to server timed out - needs manual deployment:
-  ```bash
-  ssh master@139.59.24.36 "cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main"
-  ```
+**Deploy Status:** ✅ Deployed
 
 ---
 
-*Last Updated: January 2, 2026 (iOS Input Zoom Fix)*
+### Session: January 2, 2026 (Guest Listing Flow Fix)
+
+**Issues Reported:**
+1. Two types of buttons showing on CreateListing page
+2. After submitting ad, stays on same page (not redirecting to My Ads)
+3. Multiple ads created if user clicks Post Ad button multiple times
+4. For new users, after entering phone number it hangs, after refresh shows create account fields
+
+**Root Causes:**
+1. Only one button exists (Post Ad on step 4) - user may have been confused by Continue vs Post Ad
+2. Redirect was working but could fail silently
+3. No protection against double submission
+4. AuthPromptModal wasn't resetting state when reopened, and no error handling for phone check
+
+**Fixes Applied:**
+
+1. **CreateListing.vue - Double Submission Prevention**
+   ```javascript
+   const submitting = ref(false) // New flag
+
+   const handleSubmit = async () => {
+     if (submitting.value || loading.value) return // Block if already submitting
+     // ...
+   }
+
+   const submitListing = async () => {
+     if (submitting.value) return // Double check
+     submitting.value = true
+     // Only reset on error, not on success (prevents retry on already posted)
+   }
+   ```
+
+2. **CreateListing.vue - Post Ad Button with Spinner**
+   - Added visual spinner when posting
+   - Button disabled during submission
+   - Shows "Posting..." text
+
+3. **AuthPromptModal.vue - State Reset on Open**
+   ```javascript
+   watch(() => props.isOpen, (isOpen) => {
+     if (isOpen) {
+       // Reset ALL fields when modal opens
+       step.value = 'phone'
+       loading.value = false
+       error.value = ''
+       phone.value = ''
+       // ... reset all fields
+     }
+   })
+   ```
+
+4. **AuthPromptModal.vue - Better Error Handling**
+   - Added error display in phone step
+   - Prevent double clicks on all buttons (`if (loading.value) return`)
+   - Better error messages for network issues
+   - Console logging for debugging
+
+**Files Modified:**
+- `resources/js/views/dashboard/CreateListing.vue`
+- `resources/js/components/common/AuthPromptModal.vue`
+
+**Deploy Status:** ✅ Deployed
+
+---
+
+*Last Updated: January 2, 2026 (Guest Listing Flow Fix)*
