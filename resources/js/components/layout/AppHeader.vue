@@ -148,7 +148,7 @@
     <!-- Mobile Search -->
     <div class="mobile-search">
       <div class="mobile-search-inner">
-        <MagnifyingGlassIcon class="w-5 h-5 text-gray-400" />
+        <MagnifyingGlassIcon class="w-5 h-5 text-gray-400 flex-shrink-0" />
         <input
           v-model="searchQuery"
           type="text"
@@ -157,6 +157,9 @@
         />
         <button v-if="searchQuery" @click="clearSearch" class="mobile-clear-btn">
           <XMarkIcon class="w-5 h-5" />
+        </button>
+        <button @click="handleSearch" class="mobile-search-btn">
+          <MagnifyingGlassIcon class="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -766,5 +769,22 @@ watch(() => route.query.q, (newQ) => {
 
 .mobile-clear-btn:hover {
   color: #6b7280;
+}
+
+.mobile-search-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #6366f1;
+  color: white;
+  border-radius: 8px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.mobile-search-btn:active {
+  background: #4f46e5;
 }
 </style>
