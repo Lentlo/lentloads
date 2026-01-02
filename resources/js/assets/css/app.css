@@ -6,12 +6,13 @@
 @layer base {
   html {
     @apply scroll-smooth;
-    overflow-x: hidden;
+    /* Use clip instead of hidden - hidden breaks position:sticky */
+    overflow-x: clip;
   }
 
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* Prevent iOS auto-zoom on input focus - requires minimum 16px font-size */
