@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 overflow-x-hidden">
     <div class="max-w-md w-full">
       <!-- Logo -->
       <div class="text-center mb-8">
@@ -10,14 +10,14 @@
           <span class="text-2xl font-bold text-gray-900">Lentloads</span>
         </router-link>
         <h2 class="mt-6 text-3xl font-bold text-gray-900">
-          {{ step === 'login' ? 'Welcome back' : step === 'register' ? 'Create account' : 'Sign in or Register' }}
+          {{ pageTitle }}
         </h2>
         <p class="mt-2 text-gray-600">
-          {{ step === 'login' ? `Welcome back, ${userName}!` : step === 'register' ? 'Create your account to get started' : 'Enter your phone number or email' }}
+          {{ pageSubtitle }}
         </p>
       </div>
 
-      <!-- Form -->
+      <!-- Form Card -->
       <div class="card p-8">
         <!-- Step 1: Enter Phone/Email -->
         <div v-if="step === 'identify'">
@@ -56,9 +56,9 @@
           </form>
         </div>
 
-        <!-- Step 2a: Login (User Exists) -->
+        <!-- Step 2: Login (User Exists) - Password -->
         <div v-else-if="step === 'login'">
-          <!-- Back Button & User Info -->
+          <!-- User Info Header -->
           <div class="mb-6">
             <button
               type="button"
@@ -111,7 +111,6 @@
               <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password }}</p>
             </div>
 
-            <!-- Remember me -->
             <div class="flex items-center">
               <input
                 id="remember"
@@ -135,9 +134,8 @@
           </form>
         </div>
 
-        <!-- Step 2b: Register (User Doesn't Exist) -->
-        <div v-else-if="step === 'register'">
-          <!-- Back Button -->
+        <!-- Registration Step 1: Name -->
+        <div v-else-if="step === 'register-name'">
           <div class="mb-6">
             <button
               type="button"
@@ -158,9 +156,20 @@
             </div>
           </div>
 
-          <form @submit.prevent="handleRegister" class="space-y-4">
+          <!-- Progress Steps -->
+          <div class="flex items-center justify-center mb-6">
+            <div class="flex items-center space-x-2">
+              <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">1</div>
+              <div class="w-8 h-1 bg-gray-200 rounded"></div>
+              <div class="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium">2</div>
+              <div class="w-8 h-1 bg-gray-200 rounded"></div>
+              <div class="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium">3</div>
+            </div>
+          </div>
+
+          <form @submit.prevent="goToRegisterContact" class="space-y-6">
             <div>
-              <label for="name" class="label">Full Name</label>
+              <label for="name" class="label">What's your name?</label>
               <input
                 id="name"
                 ref="nameInput"
@@ -175,11 +184,48 @@
               <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
             </div>
 
+            <button
+              type="submit"
+              class="btn-primary w-full"
+            >
+              Continue
+            </button>
+          </form>
+        </div>
+
+        <!-- Registration Step 2: Email or Phone -->
+        <div v-else-if="step === 'register-contact'">
+          <div class="mb-6">
+            <button
+              type="button"
+              @click="step = 'register-name'"
+              class="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeftIcon class="w-4 h-4 mr-1" />
+              Back
+            </button>
+          </div>
+
+          <!-- Progress Steps -->
+          <div class="flex items-center justify-center mb-6">
+            <div class="flex items-center space-x-2">
+              <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                <CheckIcon class="w-4 h-4" />
+              </div>
+              <div class="w-8 h-1 bg-primary-600 rounded"></div>
+              <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">2</div>
+              <div class="w-8 h-1 bg-gray-200 rounded"></div>
+              <div class="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium">3</div>
+            </div>
+          </div>
+
+          <form @submit.prevent="goToRegisterPassword" class="space-y-6">
             <!-- Email field (if user entered phone) -->
             <div v-if="loginType === 'phone'">
-              <label for="email" class="label">Email address</label>
+              <label for="email" class="label">What's your email?</label>
               <input
                 id="email"
+                ref="emailInput"
                 v-model="registerForm.email"
                 type="email"
                 autocomplete="email"
@@ -188,14 +234,16 @@
                 :class="{ 'input-error': errors.email }"
                 placeholder="you@example.com"
               />
+              <p class="mt-1 text-xs text-gray-500">We'll send important updates here</p>
               <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
             </div>
 
             <!-- Phone field (if user entered email) -->
             <div v-else>
-              <label for="phone" class="label">Phone number</label>
+              <label for="phone" class="label">What's your phone number?</label>
               <input
                 id="phone"
+                ref="phoneInput"
                 v-model="registerForm.phone"
                 type="tel"
                 autocomplete="tel"
@@ -204,14 +252,54 @@
                 :class="{ 'input-error': errors.phone }"
                 placeholder="Enter your phone number"
               />
+              <p class="mt-1 text-xs text-gray-500">Buyers will contact you on this number</p>
               <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone }}</p>
             </div>
 
+            <button
+              type="submit"
+              class="btn-primary w-full"
+            >
+              Continue
+            </button>
+          </form>
+        </div>
+
+        <!-- Registration Step 3: Password -->
+        <div v-else-if="step === 'register-password'">
+          <div class="mb-6">
+            <button
+              type="button"
+              @click="step = 'register-contact'"
+              class="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeftIcon class="w-4 h-4 mr-1" />
+              Back
+            </button>
+          </div>
+
+          <!-- Progress Steps -->
+          <div class="flex items-center justify-center mb-6">
+            <div class="flex items-center space-x-2">
+              <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                <CheckIcon class="w-4 h-4" />
+              </div>
+              <div class="w-8 h-1 bg-primary-600 rounded"></div>
+              <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                <CheckIcon class="w-4 h-4" />
+              </div>
+              <div class="w-8 h-1 bg-primary-600 rounded"></div>
+              <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">3</div>
+            </div>
+          </div>
+
+          <form @submit.prevent="handleRegister" class="space-y-6">
             <div>
-              <label for="reg-password" class="label">Create Password</label>
+              <label for="reg-password" class="label">Create a password</label>
               <div class="relative">
                 <input
                   id="reg-password"
+                  ref="regPasswordInput"
                   v-model="registerForm.password"
                   :type="showPassword ? 'text' : 'password'"
                   autocomplete="new-password"
@@ -233,7 +321,7 @@
             </div>
 
             <div>
-              <label for="password-confirm" class="label">Confirm Password</label>
+              <label for="password-confirm" class="label">Confirm password</label>
               <input
                 id="password-confirm"
                 v-model="registerForm.password_confirmation"
@@ -242,7 +330,7 @@
                 required
                 class="input"
                 :class="{ 'input-error': errors.password_confirmation }"
-                placeholder="Confirm your password"
+                placeholder="Re-enter your password"
               />
               <p v-if="errors.password_confirmation" class="mt-1 text-sm text-red-600">{{ errors.password_confirmation }}</p>
             </div>
@@ -258,7 +346,7 @@
           </form>
         </div>
 
-        <!-- Need Help (show on all steps) -->
+        <!-- Help Section -->
         <div class="mt-6 pt-6 border-t">
           <p class="text-sm text-gray-500 text-center mb-3">
             Need help? Contact us
@@ -289,12 +377,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, onMounted } from 'vue'
+import { ref, reactive, nextTick, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import { toast } from 'vue3-toastify'
-import { EyeIcon, EyeSlashIcon, PhoneIcon, ArrowLeftIcon, UserIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
+import { EyeIcon, EyeSlashIcon, PhoneIcon, ArrowLeftIcon, UserIcon, UserPlusIcon, CheckIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const route = useRoute()
@@ -302,7 +390,7 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const showPassword = ref(false)
-const step = ref('identify') // 'identify', 'login', 'register'
+const step = ref('identify') // 'identify', 'login', 'register-name', 'register-contact', 'register-password'
 const userName = ref('')
 const loginType = ref('') // 'phone' or 'email'
 
@@ -310,6 +398,9 @@ const loginType = ref('') // 'phone' or 'email'
 const loginInput = ref(null)
 const passwordInput = ref(null)
 const nameInput = ref(null)
+const emailInput = ref(null)
+const phoneInput = ref(null)
+const regPasswordInput = ref(null)
 
 const form = reactive({
   login: '',
@@ -332,6 +423,26 @@ const errors = reactive({
   email: '',
   phone: '',
   password_confirmation: '',
+})
+
+const pageTitle = computed(() => {
+  switch (step.value) {
+    case 'login': return 'Welcome back'
+    case 'register-name': return 'Create account'
+    case 'register-contact': return 'Contact details'
+    case 'register-password': return 'Secure your account'
+    default: return 'Sign in or Register'
+  }
+})
+
+const pageSubtitle = computed(() => {
+  switch (step.value) {
+    case 'login': return `Welcome back, ${userName.value}!`
+    case 'register-name': return "Let's get to know you"
+    case 'register-contact': return 'How can we reach you?'
+    case 'register-password': return 'Create a strong password'
+    default: return 'Enter your phone number or email'
+  }
 })
 
 const clearErrors = () => {
@@ -360,7 +471,7 @@ const checkUser = async () => {
       await nextTick()
       passwordInput.value?.focus()
     } else {
-      step.value = 'register'
+      step.value = 'register-name'
       // Pre-fill the appropriate field
       if (type === 'email') {
         registerForm.email = form.login
@@ -399,7 +510,6 @@ const handleLogin = async () => {
     })
     toast.success('Welcome back!')
 
-    // Redirect - validate to prevent open redirect attacks
     const redirect = route.query.redirect
     const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
       ? redirect
@@ -418,14 +528,25 @@ const handleLogin = async () => {
   }
 }
 
-const handleRegister = async () => {
+const goToRegisterContact = async () => {
   clearErrors()
 
-  // Validation
-  if (!registerForm.name) {
-    errors.name = 'Name is required'
+  if (!registerForm.name || registerForm.name.length < 2) {
+    errors.name = 'Please enter your name'
     return
   }
+
+  step.value = 'register-contact'
+  await nextTick()
+  if (loginType.value === 'phone') {
+    emailInput.value?.focus()
+  } else {
+    phoneInput.value?.focus()
+  }
+}
+
+const goToRegisterPassword = async () => {
+  clearErrors()
 
   if (loginType.value === 'phone' && !registerForm.email) {
     errors.email = 'Email is required'
@@ -436,6 +557,20 @@ const handleRegister = async () => {
     errors.phone = 'Phone number is required'
     return
   }
+
+  // Basic email validation
+  if (loginType.value === 'phone' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerForm.email)) {
+    errors.email = 'Please enter a valid email address'
+    return
+  }
+
+  step.value = 'register-password'
+  await nextTick()
+  regPasswordInput.value?.focus()
+}
+
+const handleRegister = async () => {
+  clearErrors()
 
   if (!registerForm.password || registerForm.password.length < 8) {
     errors.password = 'Password must be at least 8 characters'
@@ -450,7 +585,6 @@ const handleRegister = async () => {
   loading.value = true
 
   try {
-    // Prepare registration data
     const data = {
       name: registerForm.name,
       email: loginType.value === 'phone' ? registerForm.email : form.login,
@@ -462,7 +596,6 @@ const handleRegister = async () => {
     await authStore.register(data)
     toast.success('Account created successfully!')
 
-    // Redirect
     const redirect = route.query.redirect
     const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
       ? redirect
@@ -475,6 +608,12 @@ const handleRegister = async () => {
       if (serverErrors.phone) errors.phone = serverErrors.phone[0]
       if (serverErrors.password) errors.password = serverErrors.password[0]
       if (serverErrors.name) errors.name = serverErrors.name[0]
+      // Go back to relevant step if there's an error
+      if (serverErrors.email || serverErrors.phone) {
+        step.value = 'register-contact'
+      } else if (serverErrors.name) {
+        step.value = 'register-name'
+      }
     } else {
       errors.password = 'Something went wrong. Please try again.'
     }
