@@ -557,12 +557,60 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 
 ## Session Notes
 
-### Session: January 2, 2026 (Location Pin & Map Feature)
+### Session: January 2, 2026 (Guest Listing Flow & Auth Modal)
+
+**New Feature: Guest Listing Flow (No Login Required Upfront)**
+
+Users can now fill the entire listing form without logging in first. Authentication only happens at submit time.
+
+**The Flow:**
+1. User clicks "SELL" → Goes directly to listing form (no login wall)
+2. Fills all details, uploads photos, sets location
+3. Clicks "Post Ad" → Auth modal appears
+4. Step 1: Enter phone number
+5. Step 2a: If phone exists → "Welcome back!" + password field + forgot password link
+6. Step 2b: If phone is new → Name + Email + Password fields
+7. After auth → Listing automatically submitted
+
+**Files Created:**
+- `resources/js/components/common/AuthPromptModal.vue` - Phone-first authentication modal
+
+**Files Modified:**
+- `app/Http/Controllers/Api/AuthController.php` - Added `checkPhone()` and `quickRegister()` methods
+- `routes/api.php` - Added `/auth/check-phone` and `/auth/quick-register` routes
+- `resources/js/views/dashboard/CreateListing.vue` - Shows auth modal for guests on submit
+- `resources/js/router/index.js` - Removed `requiresAuth` from `/sell` route
+
+**API Endpoints Added:**
+```php
+POST /api/v1/auth/check-phone   // Check if phone is registered, returns {exists: bool, name: string}
+POST /api/v1/auth/quick-register // Register new user with phone, email, password
+```
+
+**Why This Is Better:**
+- Users invest time filling the form first (less likely to abandon)
+- Phone-first auth (Indians prefer phone over email)
+- No SMS costs (password-based, not OTP)
+- Existing users can login with forgot password option
+- Higher conversion rate for listings
+
+---
+
+### Session: January 2, 2026 (Storage & IP Geolocation Fixes)
+
+**Bug Fix - Storage Permissions:**
+- **Issue:** "Unable to create directory" error when posting listing
+- **Cause:** Storage symlink was pointing to wrong path (`/home/1016958.cloudwaysapps.com/...` instead of `/home/master/applications/...`)
+- **Fix:** Recreated symlink with correct path, set 777 permissions on storage directories
 
 **Bug Fix - Server Error on Listing Creation:**
 - **Issue:** IP geolocation was using `http://ip-api.com` which fails on HTTPS sites (mixed content)
 - **Fix:** Switched to `https://ipapi.co/json/` which provides free HTTPS access (1000 requests/day)
 - **Also:** Added locality column to main migration for fresh installs, made add_locality migration idempotent
+
+---
+
+### Session: January 2, 2026 (Location Pin & Map Feature)
 
 **Implemented:** Leaflet + OpenStreetMap location picker for listings
 
@@ -742,4 +790,4 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 
 ---
 
-*Last Updated: January 1, 2026*
+*Last Updated: January 2, 2026*
