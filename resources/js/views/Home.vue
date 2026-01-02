@@ -35,21 +35,19 @@
           </router-link>
         </div>
 
-        <!-- Stats -->
-        <div class="hero-stats">
-          <div class="stat-item">
-            <span class="stat-value">{{ formatNumber(stats.listings) }}</span>
-            <span class="stat-label">Active Ads</span>
+        <!-- Trust badges instead of stats -->
+        <div class="hero-badges">
+          <div class="trust-badge">
+            <CheckCircleIcon class="w-4 h-4" />
+            <span>100% Free</span>
           </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-value">{{ formatNumber(stats.users) }}</span>
-            <span class="stat-label">Happy Users</span>
+          <div class="trust-badge">
+            <CheckCircleIcon class="w-4 h-4" />
+            <span>Verified Sellers</span>
           </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-value">{{ stats.cities }}+</span>
-            <span class="stat-label">Cities</span>
+          <div class="trust-badge">
+            <CheckCircleIcon class="w-4 h-4" />
+            <span>Safe & Secure</span>
           </div>
         </div>
       </div>
@@ -149,19 +147,10 @@
     <!-- Recent Listings -->
     <section class="listings-section">
       <div class="section-container">
-        <div class="section-header">
-          <div class="section-title-group">
-            <div class="section-icon recent-icon">
-              <ClockIcon class="w-5 h-5" />
-            </div>
-            <div>
-              <h2 class="section-title">Fresh Recommendations</h2>
-              <p class="section-subtitle">Recently posted near you</p>
-            </div>
-          </div>
-          <router-link to="/search" class="view-all-link">
+        <div class="section-header-simple">
+          <h2 class="section-title-sm">Fresh Recommendations</h2>
+          <router-link to="/search" class="view-all-btn">
             View All
-            <ChevronRightIcon class="w-4 h-4" />
           </router-link>
         </div>
 
@@ -257,20 +246,8 @@ const appStore = useAppStore()
 const loading = ref(true)
 const featuredListings = ref([])
 const recentListings = ref([])
-const stats = ref({
-  listings: 0,
-  users: 0,
-  cities: 50
-})
 
 const categories = computed(() => appStore.categories)
-
-const formatNumber = (num) => {
-  if (num >= 1000) {
-    return (num / 1000).toFixed(num >= 10000 ? 0 : 1) + 'K+'
-  }
-  return num + '+'
-}
 
 const getCategoryIcon = (slug) => {
   const icons = {
@@ -309,8 +286,6 @@ const fetchHomeData = async () => {
     const response = await api.get('/home')
     featuredListings.value = response.data.data.featured_listings || []
     recentListings.value = response.data.data.recent_listings || []
-    stats.value.listings = response.data.data.total_listings || 0
-    stats.value.users = response.data.data.total_users || 0
   } catch (error) {
     // Silent fail - page will still render
   } finally {
@@ -327,6 +302,7 @@ onMounted(() => {
 .home-page {
   min-height: 100vh;
   background: #f8fafc;
+  overflow-x: hidden;
 }
 
 /* Hero Section */
@@ -517,51 +493,35 @@ onMounted(() => {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-.hero-stats {
+.hero-badges {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 10px;
 }
 
 @media (min-width: 768px) {
-  .hero-stats {
+  .hero-badges {
     justify-content: flex-start;
   }
 }
 
-.stat-item {
-  text-align: center;
-}
-
-@media (min-width: 768px) {
-  .stat-item {
-    text-align: left;
-  }
-}
-
-.stat-value {
-  display: block;
-  font-size: 24px;
-  font-weight: 800;
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  border-radius: 20px;
   color: white;
-}
-
-@media (min-width: 768px) {
-  .stat-value {
-    font-size: 28px;
-  }
-}
-
-.stat-label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
 }
 
-.stat-divider {
-  width: 1px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.2);
+.trust-badge svg {
+  color: #fbbf24;
 }
 
 /* Hero Visual */
@@ -721,34 +681,71 @@ onMounted(() => {
   text-decoration: none;
   padding: 8px 0;
   transition: gap 0.2s;
+  white-space: nowrap;
 }
 
 .view-all-link:hover {
   gap: 8px;
 }
 
+/* Simple section header */
+.section-header-simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.section-title-sm {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+@media (min-width: 768px) {
+  .section-title-sm {
+    font-size: 20px;
+  }
+}
+
+.view-all-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6366f1;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.view-all-btn:hover {
+  text-decoration: underline;
+}
+
 /* Categories Section */
 .categories-section {
-  padding: 48px 0;
+  padding: 40px 0;
   background: white;
+  overflow-x: hidden;
 }
 
 @media (min-width: 768px) {
   .categories-section {
-    padding: 64px 0;
+    padding: 56px 0;
   }
 }
 
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 10px;
+  max-width: 100%;
 }
 
 @media (min-width: 640px) {
   .categories-grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 14px;
   }
 }
 
@@ -761,13 +758,15 @@ onMounted(() => {
 .category-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: 12px;
   text-decoration: none;
   transition: all 0.2s ease;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .category-card:hover {
@@ -778,13 +777,25 @@ onMounted(() => {
 }
 
 .category-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 10px;
   flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .category-icon {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.category-icon svg {
+  width: 22px;
+  height: 22px;
 }
 
 .icon-purple { background: #ede9fe; color: #7c3aed; }
@@ -800,23 +811,46 @@ onMounted(() => {
 .category-info {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .category-name {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+  .category-name {
+    font-size: 14px;
+  }
 }
 
 .category-count {
-  font-size: 13px;
+  font-size: 11px;
   color: #64748b;
+}
+
+@media (min-width: 640px) {
+  .category-count {
+    font-size: 12px;
+  }
 }
 
 .category-arrow {
   color: #cbd5e1;
   transition: all 0.2s;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .category-arrow {
+    display: block;
+  }
 }
 
 .category-card:hover .category-arrow {

@@ -155,7 +155,6 @@
         <ChevronDownIcon class="w-3 h-3" />
       </button>
       <div class="mobile-search-inner">
-        <MagnifyingGlassIcon class="w-4 h-4 text-white/60 flex-shrink-0" />
         <input
           v-model="searchQuery"
           type="text"
@@ -164,6 +163,9 @@
         />
         <button v-if="searchQuery" @click="clearSearch" class="mobile-clear-btn">
           <XMarkIcon class="w-4 h-4" />
+        </button>
+        <button @click="handleSearch" class="mobile-search-btn">
+          <MagnifyingGlassIcon class="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -1245,6 +1247,23 @@ watch(() => route.query.q, (newQ) => {
 
 .mobile-clear-btn:hover {
   color: white;
+}
+
+.mobile-search-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  color: #667eea;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.mobile-search-btn:active {
+  transform: scale(0.95);
 }
 
 /* Location Button (Desktop) */
