@@ -26,6 +26,10 @@ Example CSS for modals that should appear above the mobile nav:
 - Mobile nav: z-index 40
 - Modals/Popups: Use z-index 9999 to ensure they appear above everything
 
+### CSS Gotchas
+- **NEVER use `overflow-x: hidden` on html/body** - it breaks `position: sticky`
+- Use `overflow-x: clip` instead - provides same clipping but preserves sticky positioning
+
 ### Filter Tags Display
 - Filter tags should wrap to new lines (use `flex-wrap`) instead of horizontal scroll
 - Keep filter tags visible in viewport at all times
