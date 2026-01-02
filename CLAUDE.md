@@ -559,6 +559,11 @@ $listingCounts = Listing::whereIn('category_id', $allCategoryIds)->selectRaw('ca
 
 ### Session: January 2, 2026 (Location Pin & Map Feature)
 
+**Bug Fix - Server Error on Listing Creation:**
+- **Issue:** IP geolocation was using `http://ip-api.com` which fails on HTTPS sites (mixed content)
+- **Fix:** Switched to `https://ipapi.co/json/` which provides free HTTPS access (1000 requests/day)
+- **Also:** Added locality column to main migration for fresh installs, made add_locality migration idempotent
+
 **Implemented:** Leaflet + OpenStreetMap location picker for listings
 
 **New Files Created:**
