@@ -357,3 +357,286 @@ The LocationPicker supports both v-model bindings and legacy initial* props:
 ```
 
 **Important**: Use `:key` to force component recreation when editing different items.
+
+## Production Readiness Audit (2026-01-02)
+
+### Audit Summary
+- **Total Issues Found:** 34 (2 Critical, 8 High, 12 Medium, 12 Low)
+- **Status:** Requires fixes before production deployment
+
+---
+
+## CRITICAL ISSUES (Must Fix Before Production)
+
+### 1. Sensitive Information Exposed in API Responses
+**File:** `app/Http/Controllers/Api/ListingController.php` (line 152)
+**Issue:** Phone numbers exposed in public listing API:
+```php
+'user:id,name,phone,avatar,city,rating,total_reviews,created_at,is_verified_seller',
+```
+**Fix:** Remove `phone` from public API responses. Only show to authenticated users who initiate contact.
+
+### 2. Rate Limiting Too Weak on Auth Endpoints
+**File:** `routes/api.php` (lines 35-45)
+**Issues:**
+- `check-phone` endpoint: 10 req/min (should be 3-5)
+- Login/Register: 5 req/min but no account enumeration protection
+- No CAPTCHA after failed attempts
+
+**Fix:** Implement stricter throttling, add exponential backoff, implement CAPTCHA.
+
+---
+
+## HIGH SEVERITY ISSUES
+
+### 3. N+1 Query Problems
+**Files:**
+- `app/Http/Controllers/Api/AuthController.php` (lines 116-127)
+- `app/Models/Conversation.php` (lines 80-85) - `unread_count` accessor
+
+**Issue:** The `getUnreadCountAttribute()` executes a query every time accessed in a loop.
+```php
+public function getUnreadCountAttribute(): int
+{
+    return $this->messages()
+        ->where('is_read', false)
+        ->where('sender_id', '!=', auth()->id())
+        ->count();  // Query in loop!
+}
+```
+**Fix:** Use `withCount()` or cache unread count in database column.
+
+### 4. Missing Input Validation on Location Parameters
+**File:** `app/Http/Controllers/Api/ListingController.php` (lines 94-107)
+**Issue:** Latitude/longitude not bounds-checked before Haversine calculation.
+**Fix:** Add validation: `latitude|numeric|between:-90,90`, `longitude|numeric|between:-180,180`
+
+### 5. Email Verification Vulnerability
+**File:** `app/Http/Controllers/Api/AuthController.php` (lines 243-256)
+**Issue:** Verification endpoint accepts any user ID without rate limiting per email.
+**Fix:** Add rate limiting, use signed URLs, log all verification attempts.
+
+### 6. Missing Authorization on Admin Actions
+**File:** `app/Http/Controllers/Api/Admin/AdminReportController.php` (lines 95-121)
+**Issue:** `takeAction()` can suspend users without checking if target is admin/super-admin.
+**Fix:** Add policy checks, prevent suspension of admins, add audit logging.
+
+### 7. Soft-Delete Not Checked in Relationships
+**File:** `app/Models/Conversation.php` (lines 88-95)
+**Issue:** `forUser()` scope allows viewing conversations of soft-deleted users.
+**Fix:** Add `->whereHas('buyer', fn($q) => $q->withoutTrashed())`.
+
+### 8. Missing HTTPS Enforcement
+**Issue:** No middleware forcing HTTPS, no HSTS headers configured.
+**Fix:** Add HTTPS middleware for production, configure HSTS, ensure `APP_URL=https://...`.
+
+### 9. Weak Password Reset Tokens
+**File:** `app/Http/Controllers/Api/AuthController.php` (lines 218-241)
+**Issue:** No tracking of used tokens, no logging of reset requests.
+**Fix:** Track used tokens, log all password resets with IP/timestamp, notify user.
+
+### 10. Undefined Array Key in ReviewController (FIXED)
+**File:** `app/Http/Controllers/Api/ReviewController.php` (line 55)
+**Issue:** `$validated['listing_id']` accessed without null check.
+**Status:** ✅ Fixed on 2026-01-02 - Added `?? null` operator.
+
+---
+
+## MEDIUM SEVERITY ISSUES
+
+### 11. Complex Raw SQL in Search
+**File:** `app/Http/Controllers/Api/ListingController.php` (lines 44-51)
+**Issue:** SOUNDEX queries with complex substring operations could impact performance.
+**Fix:** Consider full-text search, limit search term variations to 10.
+
+### 12. File Upload Security
+**File:** `app/Http/Controllers/Api/AuthController.php` (lines 152-181)
+**Issues:**
+- Only MIME validation (can be spoofed)
+- No image dimension validation
+- No virus scanning
+**Fix:** Validate actual image content, add dimension limits, implement ClamAV.
+
+### 13. Console.log in Production
+**Files:** Multiple Vue components (15+ files)
+**Issue:** Debug statements logged in production.
+**Fix:** Remove all console.log, use Sentry/LogRocket for logging.
+
+### 14. Missing Audit Logging
+**Issue:** No logging for admin actions, sensitive user actions, data modifications.
+**Fix:** Implement Spatie Laravel Auditable or custom audit logging.
+
+### 15. Missing Cache Invalidation
+**Files:** AuthController, ListingController, FavoriteController
+**Issue:** Cache not invalidated on updates.
+**Fix:** Add cache invalidation in model observers.
+
+### 16. Environment-Specific Config Issues
+**File:** `.env.example`
+**Issues:**
+- CORS hardcoded with localhost
+- Redis uses no password
+- No separate production template
+**Fix:** Create `.env.production.example`, use secrets manager.
+
+---
+
+## LOW SEVERITY ISSUES
+
+### 17. Missing API Documentation
+**Fix:** Generate OpenAPI/Swagger documentation.
+
+### 18. Missing Security Headers
+**Fix:** Add `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, CSP headers.
+
+### 19. No Vue Error Boundaries
+**Fix:** Add ErrorBoundary component for graceful error handling.
+
+### 20. No Service Worker Cache Versioning
+**Fix:** Implement cache busting strategy for PWA updates.
+
+### 21. Missing Input Length Limits
+**Fix:** Add `max:1000` or `max:5000` to all text fields.
+
+### 22. No Request ID Logging
+**Fix:** Add request ID header for debugging distributed issues.
+
+---
+
+## Database Performance Notes
+
+### Missing Indexes (Add These)
+```sql
+-- For unread message count performance
+CREATE INDEX idx_messages_conversation_read ON messages(conversation_id, is_read);
+
+-- For conversation sorting
+CREATE INDEX idx_conversations_created ON conversations(created_at);
+
+-- For listing sorting
+CREATE INDEX idx_listings_created ON listings(created_at);
+
+-- For user analytics
+CREATE INDEX idx_users_created ON users(created_at);
+```
+
+### Query Optimization Needed
+1. Conversation unread count - cache in column or use withCount()
+2. User statistics aggregation - use single query with subqueries
+3. Search term variations - limit to prevent query explosion
+
+---
+
+## Security Checklist for Production
+
+### Authentication & Authorization
+- [ ] Rate limit auth endpoints (3-5 req/min)
+- [ ] Implement CAPTCHA after 3 failed logins
+- [ ] Add account lockout after 10 failed attempts
+- [ ] Use signed URLs for email verification
+- [ ] Track password reset tokens
+- [ ] Prevent admin suspension of other admins
+
+### Data Protection
+- [ ] Remove phone from public API responses
+- [ ] Mask emails in admin panels
+- [ ] Implement audit logging
+- [ ] Add field-level encryption for sensitive data
+
+### Infrastructure
+- [ ] Force HTTPS with middleware
+- [ ] Configure HSTS headers
+- [ ] Add security headers (X-Frame-Options, CSP, etc.)
+- [ ] Set up WAF rules
+- [ ] Configure proper CORS for production domain only
+
+### File Uploads
+- [ ] Validate actual image content (not just MIME)
+- [ ] Add dimension limits
+- [ ] Implement virus scanning
+- [ ] Serve with `X-Content-Type-Options: nosniff`
+
+---
+
+## Performance Checklist
+
+### Database
+- [ ] Add missing indexes (see above)
+- [ ] Fix N+1 queries in Conversation model
+- [ ] Enable query caching with Redis
+- [ ] Set up read replicas for scaling
+
+### Caching
+- [ ] Use Redis for sessions (`SESSION_DRIVER=redis`)
+- [ ] Use Redis for cache (`CACHE_DRIVER=redis`)
+- [ ] Implement cache invalidation in model observers
+- [ ] Cache common search terms
+
+### Frontend
+- [ ] Remove all console.log statements
+- [ ] Enable gzip compression
+- [ ] Set up CDN for images
+- [ ] Implement proper lazy loading
+
+---
+
+## Monitoring Checklist
+
+- [ ] Set up Sentry for error tracking
+- [ ] Enable Laravel Telescope for debugging (staging only)
+- [ ] Configure slow query logging (>100ms threshold)
+- [ ] Set up uptime monitoring
+- [ ] Configure alerting for critical errors
+
+---
+
+## Pre-Production Deployment Checklist
+
+```
+Environment:
+[ ] APP_DEBUG=false
+[ ] APP_ENV=production
+[ ] APP_URL=https://lentloads.com
+[ ] Proper mail configuration (not mailpit)
+[ ] Redis configured with password
+
+Security:
+[ ] HTTPS enforced
+[ ] Security headers configured
+[ ] CORS restricted to production domain
+[ ] Rate limiting enabled
+[ ] Audit logging enabled
+
+Performance:
+[ ] Database indexes added
+[ ] N+1 queries fixed
+[ ] Redis caching enabled
+[ ] CDN configured for images
+
+Monitoring:
+[ ] Error tracking (Sentry) configured
+[ ] Logging to persistent storage
+[ ] Database backups automated
+[ ] Uptime monitoring enabled
+
+Testing:
+[ ] All auth flows tested
+[ ] File uploads tested
+[ ] Search functionality tested
+[ ] Admin actions tested
+[ ] Mobile responsiveness verified
+```
+
+---
+
+## Quick Reference: Files That Need Attention
+
+| Priority | File | Issue |
+|----------|------|-------|
+| CRITICAL | `ListingController.php:152` | Remove phone from API |
+| CRITICAL | `routes/api.php:35-45` | Strengthen rate limiting |
+| HIGH | `Conversation.php:80-85` | Fix N+1 in unread_count |
+| HIGH | `AuthController.php:243-256` | Secure email verification |
+| HIGH | `AdminReportController.php:95-121` | Add authorization checks |
+| MEDIUM | Vue components (15 files) | Remove console.log |
+| MEDIUM | `AuthController.php:152-181` | Improve file upload security |
