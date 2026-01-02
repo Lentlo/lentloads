@@ -16,17 +16,30 @@
         <div
           class="main-image-container"
           @click="openLightbox"
-          @touchstart="handleSwipeStart"
-          @touchmove="handleSwipeMove"
-          @touchend="handleSwipeEnd"
+          @touchstart="onGalleryTouchStart"
+          @touchmove="onGalleryTouchMove"
+          @touchend="onGalleryTouchEnd"
         >
-          <img
-            :src="currentImage"
-            :alt="listing.title"
-            class="main-image"
-            :style="{ transform: `translateX(${swipeOffset}px)` }"
-            @error="handleImageError"
-          />
+          <div
+            class="images-track"
+            :style="{
+              transform: `translateX(${galleryTranslate}px)`,
+              transition: isGallerySwiping ? 'none' : 'transform 0.3s ease-out'
+            }"
+          >
+            <div
+              v-for="(image, index) in listing.images"
+              :key="image.id"
+              class="image-slide"
+            >
+              <img
+                :src="image.medium_url || image.url"
+                :alt="`${listing.title} - Image ${index + 1}`"
+                class="main-image"
+                @error="handleImageError"
+              />
+            </div>
+          </div>
 
           <!-- Image Counter -->
           <div v-if="listing.images?.length > 1" class="image-counter">
@@ -55,7 +68,7 @@
           <button
             v-for="(image, index) in listing.images"
             :key="image.id"
-            @click="currentImageIndex = index"
+            @click="goToImage(index)"
             class="thumbnail"
             :class="{ 'active': currentImageIndex === index }"
           >
@@ -225,45 +238,62 @@
     </template>
 
     <!-- Lightbox -->
-    <div v-if="lightboxOpen" class="lightbox" @click="closeLightbox">
-      <button @click="closeLightbox" class="lightbox-close">
-        <XMarkIcon class="w-8 h-8" />
-      </button>
-
-      <div class="lightbox-content" @click.stop>
-        <img
-          :src="currentImage"
-          :alt="listing.title"
-          class="lightbox-image"
-          :style="{ transform: `scale(${zoomLevel}) translate(${panX}px, ${panY}px)` }"
-          @error="handleImageError"
-          @touchstart="handleTouchStart"
-          @touchmove="handleTouchMove"
-          @touchend="handleTouchEnd"
-        />
-      </div>
-
-      <div class="lightbox-controls">
-        <button @click.stop="zoomOut" class="zoom-btn" :disabled="zoomLevel <= 1">
-          <MinusIcon class="w-6 h-6" />
+    <Teleport to="body">
+      <div
+        v-if="lightboxOpen"
+        class="lightbox"
+        @touchstart="onLightboxTouchStart"
+        @touchmove="onLightboxTouchMove"
+        @touchend="onLightboxTouchEnd"
+      >
+        <!-- Close button -->
+        <button @click="closeLightbox" class="lightbox-close">
+          <XMarkIcon class="w-7 h-7" />
         </button>
-        <span class="zoom-level">{{ Math.round(zoomLevel * 100) }}%</span>
-        <button @click.stop="zoomIn" class="zoom-btn" :disabled="zoomLevel >= 3">
-          <PlusIcon class="w-6 h-6" />
-        </button>
-      </div>
 
-      <button v-if="listing.images?.length > 1" @click.stop="prevImage" class="lightbox-nav lightbox-prev">
-        <ChevronLeftIcon class="w-8 h-8" />
-      </button>
-      <button v-if="listing.images?.length > 1" @click.stop="nextImage" class="lightbox-nav lightbox-next">
-        <ChevronRightIcon class="w-8 h-8" />
-      </button>
+        <!-- Images container -->
+        <div
+          class="lightbox-track"
+          :style="{
+            transform: `translateX(${lightboxTranslateX}px) translateY(${lightboxTranslateY}px)`,
+            transition: isLightboxSwiping ? 'none' : 'transform 0.3s ease-out',
+            opacity: lightboxOpacity
+          }"
+        >
+          <div
+            v-for="(image, index) in listing?.images"
+            :key="image.id"
+            class="lightbox-slide"
+          >
+            <img
+              :src="image.url"
+              :alt="`${listing?.title} - Image ${index + 1}`"
+              class="lightbox-image"
+              :style="{
+                transform: `scale(${index === currentImageIndex ? zoomScale : 1})`,
+                transformOrigin: 'center center'
+              }"
+              @error="handleImageError"
+            />
+          </div>
+        </div>
 
-      <div v-if="listing.images?.length > 1" class="lightbox-counter">
-        {{ currentImageIndex + 1 }} / {{ listing.images.length }}
+        <!-- Image counter -->
+        <div v-if="listing?.images?.length > 1" class="lightbox-counter">
+          {{ currentImageIndex + 1 }} / {{ listing.images.length }}
+        </div>
+
+        <!-- Dots indicator -->
+        <div v-if="listing?.images?.length > 1" class="lightbox-dots">
+          <span
+            v-for="(_, index) in listing.images"
+            :key="index"
+            class="lightbox-dot"
+            :class="{ 'active': currentImageIndex === index }"
+          ></span>
+        </div>
       </div>
-    </div>
+    </Teleport>
 
     <!-- Chat Modal -->
     <ChatModal v-if="showChatModal" :listing="listing" @close="showChatModal = false" />
@@ -274,7 +304,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useListingsStore } from '@/stores/listings'
@@ -285,8 +315,6 @@ import ChatModal from '@/components/modals/ChatModal.vue'
 import ReportModal from '@/components/modals/ReportModal.vue'
 import dayjs from 'dayjs'
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   HeartIcon,
   ShareIcon,
   MapPinIcon,
@@ -298,8 +326,6 @@ import {
   PhoneIcon,
   FlagIcon,
   XMarkIcon,
-  PlusIcon,
-  MinusIcon,
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -316,47 +342,180 @@ const showChatModal = ref(false)
 const showReportModal = ref(false)
 const showPhone = ref(false)
 
+// Gallery swipe state
+const isGallerySwiping = ref(false)
+const galleryStartX = ref(0)
+const galleryCurrentX = ref(0)
+const galleryWidth = ref(0)
+
+const galleryTranslate = computed(() => {
+  const baseTranslate = -currentImageIndex.value * galleryWidth.value
+  if (isGallerySwiping.value) {
+    return baseTranslate + (galleryCurrentX.value - galleryStartX.value)
+  }
+  return baseTranslate
+})
+
+const onGalleryTouchStart = (e) => {
+  if (e.touches.length !== 1) return
+  isGallerySwiping.value = true
+  galleryStartX.value = e.touches[0].clientX
+  galleryCurrentX.value = e.touches[0].clientX
+  galleryWidth.value = e.currentTarget.offsetWidth
+}
+
+const onGalleryTouchMove = (e) => {
+  if (!isGallerySwiping.value || e.touches.length !== 1) return
+  galleryCurrentX.value = e.touches[0].clientX
+}
+
+const onGalleryTouchEnd = () => {
+  if (!isGallerySwiping.value) return
+  isGallerySwiping.value = false
+
+  const diff = galleryCurrentX.value - galleryStartX.value
+  const threshold = galleryWidth.value * 0.2
+
+  if (diff > threshold && currentImageIndex.value > 0) {
+    currentImageIndex.value--
+  } else if (diff < -threshold && currentImageIndex.value < listing.value.images.length - 1) {
+    currentImageIndex.value++
+  }
+}
+
+const goToImage = (index) => {
+  currentImageIndex.value = index
+}
+
 // Lightbox state
 const lightboxOpen = ref(false)
-const zoomLevel = ref(1)
-const panX = ref(0)
-const panY = ref(0)
-let touchStartX = 0
-let touchStartY = 0
-let lastTouchDistance = 0
+const isLightboxSwiping = ref(false)
+const lightboxStartX = ref(0)
+const lightboxStartY = ref(0)
+const lightboxCurrentX = ref(0)
+const lightboxCurrentY = ref(0)
+const zoomScale = ref(1)
+const lightboxWidth = ref(0)
+const lastTapTime = ref(0)
+const initialPinchDistance = ref(0)
+const isPinching = ref(false)
+const swipeDirection = ref(null) // 'horizontal' or 'vertical'
 
-// Swipe state for main gallery
-const swipeOffset = ref(0)
-let swipeStartX = 0
-let isSwiping = false
+const lightboxTranslateX = computed(() => {
+  const baseTranslate = -currentImageIndex.value * lightboxWidth.value
+  if (isLightboxSwiping.value && swipeDirection.value === 'horizontal' && zoomScale.value === 1) {
+    return baseTranslate + (lightboxCurrentX.value - lightboxStartX.value)
+  }
+  return baseTranslate
+})
 
-const handleSwipeStart = (e) => {
-  if (e.touches.length === 1) {
-    swipeStartX = e.touches[0].clientX
-    isSwiping = true
+const lightboxTranslateY = computed(() => {
+  if (isLightboxSwiping.value && swipeDirection.value === 'vertical' && zoomScale.value === 1) {
+    return lightboxCurrentY.value - lightboxStartY.value
+  }
+  return 0
+})
+
+const lightboxOpacity = computed(() => {
+  if (swipeDirection.value === 'vertical' && zoomScale.value === 1) {
+    const dragDistance = Math.abs(lightboxCurrentY.value - lightboxStartY.value)
+    return Math.max(0.3, 1 - dragDistance / 300)
+  }
+  return 1
+})
+
+const onLightboxTouchStart = (e) => {
+  // Handle double tap to zoom
+  const now = Date.now()
+  if (now - lastTapTime.value < 300 && e.touches.length === 1) {
+    // Double tap
+    zoomScale.value = zoomScale.value === 1 ? 2 : 1
+    lastTapTime.value = 0
+    return
+  }
+  lastTapTime.value = now
+
+  if (e.touches.length === 2) {
+    // Pinch start
+    isPinching.value = true
+    initialPinchDistance.value = getPinchDistance(e.touches)
+  } else if (e.touches.length === 1) {
+    isLightboxSwiping.value = true
+    lightboxStartX.value = e.touches[0].clientX
+    lightboxStartY.value = e.touches[0].clientY
+    lightboxCurrentX.value = e.touches[0].clientX
+    lightboxCurrentY.value = e.touches[0].clientY
+    lightboxWidth.value = window.innerWidth
+    swipeDirection.value = null
   }
 }
 
-const handleSwipeMove = (e) => {
-  if (!isSwiping || e.touches.length !== 1) return
-  const diff = e.touches[0].clientX - swipeStartX
-  // Limit the swipe offset
-  swipeOffset.value = Math.max(-100, Math.min(100, diff))
-}
-
-const handleSwipeEnd = () => {
-  if (!isSwiping) return
-  isSwiping = false
-
-  const threshold = 50
-  if (swipeOffset.value > threshold && listing.value?.images?.length > 1) {
-    prevImage()
-  } else if (swipeOffset.value < -threshold && listing.value?.images?.length > 1) {
-    nextImage()
+const onLightboxTouchMove = (e) => {
+  if (isPinching.value && e.touches.length === 2) {
+    // Pinch zoom
+    const distance = getPinchDistance(e.touches)
+    const scale = distance / initialPinchDistance.value
+    zoomScale.value = Math.max(1, Math.min(3, zoomScale.value * scale))
+    initialPinchDistance.value = distance
+    return
   }
 
-  // Reset offset with animation
-  swipeOffset.value = 0
+  if (!isLightboxSwiping.value || e.touches.length !== 1) return
+
+  lightboxCurrentX.value = e.touches[0].clientX
+  lightboxCurrentY.value = e.touches[0].clientY
+
+  // Determine swipe direction if not set
+  if (!swipeDirection.value) {
+    const diffX = Math.abs(lightboxCurrentX.value - lightboxStartX.value)
+    const diffY = Math.abs(lightboxCurrentY.value - lightboxStartY.value)
+    if (diffX > 10 || diffY > 10) {
+      swipeDirection.value = diffX > diffY ? 'horizontal' : 'vertical'
+    }
+  }
+
+  // Prevent default only for horizontal swipes to allow vertical scroll close
+  if (swipeDirection.value === 'horizontal' && zoomScale.value === 1) {
+    e.preventDefault()
+  }
+}
+
+const onLightboxTouchEnd = () => {
+  isPinching.value = false
+
+  if (!isLightboxSwiping.value) return
+  isLightboxSwiping.value = false
+
+  if (zoomScale.value > 1) {
+    swipeDirection.value = null
+    return
+  }
+
+  const diffX = lightboxCurrentX.value - lightboxStartX.value
+  const diffY = lightboxCurrentY.value - lightboxStartY.value
+  const threshold = lightboxWidth.value * 0.2
+
+  if (swipeDirection.value === 'horizontal') {
+    if (diffX > threshold && currentImageIndex.value > 0) {
+      currentImageIndex.value--
+    } else if (diffX < -threshold && currentImageIndex.value < listing.value.images.length - 1) {
+      currentImageIndex.value++
+    }
+  } else if (swipeDirection.value === 'vertical') {
+    // Swipe down to close
+    if (Math.abs(diffY) > 100) {
+      closeLightbox()
+    }
+  }
+
+  swipeDirection.value = null
+}
+
+const getPinchDistance = (touches) => {
+  return Math.hypot(
+    touches[0].clientX - touches[1].clientX,
+    touches[0].clientY - touches[1].clientY
+  )
 }
 
 const currentImage = computed(() => {
@@ -388,23 +547,8 @@ const formatCondition = (condition) => {
   return map[condition] || condition?.replace(/_/g, ' ')
 }
 
-const prevImage = () => {
-  currentImageIndex.value = currentImageIndex.value > 0
-    ? currentImageIndex.value - 1
-    : listing.value.images.length - 1
-  resetZoom()
-}
-
-const nextImage = () => {
-  currentImageIndex.value = currentImageIndex.value < listing.value.images.length - 1
-    ? currentImageIndex.value + 1
-    : 0
-  resetZoom()
-}
-
 // Handle broken images - show placeholder
 const handleImageError = (e) => {
-  // Prevent infinite loop - only replace once per image
   if (!e.target.dataset.fallback) {
     e.target.dataset.fallback = 'true'
     e.target.src = 'https://placehold.co/800x600/e2e8f0/64748b?text=Image+Not+Available'
@@ -413,61 +557,14 @@ const handleImageError = (e) => {
 
 const openLightbox = () => {
   lightboxOpen.value = true
+  zoomScale.value = 1
   document.body.style.overflow = 'hidden'
 }
 
 const closeLightbox = () => {
   lightboxOpen.value = false
+  zoomScale.value = 1
   document.body.style.overflow = ''
-  resetZoom()
-}
-
-const resetZoom = () => {
-  zoomLevel.value = 1
-  panX.value = 0
-  panY.value = 0
-}
-
-const zoomIn = () => {
-  if (zoomLevel.value < 3) zoomLevel.value += 0.5
-}
-
-const zoomOut = () => {
-  if (zoomLevel.value > 1) {
-    zoomLevel.value -= 0.5
-    if (zoomLevel.value === 1) { panX.value = 0; panY.value = 0 }
-  }
-}
-
-const handleTouchStart = (e) => {
-  if (e.touches.length === 2) {
-    lastTouchDistance = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    )
-  } else if (e.touches.length === 1) {
-    touchStartX = e.touches[0].clientX - panX.value
-    touchStartY = e.touches[0].clientY - panY.value
-  }
-}
-
-const handleTouchMove = (e) => {
-  if (e.touches.length === 2) {
-    const distance = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    )
-    const scale = distance / lastTouchDistance
-    zoomLevel.value = Math.max(1, Math.min(3, zoomLevel.value * scale))
-    lastTouchDistance = distance
-  } else if (e.touches.length === 1 && zoomLevel.value > 1) {
-    panX.value = e.touches[0].clientX - touchStartX
-    panY.value = e.touches[0].clientY - touchStartY
-  }
-}
-
-const handleTouchEnd = () => {
-  lastTouchDistance = 0
 }
 
 const toggleFavorite = async () => {
@@ -506,7 +603,22 @@ const fetchListing = async () => {
   }
 }
 
-onMounted(() => fetchListing())
+// Handle escape key to close lightbox
+const handleKeydown = (e) => {
+  if (e.key === 'Escape' && lightboxOpen.value) {
+    closeLightbox()
+  }
+}
+
+onMounted(() => {
+  fetchListing()
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  document.body.style.overflow = ''
+})
 
 watch(() => route.params.slug, (newSlug, oldSlug) => {
   if (newSlug !== oldSlug) {
@@ -534,6 +646,7 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
   width: 100%;
   aspect-ratio: 4/3;
   background: #1a1a1a;
+  overflow: hidden;
   cursor: zoom-in;
 }
 
@@ -544,10 +657,27 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
   }
 }
 
+.images-track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+
+.image-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .main-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .image-counter {
@@ -587,7 +717,6 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
   color: white;
 }
 
-/* Swipe dots indicator */
 .swipe-dots {
   position: absolute;
   bottom: 12px;
@@ -608,42 +737,6 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
   background: white;
   width: 20px;
   border-radius: 4px;
-}
-
-/* Main image transition */
-.main-image {
-  transition: transform 0.15s ease-out;
-}
-
-/* Hide nav arrows on mobile - only show on desktop */
-.nav-arrow {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .nav-arrow {
-    display: flex;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    color: #333;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    transition: all 0.2s;
-  }
-
-  .nav-arrow:hover {
-    background: white;
-    transform: translateY(-50%) scale(1.05);
-  }
-
-  .nav-prev { left: 12px; }
-  .nav-next { right: 12px; }
 }
 
 .thumbnails-strip {
@@ -962,104 +1055,87 @@ watch(() => route.params.slug, (newSlug, oldSlug) => {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.95);
-  z-index: 100;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: none;
 }
 
 .lightbox-close {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   color: white;
   z-index: 10;
 }
 
-.lightbox-content {
+.lightbox-track {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  will-change: transform, opacity;
+}
+
+.lightbox-slide {
+  flex: 0 0 100%;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  padding: 20px;
 }
 
 .lightbox-image {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  transition: transform 0.1s;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: transform 0.2s ease-out;
 }
-
-.lightbox-controls {
-  position: absolute;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 24px;
-}
-
-.zoom-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  color: white;
-}
-
-.zoom-btn:disabled {
-  opacity: 0.3;
-}
-
-.zoom-level {
-  font-size: 14px;
-  color: white;
-  min-width: 50px;
-  text-align: center;
-}
-
-.lightbox-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  color: white;
-}
-
-.lightbox-prev { left: 16px; }
-.lightbox-next { right: 16px; }
 
 .lightbox-counter {
   position: absolute;
-  bottom: 24px;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.6);
   border-radius: 20px;
   color: white;
   font-size: 14px;
+  font-weight: 500;
+}
+
+.lightbox-dots {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.lightbox-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 0.2s;
+}
+
+.lightbox-dot.active {
+  background: white;
+  width: 24px;
+  border-radius: 4px;
 }
 </style>
