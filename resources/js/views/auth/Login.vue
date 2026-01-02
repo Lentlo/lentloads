@@ -631,15 +631,16 @@ onMounted(() => {
 
 <style scoped>
 .auth-page {
-  min-height: 100vh;
   background: #f9fafb;
   padding: 24px 16px;
+  padding-bottom: 100px; /* Space for mobile nav */
   overflow-x: hidden;
 }
 
 /* On larger screens, center the form vertically */
 @media (min-width: 640px) {
   .auth-page {
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
