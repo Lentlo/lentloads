@@ -13,8 +13,8 @@
         <p class="mt-2 text-gray-600">Join thousands of buyers and sellers</p>
       </div>
 
-      <!-- Progress Indicator -->
-      <div class="flex items-center justify-center mb-8">
+      <!-- Progress Indicator (shown after phone check) -->
+      <div v-if="step !== 'phone'" class="flex items-center justify-center mb-8">
         <div class="flex items-center space-x-3">
           <!-- Step 1 -->
           <div
@@ -52,10 +52,46 @@
 
       <!-- Form -->
       <div class="card p-8">
+        <!-- Step 0: Phone/Email Check -->
+        <div v-if="step === 'phone'">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Enter your phone or email</h3>
+          <p class="text-sm text-gray-500 mb-6">We'll check if you already have an account</p>
+
+          <form @submit.prevent="checkUser">
+            <div class="mb-6">
+              <label for="login" class="label">Phone number or Email</label>
+              <input
+                id="login"
+                ref="loginInput"
+                v-model="loginIdentifier"
+                type="text"
+                autocomplete="username"
+                required
+                class="input"
+                :class="{ 'input-error': checkError }"
+                placeholder="Enter phone or email"
+              />
+              <p v-if="checkError" class="mt-1 text-sm text-red-600">{{ checkError }}</p>
+            </div>
+
+            <button type="submit" :disabled="checking" class="btn-primary w-full">
+              <span v-if="checking">Checking...</span>
+              <span v-else>Continue</span>
+            </button>
+          </form>
+        </div>
+
         <!-- Step 1: Name -->
         <div v-if="step === 'name'">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">What's your name?</h3>
-          <p class="text-sm text-gray-500 mb-6">This will be displayed on your profile</p>
+          <div class="flex items-center mb-4">
+            <button @click="step = 'phone'" class="text-gray-500 hover:text-gray-700 mr-3">
+              <ArrowLeftIcon class="w-5 h-5" />
+            </button>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">What's your name?</h3>
+              <p class="text-sm text-gray-500">This will be displayed on your profile</p>
+            </div>
+          </div>
 
           <form @submit.prevent="goToContact">
             <div class="mb-6">
@@ -80,24 +116,25 @@
           </form>
         </div>
 
-        <!-- Step 2: Contact (Email + Phone) -->
+        <!-- Step 2: Contact (Email or Phone - whichever wasn't entered) -->
         <div v-if="step === 'contact'">
           <div class="flex items-center mb-4">
             <button @click="step = 'name'" class="text-gray-500 hover:text-gray-700 mr-3">
               <ArrowLeftIcon class="w-5 h-5" />
             </button>
             <div>
-              <h3 class="text-lg font-semibold text-gray-900">Contact details</h3>
+              <h3 class="text-lg font-semibold text-gray-900">{{ contactType === 'email' ? 'Add your email' : 'Add your phone' }}</h3>
               <p class="text-sm text-gray-500">How can buyers reach you?</p>
             </div>
           </div>
 
           <form @submit.prevent="goToPassword">
-            <div class="mb-4">
+            <!-- Show email field if user entered phone -->
+            <div v-if="contactType === 'email'" class="mb-6">
               <label for="email" class="label">Email address</label>
               <input
                 id="email"
-                ref="emailInput"
+                ref="contactInput"
                 v-model="form.email"
                 type="email"
                 autocomplete="email"
@@ -109,10 +146,12 @@
               <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
             </div>
 
-            <div class="mb-6">
+            <!-- Show phone field if user entered email -->
+            <div v-if="contactType === 'phone'" class="mb-6">
               <label for="phone" class="label">Phone Number</label>
               <input
                 id="phone"
+                ref="contactInput"
                 v-model="form.phone"
                 type="tel"
                 autocomplete="tel"
@@ -263,18 +302,26 @@ import { ref, reactive, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'vue3-toastify'
+import api from '@/services/api'
 import { EyeIcon, EyeSlashIcon, ArrowLeftIcon, CheckIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const step = ref('name') // 'name', 'contact', 'password'
+const step = ref('phone') // 'phone', 'name', 'contact', 'password'
 const loading = ref(false)
+const checking = ref(false)
 const showPassword = ref(false)
 
+// Phone/email check
+const loginIdentifier = ref('')
+const checkError = ref('')
+const contactType = ref('email') // 'email' or 'phone' - what we need to collect
+
 // Template refs
+const loginInput = ref(null)
 const nameInput = ref(null)
-const emailInput = ref(null)
+const contactInput = ref(null)
 const passwordInput = ref(null)
 
 const form = reactive({
@@ -294,6 +341,50 @@ const errors = reactive({
   password_confirmation: '',
 })
 
+// Check if user exists
+const checkUser = async () => {
+  checkError.value = ''
+
+  if (!loginIdentifier.value || loginIdentifier.value.trim().length < 5) {
+    checkError.value = 'Please enter a valid phone number or email'
+    return
+  }
+
+  checking.value = true
+
+  try {
+    const response = await api.post('/auth/check-user', {
+      login: loginIdentifier.value
+    })
+
+    if (response.data.data.exists) {
+      // User exists - redirect to login
+      toast.info('You already have an account. Please login.')
+      router.push('/login')
+    } else {
+      // New user - continue registration
+      const type = response.data.data.type
+
+      if (type === 'email') {
+        form.email = loginIdentifier.value
+        contactType.value = 'phone' // Need to collect phone
+      } else {
+        form.phone = loginIdentifier.value
+        contactType.value = 'email' // Need to collect email
+      }
+
+      step.value = 'name'
+      nextTick(() => {
+        nameInput.value?.focus()
+      })
+    }
+  } catch (error) {
+    checkError.value = error.response?.data?.message || 'Something went wrong. Please try again.'
+  } finally {
+    checking.value = false
+  }
+}
+
 // Step navigation
 const goToContact = () => {
   errors.name = ''
@@ -303,7 +394,7 @@ const goToContact = () => {
   }
   step.value = 'contact'
   nextTick(() => {
-    emailInput.value?.focus()
+    contactInput.value?.focus()
   })
 }
 
@@ -311,21 +402,24 @@ const goToPassword = () => {
   errors.email = ''
   errors.phone = ''
 
-  if (!form.email) {
-    errors.email = 'Email is required'
-    return
-  }
-  if (!form.email.includes('@')) {
-    errors.email = 'Please enter a valid email'
-    return
-  }
-  if (!form.phone) {
-    errors.phone = 'Phone number is required'
-    return
-  }
-  if (form.phone.replace(/\D/g, '').length < 10) {
-    errors.phone = 'Please enter a valid phone number'
-    return
+  if (contactType.value === 'email') {
+    if (!form.email) {
+      errors.email = 'Email is required'
+      return
+    }
+    if (!form.email.includes('@')) {
+      errors.email = 'Please enter a valid email'
+      return
+    }
+  } else {
+    if (!form.phone) {
+      errors.phone = 'Phone number is required'
+      return
+    }
+    if (form.phone.replace(/\D/g, '').length < 10) {
+      errors.phone = 'Please enter a valid phone number'
+      return
+    }
   }
 
   step.value = 'password'
@@ -371,10 +465,10 @@ const handleSubmit = async () => {
   }
 }
 
-// Focus name input on mount
+// Focus login input on mount
 onMounted(() => {
   nextTick(() => {
-    nameInput.value?.focus()
+    loginInput.value?.focus()
   })
 })
 </script>
