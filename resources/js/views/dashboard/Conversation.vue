@@ -116,10 +116,13 @@
           :class="message.sender_id === currentUserId ? 'justify-end' : 'justify-start'"
         >
           <div
-            class="max-w-[80%] rounded-2xl px-4 py-2 shadow-sm"
-            :class="message.sender_id === currentUserId
-              ? 'bg-primary-600 text-white rounded-br-sm'
-              : 'bg-white text-gray-900 rounded-bl-sm'"
+            class="max-w-[80%] rounded-2xl px-4 py-2 shadow-sm transition-opacity"
+            :class="[
+              message.sender_id === currentUserId
+                ? 'bg-primary-600 text-white rounded-br-sm'
+                : 'bg-white text-gray-900 rounded-bl-sm',
+              String(message.id).startsWith('temp-') ? 'opacity-70' : ''
+            ]"
           >
             <div v-if="message.type === 'offer'" class="mb-2">
               <div class="flex items-center gap-2 mb-1">
@@ -161,12 +164,17 @@
               class="text-[10px] mt-1 flex items-center gap-1"
               :class="message.sender_id === currentUserId ? 'text-primary-200 justify-end' : 'text-gray-400'"
             >
-              {{ formatTime(message.created_at) }}
-              <span v-if="message.sender_id === currentUserId" class="flex items-center">
-                <CheckIcon v-if="message.is_read" class="w-3 h-3" />
-                <CheckIcon v-if="message.is_read" class="w-3 h-3 -ml-1" />
-                <CheckIcon v-else class="w-3 h-3" />
-              </span>
+              <template v-if="String(message.id).startsWith('temp-')">
+                Sending...
+              </template>
+              <template v-else>
+                {{ formatTime(message.created_at) }}
+                <span v-if="message.sender_id === currentUserId" class="flex items-center">
+                  <CheckIcon v-if="message.is_read" class="w-3 h-3" />
+                  <CheckIcon v-if="message.is_read" class="w-3 h-3 -ml-1" />
+                  <CheckIcon v-else class="w-3 h-3" />
+                </span>
+              </template>
             </p>
           </div>
         </div>
@@ -196,7 +204,6 @@
             placeholder="Type a message..."
             class="w-full px-4 py-2.5 bg-gray-100 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 leading-normal"
             rows="1"
-            :disabled="sending"
             @input="autoResize"
             @keydown.enter.exact.prevent="sendMessage"
             style="max-height: 120px;"
@@ -346,18 +353,37 @@ const sendMessage = async () => {
   newMessage.value = ''
   resetInputHeight()
 
+  // Optimistic update - show message immediately
+  const tempId = 'temp-' + Date.now()
+  const optimisticMessage = {
+    id: tempId,
+    body: messageText,
+    sender_id: currentUserId.value,
+    created_at: new Date().toISOString(),
+    is_read: false,
+    type: 'text',
+  }
+  messages.value.push(optimisticMessage)
+  scrollToBottom()
+
+  // Re-enable sending immediately for better UX
+  sending.value = false
+
   try {
     const response = await api.post(`/conversations/${route.params.uuid}/messages`, {
       message: messageText,
       type: 'text',
     })
-    messages.value.push(response.data.data)
-    scrollToBottom()
+    // Replace temp message with real one
+    const index = messages.value.findIndex(m => m.id === tempId)
+    if (index !== -1) {
+      messages.value[index] = response.data.data
+    }
   } catch (error) {
+    // Remove optimistic message on error
+    messages.value = messages.value.filter(m => m.id !== tempId)
     newMessage.value = messageText
     toast.error('Failed to send message')
-  } finally {
-    sending.value = false
   }
 }
 
