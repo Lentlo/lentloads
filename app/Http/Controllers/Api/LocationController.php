@@ -118,8 +118,8 @@ class LocationController extends Controller
         if ($city) {
             return $this->successResponse([
                 'city' => $city->name,
-                'state' => $city->state->name,
-                'country' => $city->state->country->name,
+                'state' => $city->state->name ?? null,
+                'country' => $city->state->country->name ?? 'India',
                 'latitude' => $city->latitude,
                 'longitude' => $city->longitude,
             ]);

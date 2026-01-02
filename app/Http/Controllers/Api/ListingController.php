@@ -107,15 +107,19 @@ class ListingController extends Controller
             $query->selectRaw("listings.*, {$haversine} AS distance");
         }
 
-        // Sorting - default to nearest when location is provided
-        $sortBy = $request->input('sort', $hasLocation ? 'nearest' : 'newest');
+        // Sorting - when location is provided, always sort by nearest first, then by selected sort
+        $sortBy = $request->input('sort', 'newest');
+
+        // If location provided, always sort by nearest first
+        if ($hasLocation) {
+            $query->orderByRaw('CASE WHEN latitude IS NULL OR longitude IS NULL THEN 1 ELSE 0 END ASC')
+                ->orderBy('distance', 'asc');
+        }
+
         switch ($sortBy) {
             case 'nearest':
-                if ($hasLocation) {
-                    // Put NULL distances (listings without location) at the end
-                    $query->orderByRaw('CASE WHEN latitude IS NULL OR longitude IS NULL THEN 1 ELSE 0 END ASC')
-                        ->orderBy('distance', 'asc');
-                } else {
+                // Already handled above when hasLocation
+                if (!$hasLocation) {
                     // Fallback to newest if no location
                     $query->orderBy('is_featured', 'desc')
                         ->orderBy('published_at', 'desc');

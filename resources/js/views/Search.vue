@@ -622,7 +622,7 @@ const requestLocationPermission = () => {
     async (position) => {
       filters.latitude = position.coords.latitude
       filters.longitude = position.coords.longitude
-      filters.sort = 'nearest'
+      // Backend automatically sorts by nearest when lat/lng provided
       locationActive.value = true
 
       // Reverse geocode to get city name
@@ -705,7 +705,7 @@ onMounted(() => {
   if (nearMeWasActive && appStore.currentLocation?.latitude && appStore.currentLocation?.longitude) {
     filters.latitude = appStore.currentLocation.latitude
     filters.longitude = appStore.currentLocation.longitude
-    filters.sort = 'nearest'
+    // Backend automatically sorts by nearest when lat/lng provided
     locationActive.value = true
   } else {
     // Get IP-based location in background (doesn't require permission)

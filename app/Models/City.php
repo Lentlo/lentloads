@@ -12,11 +12,18 @@ class City extends Model
     protected $fillable = [
         'name',
         'state_id',
-        'country_id',
         'latitude',
         'longitude',
         'is_active',
+        'is_popular',
+        'listings_count',
     ];
+
+    // Accessor for full name (city, state)
+    public function getFullNameAttribute()
+    {
+        return $this->name . ', ' . ($this->state->name ?? '');
+    }
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -31,7 +38,7 @@ class City extends Model
 
     public function country()
     {
-        return $this->belongsTo(Country::class);
+        return $this->hasOneThrough(Country::class, State::class, 'id', 'id', 'state_id', 'country_id');
     }
 
     public function locations()

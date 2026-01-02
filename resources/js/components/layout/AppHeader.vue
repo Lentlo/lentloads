@@ -303,6 +303,8 @@ const popularCities = computed(() => appStore.popularCities?.slice(0, 12) || [])
 const currentLocationName = computed(() => {
   const loc = selectedLocation.value || appStore.currentLocation
   if (loc?.city) return loc.city
+  // If we have coordinates but no city name, show "Near Me"
+  if (loc?.latitude && loc?.longitude) return 'Near Me'
   return 'All India'
 })
 

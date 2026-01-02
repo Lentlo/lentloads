@@ -23,7 +23,10 @@
       "Bash(sshpass:*)",
       "Bash(expect -c '\nspawn ssh -o StrictHostKeyChecking=no lentlo@12@139.59.24.36 \"\"cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main\"\"\nexpect \"\"password:\"\"\nsend \"\"789-=uioP\\\\r\"\"\nexpect eof\n')",
       "Bash(expect:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(chmod:*)",
+      "Bash(ls:*)",
+      "Bash(nc:*)"
     ]
   }
 }

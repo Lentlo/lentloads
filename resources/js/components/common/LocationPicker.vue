@@ -133,7 +133,15 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:location'])
+const emit = defineEmits([
+  'update:location',
+  'update:latitude',
+  'update:longitude',
+  'update:locality',
+  'update:city',
+  'update:state',
+  'update:postalCode'
+])
 
 const mapContainer = ref(null)
 const loading = ref(false)
@@ -320,6 +328,7 @@ const useMyLocation = () => {
 }
 
 const emitLocation = () => {
+  // Emit combined location object
   emit('update:location', {
     latitude: locationData.latitude,
     longitude: locationData.longitude,
@@ -329,6 +338,13 @@ const emitLocation = () => {
     postal_code: locationData.postal_code,
     address: locationData.address
   })
+  // Emit individual v-model updates
+  emit('update:latitude', locationData.latitude)
+  emit('update:longitude', locationData.longitude)
+  emit('update:locality', locationData.locality)
+  emit('update:city', locationData.city)
+  emit('update:state', locationData.state)
+  emit('update:postalCode', locationData.postal_code)
 }
 
 // Auto-detect user's location on mount

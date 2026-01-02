@@ -50,3 +50,27 @@ All API routes are prefixed with `/v1/`
 - `resources/js/components/layout/AppHeader.vue` - Header with location picker
 - `resources/js/components/layout/MobileNav.vue` - Bottom mobile navigation
 - `resources/js/stores/app.js` - App store with location state
+
+## Deployment
+
+### Production Server
+- **URL**: https://phplaravel-1016958-6108537.cloudwaysapps.com
+- **Server IP**: 139.59.24.36
+- **SSH User**: lentlo
+- **App Path**: /home/master/applications/bpadwztsjg/public_html
+
+### Deploy Commands (via SSH)
+```bash
+cd /home/master/applications/bpadwztsjg/public_html && git checkout . && git pull origin main
+```
+
+### Clear OPcache
+```bash
+curl -s 'https://phplaravel-1016958-6108537.cloudwaysapps.com/opcache-clear.php'
+```
+
+### After Code Changes
+1. Run `npm run build` locally
+2. Commit and push to GitHub
+3. SSH to server and pull changes
+4. Clear OPcache
