@@ -582,8 +582,6 @@ watch(() => route.query.q, (newQ) => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
   transition: box-shadow 0.3s ease;
-  overflow-x: hidden;
-  max-width: 100vw;
 }
 
 @media (min-width: 768px) {
