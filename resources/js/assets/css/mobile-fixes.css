@@ -1,0 +1,235 @@
+/**
+ * Mobile App CSS Fixes
+ * Overrides for Android WebView compatibility.
+ * Uses fallbacks for modern CSS features like aspect-ratio.
+ */
+
+/* ============================================
+   SAFE AREA INSETS (for notches, etc.)
+   ============================================ */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ============================================
+   LISTING CARD FIXES
+   ============================================ */
+
+/* Fix aspect-ratio for listing cards */
+.listing-card .card-image,
+.card-image {
+  position: relative !important;
+  width: 100% !important;
+  height: 0 !important;
+  padding-top: 100% !important; /* 1:1 aspect ratio */
+  overflow: hidden !important;
+}
+
+.listing-card .card-image img,
+.card-image img {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* ============================================
+   SKELETON LOADING FIXES
+   ============================================ */
+
+.skeleton-image {
+  position: relative !important;
+  width: 100% !important;
+  height: 0 !important;
+  padding-top: 100% !important; /* 1:1 aspect ratio */
+}
+
+/* ============================================
+   GRID LAYOUT FIXES
+   ============================================ */
+
+/* Ensure grids work on older WebViews */
+.listings-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 12px !important;
+}
+
+@media (min-width: 768px) {
+  .listings-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .listings-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+.categories-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+}
+
+@media (min-width: 640px) {
+  .categories-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .categories-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* ============================================
+   MOBILE NAVIGATION FIXES
+   ============================================ */
+
+.mobile-nav {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  background: #ffffff !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding-bottom: env(safe-area-inset-bottom, 0) !important;
+}
+
+.nav-container {
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: space-around !important;
+  height: 64px !important;
+}
+
+.nav-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  padding: 6px 0 !important;
+  text-decoration: none !important;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+  touch-action: manipulation !important;
+}
+
+/* ============================================
+   HEADER FIXES
+   ============================================ */
+
+/* Ensure header doesn't overlap with status bar */
+.app-header {
+  padding-top: env(safe-area-inset-top, 0) !important;
+}
+
+/* ============================================
+   BUTTON AND LINK FIXES
+   ============================================ */
+
+/* Improve tap targets */
+button,
+a,
+[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   FORM FIXES
+   ============================================ */
+
+/* Prevent zoom on input focus */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+/* ============================================
+   SCROLL FIXES
+   ============================================ */
+
+/* Smooth scrolling with momentum */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* ============================================
+   IMAGE LOADING FIXES
+   ============================================ */
+
+/* Ensure images load properly */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Fallback for broken images */
+img[src=""],
+img:not([src]) {
+  visibility: hidden;
+}
+
+/* ============================================
+   BACKDROP FILTER FALLBACK
+   ============================================ */
+
+/* backdrop-filter doesn't work in all WebViews */
+.hero-badge,
+.trust-badge {
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ============================================
+   PAGE CONTAINER FIXES
+   ============================================ */
+
+/* Ensure pages have proper padding for mobile nav */
+.home-page,
+.search-page,
+.listing-page,
+.dashboard-page {
+  padding-bottom: 80px !important; /* Space for mobile nav */
+}
+
+/* ============================================
+   ANIMATION PERFORMANCE
+   ============================================ */
+
+/* Use GPU acceleration for animations */
+.listing-card,
+.category-card,
+.hero-card {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Reduce animations on mobile for performance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -5,12 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/generate-capacitor-index.js",
+    "build": "vite build",
     "preview": "vite preview",
-    "cap:sync": "npx cap sync",
-    "cap:build": "npm run build && npx cap sync",
-    "cap:android": "npm run cap:build && npx cap open android",
-    "cap:run:android": "npm run cap:build && npx cap run android"
+    "mobile:build": "node scripts/build-capacitor.js",
+    "mobile:android": "npm run mobile:build && npx cap open android",
+    "mobile:apk": "npm run mobile:build && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

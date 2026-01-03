@@ -4,24 +4,35 @@
   "webDir": "public/build",
   "server": {
     "androidScheme": "https",
-    "hostname": "phplaravel-1016958-6108537.cloudwaysapps.com"
+    "hostname": "app.lentlo.local",
+    "cleartext": false
   },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 300,
       "backgroundColor": "#667eea",
-      "showSpinner": false
+      "showSpinner": true,
+      "spinnerColor": "#ffffff",
+      "splashFullScreen": true,
+      "splashImmersive": true
     },
     "StatusBar": {
       "style": "LIGHT",
       "backgroundColor": "#667eea"
     },
-    "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
     }
   },
   "android": {
-    "allowMixedContent": true,
-    "backgroundColor": "#ffffff"
+    "allowMixedContent": false,
+    "backgroundColor": "#ffffff",
+    "buildOptions": {
+      "keystorePath": null,
+      "keystoreAlias": null
+    }
   }
 }

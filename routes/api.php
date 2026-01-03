@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\Admin\AdminReportController;
 use App\Http\Controllers\Api\Admin\AdminSettingController;
 use App\Http\Controllers\Api\Admin\AdminConversationController;
+use App\Http\Controllers\Api\V1\AppVersionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -107,6 +108,9 @@ Route::prefix('v1')->group(function () {
 
     // Reviews for user
     Route::get('/reviews/user/{userId}', [ReviewController::class, 'index']);
+
+    // App version check (for mobile apps)
+    Route::get('/app/version', [AppVersionController::class, 'check']);
 });
 
 // Protected routes
