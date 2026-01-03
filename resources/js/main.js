@@ -28,26 +28,18 @@ app.config.errorHandler = (err, instance, info) => {
 app.mount('#app')
 
 // Track app health for recovery from tab suspension
-let lastActiveTime = Date.now()
 let lastVisibleTime = Date.now()
-
-// Update activity timestamp on any interaction
-const updateActivity = () => {
-  lastActiveTime = Date.now()
-}
-document.addEventListener('click', updateActivity, { passive: true })
-document.addEventListener('touchstart', updateActivity, { passive: true })
+let lastRouteChange = Date.now()
+let expectedRoute = window.location.pathname
 
 // Recovery mechanism for suspended tabs
 // When browser suspends a tab, Vue's JavaScript state can be lost
-// This detects when the page becomes visible and checks if app is still working
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     const timeSuspended = Date.now() - lastVisibleTime
 
-    // If tab was hidden for more than 2 minutes, check app health
-    if (timeSuspended > 2 * 60 * 1000) {
-      // Test if Vue Router is still functional
+    // If tab was hidden for more than 1 minute, check app health
+    if (timeSuspended > 60 * 1000) {
       setTimeout(() => {
         try {
           // Check if router and app are still mounted
@@ -55,13 +47,12 @@ document.addEventListener('visibilitychange', () => {
           const hasVueApp = appEl && appEl.__vue_app__
 
           if (!hasVueApp) {
-            // App state is broken, reload
             console.log('App state lost after suspension, reloading...')
             window.location.reload()
             return
           }
 
-          // Check if router is functional by testing if it has current route
+          // Check if router is functional
           const routerState = router.currentRoute?.value
           if (!routerState || !routerState.path) {
             console.log('Router state lost, reloading...')
@@ -69,87 +60,138 @@ document.addEventListener('visibilitychange', () => {
             return
           }
 
-          // Force router to refresh its state
-          router.replace(router.currentRoute.value.fullPath).catch(() => {
-            // If router replace fails, reload the page
-            window.location.reload()
-          })
+          // Force router to re-sync with current URL
+          const currentPath = window.location.pathname + window.location.search + window.location.hash
+          if (routerState.fullPath !== currentPath) {
+            router.replace(currentPath).catch(() => window.location.reload())
+          }
         } catch (e) {
-          // Error checking state, reload to be safe
           console.log('App health check failed, reloading...')
           window.location.reload()
         }
       }, 100)
     }
 
+    // Also check for service worker updates when tab becomes visible
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'CHECK_UPDATE' })
+    }
+
     lastVisibleTime = Date.now()
-    updateActivity()
   } else {
-    // Tab is being hidden, record time
     lastVisibleTime = Date.now()
   }
 })
 
-// Periodic health check - detect frozen app
-// If user clicks but nothing navigates for 3 seconds, reload
-let navigationAttempts = 0
-let lastNavigationTime = 0
+// Detect frozen navigation - if clicks don't result in route changes
+let clicksWithoutNavigation = 0
+let lastClickTime = 0
+let lastClickedPath = null
 
-// Listen for clicks on links to detect if navigation is broken
+// Track route changes
+router.afterEach((to) => {
+  lastRouteChange = Date.now()
+  expectedRoute = to.fullPath
+  clicksWithoutNavigation = 0 // Reset on successful navigation
+})
+
+// Listen for ALL clicks on nav elements (router-link, a tags, buttons in nav)
 document.addEventListener('click', (e) => {
-  const link = e.target.closest('a[href]')
-  if (link && link.href && link.href.startsWith(window.location.origin)) {
-    navigationAttempts++
-    lastNavigationTime = Date.now()
+  // Check if click is on a navigation element
+  const navElement = e.target.closest('a, [role="link"], .nav-item, .router-link')
+  if (!navElement) return
 
-    // Check after a short delay if URL changed
-    setTimeout(() => {
-      // If multiple clicks happened without navigation, app may be frozen
-      if (navigationAttempts > 3 && (Date.now() - lastNavigationTime) < 5000) {
-        // Check if URL actually changed or if we're stuck
-        const currentPath = window.location.pathname + window.location.search
-        const linkPath = new URL(link.href).pathname + new URL(link.href).search
-
-        // If paths are different but we didn't navigate, app is frozen
-        if (currentPath !== linkPath) {
-          console.log('Navigation appears frozen, reloading...')
-          window.location.reload()
-        }
+  // Get the intended destination
+  let targetPath = null
+  if (navElement.href) {
+    try {
+      const url = new URL(navElement.href, window.location.origin)
+      if (url.origin === window.location.origin) {
+        targetPath = url.pathname + url.search
       }
-    }, 1000)
+    } catch (err) {}
+  } else if (navElement.getAttribute('to')) {
+    targetPath = navElement.getAttribute('to')
   }
+
+  if (!targetPath) return
+
+  const currentPath = window.location.pathname + window.location.search
+  if (targetPath === currentPath) return // Same page click, ignore
+
+  lastClickedPath = targetPath
+  lastClickTime = Date.now()
+  clicksWithoutNavigation++
+
+  // Check after delay if navigation happened
+  setTimeout(() => {
+    const timeSinceClick = Date.now() - lastClickTime
+    const currentFullPath = window.location.pathname + window.location.search
+
+    // If we clicked a link but URL didn't change AND route didn't change
+    if (clicksWithoutNavigation >= 2 &&
+        timeSinceClick < 3000 &&
+        currentFullPath !== lastClickedPath &&
+        router.currentRoute.value.fullPath === expectedRoute) {
+      console.log('Navigation frozen detected, reloading...')
+      window.location.href = lastClickedPath // Force hard navigation
+    }
+  }, 500)
 }, { passive: true })
 
-// Reset navigation counter on successful route change
-router.afterEach(() => {
-  navigationAttempts = 0
-})
+// Fallback: If no route changes happen for 10 seconds after a click, force reload
+let navigationWatchdog = null
+document.addEventListener('click', (e) => {
+  const isNavClick = e.target.closest('a, .nav-item, [role="link"]')
+  if (!isNavClick) return
 
-// Register service worker with update detection
+  if (navigationWatchdog) clearTimeout(navigationWatchdog)
+
+  navigationWatchdog = setTimeout(() => {
+    const timeSinceRouteChange = Date.now() - lastRouteChange
+    // If it's been more than 10 seconds since last route change and we have pending clicks
+    if (timeSinceRouteChange > 10000 && clicksWithoutNavigation > 0) {
+      console.log('Navigation watchdog triggered, reloading...')
+      window.location.reload()
+    }
+  }, 10000)
+}, { passive: true })
+
+// Register service worker with aggressive update detection
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/build/sw.js')
       .then((registration) => {
-        // Check for updates periodically
+        // Check for updates frequently (every 5 minutes)
         setInterval(() => {
           registration.update()
-        }, 60 * 60 * 1000) // Check every hour
+        }, 5 * 60 * 1000)
 
-        // Handle service worker updates
+        // Also check on page focus
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            registration.update()
+          }
+        })
+
+        // Handle service worker updates - auto activate new version
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version available, reload on next navigation
-                console.log('New version available')
+              if (newWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // New version available - skip waiting and activate immediately
+                  newWorker.postMessage({ type: 'SKIP_WAITING' })
+                  console.log('New version available, updating...')
+                }
               }
             })
           }
         })
       })
-      .catch(() => {
-        // Service worker registration failed - app will work without offline support
+      .catch((err) => {
+        console.log('Service worker registration failed:', err)
       })
   })
 
@@ -158,7 +200,19 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!refreshing) {
       refreshing = true
-      window.location.reload()
+      // Clear all caches before reload
+      caches.keys().then(names => {
+        Promise.all(names.map(name => caches.delete(name))).then(() => {
+          window.location.reload()
+        })
+      })
+    }
+  })
+
+  // Handle messages from service worker
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data?.type === 'CACHE_CLEARED') {
+      console.log('Cache cleared by service worker')
     }
   })
 }

@@ -6,19 +6,29 @@
         :to="isAuthenticated ? '/my-listings' : '/'"
         class="nav-item"
         :class="{ active: isAuthenticated ? isActive('/my-listings') : isActive('/') }"
+        @click="handleNavClick($event, isAuthenticated ? '/my-listings' : '/')"
       >
         <component :is="isAuthenticated ? ClipboardDocumentListIcon : HomeIcon" class="nav-icon" />
         <span class="nav-label">{{ isAuthenticated ? 'My Ads' : 'Home' }}</span>
       </router-link>
 
       <!-- Search -->
-      <router-link to="/search" class="nav-item" :class="{ active: isActive('/search') }">
+      <router-link
+        to="/search"
+        class="nav-item"
+        :class="{ active: isActive('/search') }"
+        @click="handleNavClick($event, '/search')"
+      >
         <MagnifyingGlassIcon class="nav-icon" />
         <span class="nav-label">Search</span>
       </router-link>
 
       <!-- Sell Button -->
-      <router-link to="/sell" class="nav-item sell-item">
+      <router-link
+        to="/sell"
+        class="nav-item sell-item"
+        @click="handleNavClick($event, '/sell')"
+      >
         <div class="sell-button">
           <PlusIcon class="sell-icon" />
         </div>
@@ -26,7 +36,12 @@
       </router-link>
 
       <!-- Messages -->
-      <router-link to="/messages" class="nav-item" :class="{ active: isActive('/messages') }">
+      <router-link
+        to="/messages"
+        class="nav-item"
+        :class="{ active: isActive('/messages') }"
+        @click="handleNavClick($event, '/messages')"
+      >
         <div class="icon-with-badge">
           <ChatBubbleLeftRightIcon class="nav-icon" />
           <span v-if="unreadMessages > 0" class="badge">{{ unreadMessages > 9 ? '9+' : unreadMessages }}</span>
@@ -39,6 +54,7 @@
         :to="isAuthenticated ? '/dashboard' : '/login'"
         class="nav-item"
         :class="{ active: isActive('/dashboard') || isActive('/settings') || isActive('/login') }"
+        @click="handleNavClick($event, isAuthenticated ? '/dashboard' : '/login')"
       >
         <UserCircleIcon class="nav-icon" />
         <span class="nav-label">{{ isAuthenticated ? 'Account' : 'Login' }}</span>
@@ -49,7 +65,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import {
@@ -62,6 +78,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -78,6 +95,22 @@ const fetchUnreadMessages = async () => {
     const response = await api.get('/conversations/unread-count')
     unreadMessages.value = response.data.data?.count || 0
   } catch (e) {}
+}
+
+// Fallback navigation handler - if router-link fails, force navigation
+const handleNavClick = (e, targetPath) => {
+  // Don't interfere with normal click, just add fallback
+  const currentPath = window.location.pathname
+  if (currentPath === targetPath) return // Already on this page
+
+  // Set a short timeout to check if navigation happened
+  setTimeout(() => {
+    // If we're still on the same page, force hard navigation
+    if (window.location.pathname === currentPath && route.path === currentPath) {
+      console.log('Navigation fallback triggered for:', targetPath)
+      window.location.href = targetPath
+    }
+  }, 300)
 }
 
 let interval = null
@@ -110,12 +143,13 @@ watch(isAuthenticated, (val) => {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 50;
-  background: rgba(255, 255, 255, 0.95);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  z-index: 9999; /* Higher than everything else */
+  background: #ffffff; /* Solid background - no transparency issues */
   border-top: 1px solid #e5e7eb;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  /* Explicitly ensure clicks work */
+  pointer-events: auto;
+  /* Remove backdrop-filter - can cause touch issues on iOS */
 }
 
 .nav-container {
@@ -123,6 +157,7 @@ watch(isAuthenticated, (val) => {
   align-items: stretch;
   justify-content: space-around;
   height: 56px;
+  pointer-events: auto;
 }
 
 /*
@@ -140,11 +175,14 @@ watch(isAuthenticated, (val) => {
   min-height: 48px;
   padding: 6px 0;
   text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1); /* Visible tap feedback */
   touch-action: manipulation;
   cursor: pointer;
   user-select: none;
   position: relative;
+  pointer-events: auto;
+  /* Ensure the element is interactive */
+  -webkit-touch-callout: none;
 }
 
 /* Active state feedback - immediate */

@@ -51,28 +51,42 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // SPA fallback - ensures all navigation requests go to index.html
-        navigateFallback: 'index.html',
+        // Only cache essential assets - let JS/CSS always fetch fresh
+        globPatterns: ['**/*.{ico,png,svg,woff2}'],
+        // SPA fallback
+        navigateFallback: null, // Disable - let server handle routing
         navigateFallbackDenylist: [
-          /^\/api\//,  // Don't intercept API calls
-          /^\/v1\//,   // Don't intercept v1 API calls
-          /^\/storage\//, // Don't intercept storage files
-          /^\/build\//, // Don't intercept build assets
-          /\.\w+$/,    // Don't intercept files with extensions
+          /^\/api\//,
+          /^\/v1\//,
+          /^\/storage\//,
+          /^\/build\//,
+          /\.\w+$/,
         ],
-        // Don't cache HTML pages to prevent stale content issues
-        globIgnores: ['**/index.html'],
+        // Don't precache HTML or JS/CSS - always fetch fresh
+        globIgnores: ['**/index.html', '**/*.js', '**/*.css'],
         runtimeCaching: [
           {
-            // Use NetworkFirst for navigation requests (HTML pages)
+            // JS and CSS - NetworkFirst with short cache
+            urlPattern: /\.(?:js|css)$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'assets-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 // 1 hour only
+              },
+              networkTimeoutSeconds: 3
+            }
+          },
+          {
+            // Navigation - always network first
             urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {
               cacheName: 'pages-cache',
               expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 // 1 hour
+                maxEntries: 5,
+                maxAgeSeconds: 60 * 5 // 5 minutes only
               },
               networkTimeoutSeconds: 3
             }
@@ -84,20 +98,19 @@ export default defineConfig({
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                maxAgeSeconds: 60 * 60 // 1 hour
               },
               networkTimeoutSeconds: 5
             }
           },
           {
-            // Also handle same-origin API calls
             urlPattern: /\/v1\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                maxAgeSeconds: 60 * 60 // 1 hour
               },
               networkTimeoutSeconds: 5
             }
@@ -109,14 +122,15 @@ export default defineConfig({
               cacheName: 'image-cache',
               expiration: {
                 maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
               }
             }
           }
         ],
-        // Skip waiting to activate new service worker immediately
         skipWaiting: true,
-        clientsClaim: true
+        clientsClaim: true,
+        // Clean up old caches on activation
+        cleanupOutdatedCaches: true
       }
     })
   ],
