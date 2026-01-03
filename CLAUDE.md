@@ -58,6 +58,7 @@ Example CSS for modals that should appear above the mobile nav:
 - State Management: Pinia
 - Styling: Tailwind CSS
 - Icons: Heroicons
+- Mobile Apps: Capacitor (Android/iOS)
 
 ## API Base Path
 All API routes are prefixed with `/v1/`
@@ -745,3 +746,199 @@ Testing:
 | ✅ FIXED | `Kernel.php` | Added middleware |
 | ✅ FIXED | Vue components | Removed console.log |
 | ✅ FIXED | `2024_01_01_000020_*` | Created - performance indexes |
+
+---
+
+## Capacitor Mobile App Setup (2026-01-03)
+
+### Overview
+The app uses Capacitor to build native Android and iOS apps from the existing Vue.js codebase. This allows the same code to run as a web app, Android app, and iOS app.
+
+### Configuration Files
+- `capacitor.config.json` - Main Capacitor configuration
+- `android/` - Android native project
+- `scripts/generate-capacitor-index.js` - Auto-generates index.html for builds
+
+### Installed Plugins
+```
+@capacitor/app           - App lifecycle events
+@capacitor/camera        - Camera access for posting ads
+@capacitor/geolocation   - Location for local listings
+@capacitor/haptics       - Vibration feedback
+@capacitor/keyboard      - Keyboard handling
+@capacitor/push-notifications - Push notifications
+@capacitor/share         - Native share functionality
+@capacitor/splash-screen - Splash screen
+@capacitor/status-bar    - Status bar customization
+```
+
+### Build Commands
+```bash
+# Build web assets and sync with native projects
+npm run cap:build
+
+# Open Android project in Android Studio
+npm run cap:android
+
+# Run on connected Android device
+npm run cap:run:android
+
+# Just sync changes (no rebuild)
+npm run cap:sync
+```
+
+### Android Permissions (AndroidManifest.xml)
+```xml
+<!-- Network -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+<!-- Camera for posting ads -->
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+<!-- Location for local listings -->
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+<!-- Push Notifications -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.VIBRATE" />
+```
+
+### App Store Requirements
+- **Google Play Store**: $25 one-time fee
+- **Apple App Store**: $99/year (requires Mac for iOS builds)
+
+### Building APK for Testing
+1. Run `npm run cap:build`
+2. Open Android Studio: `npm run cap:android`
+3. Build > Build Bundle(s) / APK(s) > Build APK(s)
+4. APK will be in `android/app/build/outputs/apk/debug/`
+
+### How It Works
+1. Vite builds Vue.js app to `public/build/`
+2. `generate-capacitor-index.js` creates `index.html` with correct asset paths
+3. Capacitor copies assets to `android/app/src/main/assets/public/`
+4. Native Android/iOS wrapper loads the web content
+
+### API Configuration
+The app connects to the same Laravel backend:
+- Web: Direct API calls to `/v1/`
+- Android/iOS: API calls to `https://lentloads.com/v1/`
+
+Configure in `capacitor.config.json`:
+```json
+{
+  "server": {
+    "androidScheme": "https",
+    "hostname": "lentloads.com"
+  }
+}
+```
+
+---
+
+## Service Worker & Caching Improvements (2026-01-03)
+
+### Problem Solved
+Users had to manually clear cache after deployments because:
+1. Service worker was precaching ALL JS/CSS files (92 files)
+2. Old files were served from cache even after new deployment
+3. Update check only happened on page load, not when returning to tab
+
+### Solution Implemented
+
+**vite.config.js changes:**
+```javascript
+workbox: {
+  // Only cache icons/fonts - NOT JS/CSS
+  globPatterns: ['**/*.{ico,png,svg,woff2}'],
+  globIgnores: ['**/index.html', '**/*.js', '**/*.css'],
+
+  // JS/CSS use NetworkFirst with 1 hour cache
+  runtimeCaching: [{
+    urlPattern: /\.(?:js|css)$/,
+    handler: 'NetworkFirst',
+    options: {
+      cacheName: 'assets-cache',
+      expiration: { maxAgeSeconds: 60 * 60 } // 1 hour
+    }
+  }],
+
+  skipWaiting: true,
+  clientsClaim: true,
+  cleanupOutdatedCaches: true
+}
+```
+
+**main.js changes:**
+- Check for SW updates on page focus (not just load)
+- Clear ALL caches when new SW activates
+- Update check every 5 minutes instead of 1 hour
+
+### Result
+- Precache reduced from 92 to 4 entries (just icons)
+- JS/CSS always fetched fresh from network
+- Auto-updates when returning to tab
+- No more manual cache clearing needed
+
+---
+
+## Mobile Navigation Fixes (2026-01-03)
+
+### Problem
+Bottom mobile navigation sometimes stopped working after tab was idle.
+
+### Root Causes
+1. `backdrop-filter` can cause touch event issues on iOS
+2. z-index (50) same as header could cause stacking conflicts
+3. Vue Router state loss after tab suspension not detected
+
+### Fixes Applied
+
+**MobileNav.vue:**
+```css
+.mobile-nav {
+  z-index: 9999; /* Higher than everything */
+  background: #ffffff; /* Solid - no transparency */
+  /* Removed backdrop-filter */
+  pointer-events: auto;
+}
+```
+
+**Added fallback navigation:**
+```javascript
+// If Vue Router doesn't navigate within 300ms, force hard navigation
+const handleNavClick = (e, targetPath) => {
+  setTimeout(() => {
+    if (window.location.pathname !== targetPath) {
+      window.location.href = targetPath
+    }
+  }, 300)
+}
+```
+
+### Navigation Health Detection (main.js)
+- Tab suspension check reduced from 5 min to 1 min
+- Detects clicks on `.nav-item` elements
+- Watchdog timer: if no navigation for 10 sec after clicks, reloads
+- Forces hard navigation when Vue Router fails
+
+---
+
+## UI Updates (2026-01-03)
+
+### Desktop Header
+- Search bar max-width increased from 520px to 700px
+- User dropdown z-index fixed (was being clipped)
+
+### Mobile Bottom Navigation
+- Height increased from 56px to 64px
+- Icons increased from 24px to 26px
+- Font size increased from 10px to 11px
+- Font weight increased to 600
+- "Sell" renamed to "Post Ad"
+- Post Ad button increased from 48px to 52px with gradient

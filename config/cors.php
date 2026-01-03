@@ -16,11 +16,7 @@ return [
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    'allowed_origins' => [
-        env('APP_URL', 'http://localhost'),
-        env('FRONTEND_URL', 'http://localhost:5173'),
-        'https://phplaravel-1016958-6108537.cloudwaysapps.com',
-    ],
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
@@ -37,5 +33,5 @@ return [
 
     'max_age' => 86400, // 24 hours
 
-    'supports_credentials' => true,
+    'supports_credentials' => false,
 ];

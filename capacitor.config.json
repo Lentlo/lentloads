@@ -1,0 +1,27 @@
+{
+  "appId": "com.lentlo.ads",
+  "appName": "Lentlo Ads",
+  "webDir": "public/build",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "phplaravel-1016958-6108537.cloudwaysapps.com"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#667eea",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#667eea"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#ffffff"
+  }
+}

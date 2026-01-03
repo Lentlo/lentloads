@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Lentlo Ads</string>
+    <string name="title_activity_main">Lentlo Ads</string>
+    <string name="package_name">com.lentlo.ads</string>
+    <string name="custom_url_scheme">com.lentlo.ads</string>
+</resources>

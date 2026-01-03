@@ -1,8 +1,18 @@
 import axios from 'axios'
 import { toast } from 'vue3-toastify'
+import { Capacitor } from '@capacitor/core'
+
+// Use full URL for native apps, relative for web
+const getBaseURL = () => {
+  if (Capacitor.isNativePlatform()) {
+    // TODO: Change to https://lentloads.com/api/v1 after migration
+    return 'https://phplaravel-1016958-6108537.cloudwaysapps.com/api/v1'
+  }
+  return '/api/v1'
+}
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
