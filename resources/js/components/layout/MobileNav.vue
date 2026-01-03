@@ -23,7 +23,7 @@
         <span class="nav-label">Search</span>
       </router-link>
 
-      <!-- Sell Button -->
+      <!-- Post Ad Button -->
       <router-link
         to="/sell"
         class="nav-item sell-item"
@@ -32,7 +32,7 @@
         <div class="sell-button">
           <PlusIcon class="sell-icon" />
         </div>
-        <span class="nav-label">Sell</span>
+        <span class="nav-label">Post Ad</span>
       </router-link>
 
       <!-- Messages -->
@@ -156,7 +156,7 @@ watch(isAuthenticated, (val) => {
   display: flex;
   align-items: stretch;
   justify-content: space-around;
-  height: 56px;
+  height: 64px;
   pointer-events: auto;
 }
 
@@ -191,8 +191,8 @@ watch(isAuthenticated, (val) => {
 }
 
 .nav-icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   color: #6b7280;
   flex-shrink: 0;
 }
@@ -202,10 +202,10 @@ watch(isAuthenticated, (val) => {
 }
 
 .nav-label {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   color: #6b7280;
-  margin-top: 2px;
+  margin-top: 3px;
   line-height: 1;
 }
 
@@ -213,20 +213,20 @@ watch(isAuthenticated, (val) => {
   color: #7c3aed;
 }
 
-/* Sell button - larger center button */
+/* Post Ad button - larger center button */
 .sell-item {
   position: relative;
 }
 
 .sell-button {
-  width: 48px;
-  height: 48px;
-  background: #7c3aed;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: -16px;
+  margin-top: -18px;
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
 }
 
@@ -236,14 +236,15 @@ watch(isAuthenticated, (val) => {
 }
 
 .sell-icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   color: white;
 }
 
 .sell-item .nav-label {
   color: #7c3aed;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 10px;
 }
 
 /* Badge */
