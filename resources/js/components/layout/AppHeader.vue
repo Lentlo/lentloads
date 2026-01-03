@@ -833,11 +833,13 @@ watch(() => route.query.q, (newQ) => {
   align-items: center;
   gap: 4px;
   margin-left: auto;
+  position: relative;
+  z-index: 50;
 }
 
 @media (min-width: 768px) {
   .header-right {
-    gap: 6px;
+    gap: 8px;
   }
 }
 
@@ -900,7 +902,7 @@ watch(() => route.query.q, (newQ) => {
 /* User Menu */
 .user-menu {
   position: relative;
-  z-index: 60;
+  z-index: 100;
 }
 
 .user-btn {
@@ -914,6 +916,9 @@ watch(() => route.query.q, (newQ) => {
   cursor: pointer;
   border: none;
   background: transparent;
+  position: relative;
+  z-index: 101;
+  pointer-events: auto;
 }
 
 @media (min-width: 768px) {
@@ -921,6 +926,8 @@ watch(() => route.query.q, (newQ) => {
     padding: 4px 10px 4px 4px;
     border: 1px solid #e5e7eb;
     background: white;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .user-btn:hover {
