@@ -707,7 +707,7 @@ watch(() => route.query.q, (newQ) => {
 /* Search */
 .search-container {
   flex: 1;
-  max-width: 520px;
+  max-width: 700px;
   position: relative;
   display: none;
 }

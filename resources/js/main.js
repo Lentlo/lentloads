@@ -29,12 +29,11 @@ app.mount('#app')
 
 // Track app health for recovery from tab suspension
 let lastActiveTime = Date.now()
-let appHealthy = true
+let lastVisibleTime = Date.now()
 
 // Update activity timestamp on any interaction
 const updateActivity = () => {
   lastActiveTime = Date.now()
-  appHealthy = true
 }
 document.addEventListener('click', updateActivity, { passive: true })
 document.addEventListener('touchstart', updateActivity, { passive: true })
@@ -44,10 +43,10 @@ document.addEventListener('touchstart', updateActivity, { passive: true })
 // This detects when the page becomes visible and checks if app is still working
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    const timeSuspended = Date.now() - lastActiveTime
+    const timeSuspended = Date.now() - lastVisibleTime
 
-    // If tab was inactive for more than 5 minutes, check app health
-    if (timeSuspended > 5 * 60 * 1000) {
+    // If tab was hidden for more than 2 minutes, check app health
+    if (timeSuspended > 2 * 60 * 1000) {
       // Test if Vue Router is still functional
       setTimeout(() => {
         try {
@@ -59,16 +58,71 @@ document.addEventListener('visibilitychange', () => {
             // App state is broken, reload
             console.log('App state lost after suspension, reloading...')
             window.location.reload()
+            return
           }
+
+          // Check if router is functional by testing if it has current route
+          const routerState = router.currentRoute?.value
+          if (!routerState || !routerState.path) {
+            console.log('Router state lost, reloading...')
+            window.location.reload()
+            return
+          }
+
+          // Force router to refresh its state
+          router.replace(router.currentRoute.value.fullPath).catch(() => {
+            // If router replace fails, reload the page
+            window.location.reload()
+          })
         } catch (e) {
           // Error checking state, reload to be safe
+          console.log('App health check failed, reloading...')
           window.location.reload()
         }
       }, 100)
     }
 
+    lastVisibleTime = Date.now()
     updateActivity()
+  } else {
+    // Tab is being hidden, record time
+    lastVisibleTime = Date.now()
   }
+})
+
+// Periodic health check - detect frozen app
+// If user clicks but nothing navigates for 3 seconds, reload
+let navigationAttempts = 0
+let lastNavigationTime = 0
+
+// Listen for clicks on links to detect if navigation is broken
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href]')
+  if (link && link.href && link.href.startsWith(window.location.origin)) {
+    navigationAttempts++
+    lastNavigationTime = Date.now()
+
+    // Check after a short delay if URL changed
+    setTimeout(() => {
+      // If multiple clicks happened without navigation, app may be frozen
+      if (navigationAttempts > 3 && (Date.now() - lastNavigationTime) < 5000) {
+        // Check if URL actually changed or if we're stuck
+        const currentPath = window.location.pathname + window.location.search
+        const linkPath = new URL(link.href).pathname + new URL(link.href).search
+
+        // If paths are different but we didn't navigate, app is frozen
+        if (currentPath !== linkPath) {
+          console.log('Navigation appears frozen, reloading...')
+          window.location.reload()
+        }
+      }
+    }, 1000)
+  }
+}, { passive: true })
+
+// Reset navigation counter on successful route change
+router.afterEach(() => {
+  navigationAttempts = 0
 })
 
 // Register service worker with update detection
