@@ -93,9 +93,9 @@ onMounted(async () => {
   opacity: 0;
 }
 
-/* Mobile nav height CSS variable */
+/* Mobile nav height CSS variable - nav is 64px + safe area */
 :root {
-  --mobile-nav-height: calc(60px + env(safe-area-inset-bottom, 8px));
+  --mobile-nav-height: calc(64px + env(safe-area-inset-bottom, 0px));
 }
 
 /* When mobile nav is present, add bottom padding to main content */

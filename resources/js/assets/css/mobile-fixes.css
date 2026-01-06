@@ -8,8 +8,7 @@
    SAFE AREA INSETS (for notches, etc.)
    ============================================ */
 body {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* Only horizontal safe areas - vertical handled by nav components */
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
@@ -203,31 +202,12 @@ img:not([src]) {
    PAGE CONTAINER FIXES
    ============================================ */
 
-/* Ensure pages have proper padding for mobile nav */
-/* Exclude chat-page as it has fixed positioning with its own input area */
-.home-page,
-.search-page,
-.listing-page,
-.listing-detail-page,
-.dashboard-page,
-.category-page,
-.favorites-page,
-.messages-page,
-.settings-page,
-.profile-page,
-.notifications-page,
-.create-listing-page,
-.my-listings-page,
-.auth-page,
-.categories-page {
-  padding-bottom: 80px !important; /* Space for mobile nav */
-}
-
-/* Chat page is fullscreen fixed - NO extra padding needed */
-.chat-page,
-.conversation-page {
-  padding-bottom: 0 !important;
-}
+/*
+ * NOTE: Page bottom padding is handled by App.vue via:
+ * .has-mobile-nav .main-content { padding-bottom: var(--mobile-nav-height); }
+ *
+ * DO NOT add padding-bottom here - it causes double spacing!
+ */
 
 /* ============================================
    FLOATING ELEMENTS POSITIONING
@@ -239,17 +219,15 @@ img:not([src]) {
 .chat-fab,
 .chat-popup,
 .floating-action-button,
-[class*="float"],
 .fixed-bottom-btn {
-  bottom: calc(80px + env(safe-area-inset-bottom, 0)) !important;
+  bottom: calc(70px + env(safe-area-inset-bottom, 0)) !important;
   z-index: 9998 !important; /* Below mobile nav (9999) but above content */
 }
 
 /* Toast notifications should be above everything */
 .Toastify__toast-container,
-.toast-container,
-[class*="toast"] {
-  bottom: calc(90px + env(safe-area-inset-bottom, 0)) !important;
+.toast-container {
+  bottom: calc(80px + env(safe-area-inset-bottom, 0)) !important;
 }
 
 /* ============================================
