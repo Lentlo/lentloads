@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-6">
-    <div class="container-app">
+  <div class="favorites-page min-h-screen bg-gray-50">
+    <div class="container-app py-6">
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold text-gray-900">My Favorites</h1>

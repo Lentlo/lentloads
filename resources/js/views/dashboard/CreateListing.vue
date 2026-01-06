@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="create-listing-page min-h-screen bg-gray-50">
     <!-- Progress Header -->
     <div class="bg-white border-b sticky top-0 z-40">
       <div class="container-app py-3">

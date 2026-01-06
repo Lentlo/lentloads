@@ -46,8 +46,17 @@ api.interceptors.response.use(
         case 401:
           // Unauthorized - clear auth and redirect to login
           localStorage.removeItem('token')
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login'
+          // For Capacitor (hash routing), check hash; for web (history routing), check pathname
+          if (Capacitor.isNativePlatform()) {
+            // Hash routing: route is in window.location.hash (e.g., "#/login")
+            if (!window.location.hash.includes('/login')) {
+              window.location.hash = '#/login'
+            }
+          } else {
+            // History routing: route is in window.location.pathname
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login'
+            }
           }
           break
 

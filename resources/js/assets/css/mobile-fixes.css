@@ -203,12 +203,33 @@ img:not([src]) {
    PAGE CONTAINER FIXES
    ============================================ */
 
-/* Ensure pages have proper padding for mobile nav */
+/* Ensure all pages have proper padding for mobile nav */
 .home-page,
 .search-page,
 .listing-page,
-.dashboard-page {
+.listing-detail-page,
+.dashboard-page,
+.category-page,
+.favorites-page,
+.messages-page,
+.settings-page,
+.profile-page,
+.notifications-page,
+.create-listing-page,
+.my-listings-page,
+.conversation-page,
+.chat-page,
+.auth-page,
+.categories-page {
   padding-bottom: 80px !important; /* Space for mobile nav */
+}
+
+/* Fallback: Any page-like container should have bottom padding on mobile */
+@media (max-width: 767px) {
+  .container-app,
+  .min-h-screen {
+    padding-bottom: 80px;
+  }
 }
 
 /* ============================================

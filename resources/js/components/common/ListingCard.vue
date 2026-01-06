@@ -179,9 +179,19 @@ const handleImageError = (e) => {
 
 .card-image {
   position: relative;
-  aspect-ratio: 1 / 1;
+  width: 100%;
+  padding-top: 100%; /* 1:1 aspect ratio fallback for older browsers */
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   overflow: hidden;
+}
+
+.card-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .badge-featured {

@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-6">
-    <div class="container-app">
+  <div class="messages-page min-h-screen bg-gray-50">
+    <div class="container-app py-6">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Messages</h1>
 
       <!-- Loading -->

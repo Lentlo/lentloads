@@ -148,15 +148,15 @@
     <section class="listings-section">
       <div class="section-container">
         <div class="section-header-simple">
-          <h2 class="section-title-sm">Fresh Recommendations</h2>
+          <h2 class="section-title-sm">Fresh Recommendations ({{ recentListings.length }})</h2>
           <router-link to="/search" class="view-all-btn">
             View All
           </router-link>
         </div>
 
-        <!-- Loading Skeleton -->
+        <!-- Loading State -->
         <div v-if="loading" class="listings-grid">
-          <div v-for="i in 8" :key="i" class="listing-skeleton">
+          <div v-for="i in 8" :key="'skel-'+i" class="listing-skeleton">
             <div class="skeleton-image"></div>
             <div class="skeleton-content">
               <div class="skeleton-price"></div>
@@ -164,6 +164,16 @@
               <div class="skeleton-location"></div>
             </div>
           </div>
+        </div>
+
+        <!-- API Error -->
+        <div v-else-if="apiError" style="background: #fee2e2; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+          <p style="color: #dc2626; margin: 0; font-weight: 500;">Error loading listings: {{ apiError }}</p>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="recentListings.length === 0" style="background: #fef3c7; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+          <p style="color: #92400e; margin: 0;">No listings available at the moment.</p>
         </div>
 
         <!-- Listings Grid -->
@@ -246,6 +256,7 @@ const appStore = useAppStore()
 const loading = ref(true)
 const featuredListings = ref([])
 const recentListings = ref([])
+const apiError = ref(null)
 
 const categories = computed(() => appStore.categories)
 
@@ -286,8 +297,10 @@ const fetchHomeData = async () => {
     const response = await api.get('/home')
     featuredListings.value = response.data.data.featured_listings || []
     recentListings.value = response.data.data.recent_listings || []
+    apiError.value = null
   } catch (error) {
-    // Silent fail - page will still render
+    apiError.value = error.message || 'Failed to load listings'
+    console.error('Home API Error:', error)
   } finally {
     loading.value = false
   }
@@ -902,7 +915,8 @@ onMounted(() => {
 }
 
 .skeleton-image {
-  aspect-ratio: 4 / 3;
+  width: 100%;
+  padding-top: 100%; /* 1:1 aspect ratio fallback - matches card images */
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;

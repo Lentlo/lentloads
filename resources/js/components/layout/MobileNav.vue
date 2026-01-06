@@ -99,16 +99,18 @@ const fetchUnreadMessages = async () => {
 
 // Fallback navigation handler - if router-link fails, force navigation
 const handleNavClick = (e, targetPath) => {
-  // Don't interfere with normal click, just add fallback
-  const currentPath = window.location.pathname
-  if (currentPath === targetPath) return // Already on this page
+  // Use route.path from Vue Router (works with both hash and history mode)
+  const currentRoutePath = route.path
+  if (currentRoutePath === targetPath) return // Already on this page
 
   // Set a short timeout to check if navigation happened
   setTimeout(() => {
-    // If we're still on the same page, force hard navigation
-    if (window.location.pathname === currentPath && route.path === currentPath) {
-      console.log('Navigation fallback triggered for:', targetPath)
-      window.location.href = targetPath
+    // If we're still on the same page after 300ms, force navigation via router
+    if (route.path === currentRoutePath) {
+      router.push(targetPath).catch(() => {
+        // If router.push also fails, force reload
+        window.location.reload()
+      })
     }
   }, 300)
 }

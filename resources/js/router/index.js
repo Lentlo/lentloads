@@ -1,5 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { Capacitor } from '@capacitor/core'
 
 // Layouts
 const DefaultLayout = () => import('@/layouts/DefaultLayout.vue')
@@ -249,8 +250,13 @@ const routes = [
   }
 ]
 
+// Use hash history for native apps (Capacitor), web history for browser
+const history = Capacitor.isNativePlatform()
+  ? createWebHashHistory()
+  : createWebHistory()
+
 const router = createRouter({
-  history: createWebHistory(),
+  history,
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {

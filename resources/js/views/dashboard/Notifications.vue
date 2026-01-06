@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="notifications-page min-h-screen bg-gray-50">
     <div class="container-app py-4 max-w-2xl">
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">

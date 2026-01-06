@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-6">
-    <div class="container-app">
+  <div class="categories-page min-h-screen bg-gray-50">
+    <div class="container-app py-6">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">All Categories</h1>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

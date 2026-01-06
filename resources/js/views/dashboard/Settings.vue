@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-6">
-    <div class="container-app max-w-2xl">
+  <div class="settings-page min-h-screen bg-gray-50">
+    <div class="container-app py-6 max-w-2xl">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Account Settings</h1>
 
       <!-- Profile Section -->

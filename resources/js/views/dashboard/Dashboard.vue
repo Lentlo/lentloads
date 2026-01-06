@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-6">
-    <div class="container-app">
+  <div class="dashboard-page min-h-screen bg-gray-50">
+    <div class="container-app py-6">
       <!-- Welcome -->
       <div class="mb-8">
         <h1 class="text-2xl font-bold text-gray-900">Welcome, {{ user?.name }}!</h1>
