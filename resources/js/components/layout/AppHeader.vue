@@ -1,187 +1,253 @@
 <template>
-  <header class="app-header" :class="{ 'header-scrolled': isScrolled, 'search-hidden': !showMobileSearch }">
-    <!-- Main Header Bar -->
-    <div class="header-inner">
-      <!-- Logo -->
-      <router-link to="/" class="logo-link">
-        <div class="logo-icon">
-          <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#6366f1" />
-                <stop offset="100%" stop-color="#8b5cf6" />
-              </linearGradient>
-            </defs>
-            <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#logoGrad)"/>
-            <path d="M14 12V28H28V24H18V12H14Z" fill="white"/>
-            <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
-          </svg>
-        </div>
-        <span class="logo-name-mobile">Lentlo Ads</span>
-      </router-link>
-
-      <!-- Location Selector (Desktop) -->
-      <button @click="showLocationPicker = true" class="location-btn desktop-only">
-        <MapPinIcon class="w-5 h-5" />
-        <span class="location-text">{{ currentLocationName }}</span>
-        <ChevronDownIcon class="w-4 h-4" />
-      </button>
-
-      <!-- Search Bar - Desktop Only -->
-      <div class="search-container desktop-only">
-        <div class="search-box" :class="{ focused: searchFocused }">
-          <MagnifyingGlassIcon class="search-icon" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search for cars, mobiles, jobs..."
-            @focus="searchFocused = true"
-            @blur="handleSearchBlur"
-            @keyup.enter="handleSearch"
-            @input="handleSearchInput"
-          />
-          <button v-if="searchQuery" @click="clearSearch" class="clear-btn">
-            <XMarkIcon class="w-4 h-4" />
-          </button>
-          <button @click="handleSearch" class="search-submit">
-            <MagnifyingGlassIcon class="w-5 h-5" />
-          </button>
-        </div>
-
-        <!-- Suggestions -->
-        <div v-if="showSuggestions && suggestions.length" class="suggestions">
-          <div
-            v-for="(item, i) in suggestions"
-            :key="i"
-            class="suggestion"
-            @mousedown="selectSuggestion(item)"
-          >
-            <MagnifyingGlassIcon class="w-4 h-4" />
-            <span>{{ item.text }}</span>
+  <header class="app-header" :class="{ 'header-scrolled': isScrolled }">
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+      <!-- Top Bar: Logo + Actions -->
+      <div class="mobile-top-bar">
+        <router-link to="/" class="mobile-logo">
+          <div class="mobile-logo-icon">
+            <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="40" height="40" rx="10" fill="white"/>
+              <path d="M14 12V28H28V24H18V12H14Z" fill="#6366f1"/>
+              <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
+            </svg>
           </div>
+          <span class="mobile-logo-text">Lentlo</span>
+        </router-link>
+
+        <div class="mobile-actions">
+          <router-link v-if="isAuthenticated" to="/notifications" class="mobile-icon-btn">
+            <BellIcon class="w-5 h-5" />
+            <span v-if="unreadNotifications > 0" class="mobile-badge">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</span>
+          </router-link>
+
+          <router-link v-if="isAuthenticated" to="/messages" class="mobile-icon-btn">
+            <ChatBubbleLeftRightIcon class="w-5 h-5" />
+            <span v-if="unreadMessages > 0" class="mobile-badge">{{ unreadMessages > 9 ? '9+' : unreadMessages }}</span>
+          </router-link>
+
+          <router-link v-if="!isAuthenticated" to="/login" class="mobile-login-btn">
+            Login
+          </router-link>
+
+          <button v-if="isAuthenticated" @click="showUserMenu = !showUserMenu" class="mobile-avatar-btn">
+            <span class="mobile-avatar">{{ user?.name?.charAt(0) || 'U' }}</span>
+          </button>
         </div>
       </div>
 
-      <!-- Right Actions -->
-      <div class="header-right">
-        <!-- Notifications -->
-        <router-link
-          v-if="isAuthenticated"
-          to="/notifications"
-          class="icon-btn"
-        >
-          <BellIcon class="w-5 h-5" />
-          <span v-if="unreadNotifications > 0" class="notif-badge">
-            {{ unreadNotifications > 9 ? '9+' : unreadNotifications }}
-          </span>
-        </router-link>
+      <!-- Search Bar: Always Visible -->
+      <div class="mobile-search-bar" :class="{ 'search-collapsed': !showMobileSearch }">
+        <button @click="showLocationPicker = true" class="mobile-location">
+          <MapPinIcon class="w-4 h-4" />
+          <span>{{ shortLocationName }}</span>
+          <ChevronDownIcon class="w-3 h-3" />
+        </button>
 
-        <!-- Messages -->
-        <router-link v-if="isAuthenticated" to="/messages" class="icon-btn">
-          <ChatBubbleLeftRightIcon class="w-5 h-5" />
-          <span v-if="unreadMessages > 0" class="notif-badge">
-            {{ unreadMessages > 9 ? '9+' : unreadMessages }}
-          </span>
-        </router-link>
-
-        <!-- User Menu -->
-        <div v-if="isAuthenticated" class="user-menu">
-          <button @click="showUserMenu = !showUserMenu" class="user-btn">
-            <div class="avatar">{{ user?.name?.charAt(0) || 'U' }}</div>
-            <ChevronDownIcon class="w-4 h-4 chevron desktop-only" />
+        <div class="mobile-search-field">
+          <MagnifyingGlassIcon class="w-4 h-4 search-icon" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search cars, mobiles, jobs..."
+            @keyup.enter="handleSearch"
+          />
+          <button v-if="searchQuery" @click="clearSearch" class="clear-search">
+            <XMarkIcon class="w-4 h-4" />
           </button>
+        </div>
+      </div>
 
-          <Transition name="menu">
-            <div v-if="showUserMenu" class="dropdown">
-              <div class="dropdown-user">
-                <div class="dropdown-avatar">{{ user?.name?.charAt(0) || 'U' }}</div>
-                <div>
-                  <p class="dropdown-name">{{ user?.name }}</p>
-                  <p class="dropdown-email">{{ user?.email }}</p>
+      <!-- User Menu Dropdown -->
+      <Transition name="menu">
+        <div v-if="showUserMenu" class="mobile-dropdown">
+          <div class="dropdown-header">
+            <div class="dropdown-avatar">{{ user?.name?.charAt(0) || 'U' }}</div>
+            <div class="dropdown-info">
+              <p class="dropdown-name">{{ user?.name }}</p>
+              <p class="dropdown-email">{{ user?.email }}</p>
+            </div>
+          </div>
+          <div class="dropdown-links">
+            <router-link v-if="isAdmin" to="/admin" class="dropdown-link admin" @click="showUserMenu = false">
+              <ShieldCheckIcon class="w-5 h-5" />
+              Admin Panel
+            </router-link>
+            <router-link to="/dashboard" class="dropdown-link" @click="showUserMenu = false">
+              <Squares2X2Icon class="w-5 h-5" />
+              Dashboard
+            </router-link>
+            <router-link to="/my-listings" class="dropdown-link" @click="showUserMenu = false">
+              <ClipboardDocumentListIcon class="w-5 h-5" />
+              My Ads
+            </router-link>
+            <router-link to="/favorites" class="dropdown-link" @click="showUserMenu = false">
+              <HeartIcon class="w-5 h-5" />
+              Favorites
+            </router-link>
+            <router-link to="/settings" class="dropdown-link" @click="showUserMenu = false">
+              <Cog6ToothIcon class="w-5 h-5" />
+              Settings
+            </router-link>
+          </div>
+          <button @click="handleLogout" class="dropdown-logout">
+            <ArrowRightOnRectangleIcon class="w-5 h-5" />
+            Logout
+          </button>
+        </div>
+      </Transition>
+    </div>
+
+    <!-- Desktop Header -->
+    <div class="desktop-header">
+      <div class="desktop-inner">
+        <!-- Logo -->
+        <router-link to="/" class="desktop-logo">
+          <div class="desktop-logo-icon">
+            <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1" />
+                  <stop offset="100%" stop-color="#8b5cf6" />
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#logoGrad)"/>
+              <path d="M14 12V28H28V24H18V12H14Z" fill="white"/>
+              <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
+            </svg>
+          </div>
+          <span class="desktop-logo-text">Lentlo Ads</span>
+        </router-link>
+
+        <!-- Location Selector -->
+        <button @click="showLocationPicker = true" class="desktop-location">
+          <MapPinIcon class="w-5 h-5" />
+          <span>{{ currentLocationName }}</span>
+          <ChevronDownIcon class="w-4 h-4" />
+        </button>
+
+        <!-- Search Bar -->
+        <div class="desktop-search">
+          <div class="search-box" :class="{ focused: searchFocused }">
+            <MagnifyingGlassIcon class="search-icon" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search for cars, mobiles, jobs..."
+              @focus="searchFocused = true"
+              @blur="handleSearchBlur"
+              @keyup.enter="handleSearch"
+              @input="handleSearchInput"
+            />
+            <button v-if="searchQuery" @click="clearSearch" class="clear-btn">
+              <XMarkIcon class="w-4 h-4" />
+            </button>
+            <button @click="handleSearch" class="search-submit">
+              <MagnifyingGlassIcon class="w-5 h-5" />
+            </button>
+          </div>
+
+          <!-- Suggestions -->
+          <div v-if="showSuggestions && suggestions.length" class="suggestions">
+            <div
+              v-for="(item, i) in suggestions"
+              :key="i"
+              class="suggestion"
+              @mousedown="selectSuggestion(item)"
+            >
+              <MagnifyingGlassIcon class="w-4 h-4" />
+              <span>{{ item.text }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Actions -->
+        <div class="desktop-actions">
+          <router-link v-if="isAuthenticated" to="/notifications" class="desktop-icon-btn">
+            <BellIcon class="w-5 h-5" />
+            <span v-if="unreadNotifications > 0" class="desktop-badge">
+              {{ unreadNotifications > 9 ? '9+' : unreadNotifications }}
+            </span>
+          </router-link>
+
+          <router-link v-if="isAuthenticated" to="/messages" class="desktop-icon-btn">
+            <ChatBubbleLeftRightIcon class="w-5 h-5" />
+            <span v-if="unreadMessages > 0" class="desktop-badge">
+              {{ unreadMessages > 9 ? '9+' : unreadMessages }}
+            </span>
+          </router-link>
+
+          <!-- User Menu -->
+          <div v-if="isAuthenticated" class="desktop-user-menu">
+            <button @click="showUserMenu = !showUserMenu" class="desktop-user-btn">
+              <div class="desktop-avatar">{{ user?.name?.charAt(0) || 'U' }}</div>
+              <ChevronDownIcon class="w-4 h-4" />
+            </button>
+
+            <Transition name="menu">
+              <div v-if="showUserMenu" class="desktop-dropdown">
+                <div class="dropdown-header">
+                  <div class="dropdown-avatar">{{ user?.name?.charAt(0) || 'U' }}</div>
+                  <div class="dropdown-info">
+                    <p class="dropdown-name">{{ user?.name }}</p>
+                    <p class="dropdown-email">{{ user?.email }}</p>
+                  </div>
                 </div>
-              </div>
-
-              <div class="dropdown-body">
-                <router-link v-if="isAdmin" to="/admin" class="dropdown-item admin" @click="showUserMenu = false">
-                  <ShieldCheckIcon class="w-5 h-5" />
-                  Admin Panel
-                </router-link>
-                <router-link to="/dashboard" class="dropdown-item" @click="showUserMenu = false">
-                  <Squares2X2Icon class="w-5 h-5" />
-                  Dashboard
-                </router-link>
-                <router-link to="/my-listings" class="dropdown-item" @click="showUserMenu = false">
-                  <ClipboardDocumentListIcon class="w-5 h-5" />
-                  My Ads
-                </router-link>
-                <router-link to="/favorites" class="dropdown-item" @click="showUserMenu = false">
-                  <HeartIcon class="w-5 h-5" />
-                  Favorites
-                </router-link>
-                <router-link to="/settings" class="dropdown-item" @click="showUserMenu = false">
-                  <Cog6ToothIcon class="w-5 h-5" />
-                  Settings
-                </router-link>
-              </div>
-
-              <div class="dropdown-foot">
-                <button @click="handleLogout" class="logout-btn">
+                <div class="dropdown-links">
+                  <router-link v-if="isAdmin" to="/admin" class="dropdown-link admin" @click="showUserMenu = false">
+                    <ShieldCheckIcon class="w-5 h-5" />
+                    Admin Panel
+                  </router-link>
+                  <router-link to="/dashboard" class="dropdown-link" @click="showUserMenu = false">
+                    <Squares2X2Icon class="w-5 h-5" />
+                    Dashboard
+                  </router-link>
+                  <router-link to="/my-listings" class="dropdown-link" @click="showUserMenu = false">
+                    <ClipboardDocumentListIcon class="w-5 h-5" />
+                    My Ads
+                  </router-link>
+                  <router-link to="/favorites" class="dropdown-link" @click="showUserMenu = false">
+                    <HeartIcon class="w-5 h-5" />
+                    Favorites
+                  </router-link>
+                  <router-link to="/settings" class="dropdown-link" @click="showUserMenu = false">
+                    <Cog6ToothIcon class="w-5 h-5" />
+                    Settings
+                  </router-link>
+                </div>
+                <button @click="handleLogout" class="dropdown-logout">
                   <ArrowRightOnRectangleIcon class="w-5 h-5" />
                   Logout
                 </button>
               </div>
-            </div>
-          </Transition>
+            </Transition>
+          </div>
+
+          <router-link v-if="!isAuthenticated" to="/login" class="desktop-login">
+            Login
+          </router-link>
+
+          <router-link to="/sell" class="desktop-post-btn">
+            <PlusIcon class="w-4 h-4" />
+            <span>Post Free Ad</span>
+          </router-link>
         </div>
-
-        <!-- Login -->
-        <router-link v-if="!isAuthenticated" to="/login" class="login-link desktop-only">
-          Login
-        </router-link>
-
-        <!-- Post Ad Button -->
-        <router-link to="/sell" class="post-btn">
-          <PlusIcon class="w-4 h-4" />
-          <span class="post-text">Post Free Ad</span>
-        </router-link>
-      </div>
-    </div>
-
-    <!-- Mobile Search Bar (Collapsible) -->
-    <div class="mobile-search" :class="{ 'search-visible': showMobileSearch }">
-      <button @click="showLocationPicker = true" class="mobile-location-btn">
-        <MapPinIcon class="w-4 h-4" />
-        <span>{{ shortLocationName }}</span>
-        <ChevronDownIcon class="w-3 h-3" />
-      </button>
-      <div class="mobile-search-inner">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search for anything..."
-          @keyup.enter="handleSearch"
-        />
-        <button v-if="searchQuery" @click="clearSearch" class="mobile-clear-btn">
-          <XMarkIcon class="w-4 h-4" />
-        </button>
-        <button @click="handleSearch" class="mobile-search-btn">
-          <MagnifyingGlassIcon class="w-4 h-4" />
-        </button>
       </div>
     </div>
 
     <!-- Location Picker Modal -->
-    <div v-if="showLocationPicker" class="location-picker-modal">
-      <div class="location-picker-backdrop" @click="showLocationPicker = false"></div>
-      <div class="location-picker-sheet">
-        <div class="location-picker-header">
+    <div v-if="showLocationPicker" class="location-modal">
+      <div class="location-backdrop" @click="showLocationPicker = false"></div>
+      <div class="location-sheet">
+        <div class="location-header">
           <h3>Select Location</h3>
-          <button @click="showLocationPicker = false"><XMarkIcon class="w-6 h-6" /></button>
+          <button @click="showLocationPicker = false" class="location-close">
+            <XMarkIcon class="w-6 h-6" />
+          </button>
         </div>
 
-        <!-- Search Cities -->
         <div class="location-search">
-          <MagnifyingGlassIcon class="w-5 h-5 text-gray-400" />
+          <MagnifyingGlassIcon class="w-5 h-5" />
           <input
             v-model="citySearch"
             type="text"
@@ -190,47 +256,45 @@
           />
         </div>
 
-        <!-- Use Current Location -->
-        <button @click="useCurrentLocation" class="use-location-btn" :disabled="detectingLocation">
-          <div class="use-location-icon">
+        <button @click="useCurrentLocation" class="location-current" :disabled="detectingLocation">
+          <div class="location-current-icon">
             <MapPinIcon class="w-5 h-5" />
           </div>
           <div>
-            <span class="use-location-title">{{ detectingLocation ? 'Detecting...' : 'Use current location' }}</span>
-            <span class="use-location-subtitle">Enable GPS for accurate location</span>
+            <span class="location-current-title">{{ detectingLocation ? 'Detecting...' : 'Use current location' }}</span>
+            <span class="location-current-sub">Enable GPS for accurate location</span>
           </div>
         </button>
 
-        <!-- City Results or Popular Cities -->
         <div class="location-list">
           <template v-if="cityResults.length">
-            <div class="location-section-title">Search Results</div>
+            <div class="location-section">Search Results</div>
             <button
               v-for="city in cityResults"
               :key="city.id"
               @click="selectCity(city)"
               class="location-item"
             >
-              <MapPinIcon class="w-4 h-4 text-gray-400" />
+              <MapPinIcon class="w-4 h-4" />
               <div>
-                <span class="location-name">{{ city.name }}</span>
+                <span class="location-city">{{ city.name }}</span>
                 <span class="location-state">{{ city.state }}</span>
               </div>
             </button>
           </template>
           <template v-else>
-            <div class="location-section-title">Popular Cities</div>
-            <div class="popular-cities-grid">
+            <div class="location-section">Popular Cities</div>
+            <div class="location-grid">
               <button
                 v-for="city in popularCities"
                 :key="city.id"
                 @click="selectCity(city)"
-                class="popular-city-btn"
+                class="location-city-btn"
               >
                 {{ city.name }}
               </button>
             </div>
-            <button @click="selectAllIndia" class="all-india-btn">
+            <button @click="selectAllIndia" class="location-all">
               <GlobeAltIcon class="w-5 h-5" />
               <span>All India</span>
             </button>
@@ -279,7 +343,7 @@ const unreadNotifications = ref(0)
 const unreadMessages = ref(0)
 let searchTimeout = null
 
-// Scroll-based header state
+// Scroll state
 const isScrolled = ref(false)
 const showMobileSearch = ref(true)
 let lastScrollY = 0
@@ -288,15 +352,14 @@ let lastToggleTime = 0
 let scrollDirection = null
 let scrollAccumulator = 0
 
-// Location picker state
+// Location state
 const showLocationPicker = ref(false)
 const citySearch = ref('')
 const cityResults = ref([])
 const detectingLocation = ref(false)
 const selectedLocation = ref(null)
 
-// Handle scroll for showing/hiding mobile search - optimized with RAF
-// Uses accumulator pattern to prevent flicker from small scroll movements
+// Handle scroll
 const handleScroll = () => {
   if (ticking) return
 
@@ -306,51 +369,41 @@ const handleScroll = () => {
     const now = Date.now()
     const scrollDelta = currentScrollY - lastScrollY
 
-    // Only process on mobile (< 768px)
-    if (window.innerWidth < 768) {
-      // Add scrolled class when past threshold
-      const shouldBeScrolled = currentScrollY > 10
-      if (isScrolled.value !== shouldBeScrolled) {
-        isScrolled.value = shouldBeScrolled
-      }
+    // Add scrolled class when past threshold
+    isScrolled.value = currentScrollY > 10
 
-      // Always show search at top of page
+    // Mobile search bar toggle (< 768px)
+    if (window.innerWidth < 768) {
+      // Always show at top
       if (currentScrollY < 50) {
-        if (!showMobileSearch.value) showMobileSearch.value = true
+        showMobileSearch.value = true
         scrollAccumulator = 0
         lastScrollY = currentScrollY
         ticking = false
         return
       }
 
-      // Check if we're near bottom of page (within 100px) - prevent flicker from bounce
-      const documentHeight = document.documentElement.scrollHeight
-      const windowHeight = window.innerHeight
-      const nearBottom = currentScrollY + windowHeight >= documentHeight - 100
-
+      // Don't toggle near bottom
+      const nearBottom = currentScrollY + window.innerHeight >= document.documentElement.scrollHeight - 100
       if (nearBottom) {
-        // At bottom - don't toggle, just maintain current state
         lastScrollY = currentScrollY
         ticking = false
         return
       }
 
-      // Determine scroll direction
+      // Determine direction
       const currentDirection = scrollDelta > 0 ? 'down' : scrollDelta < 0 ? 'up' : null
 
-      // If direction changed, reset accumulator
       if (currentDirection && currentDirection !== scrollDirection) {
         scrollDirection = currentDirection
         scrollAccumulator = 0
       }
 
-      // Accumulate scroll distance in current direction
       scrollAccumulator += Math.abs(scrollDelta)
 
-      // Toggle after accumulating enough scroll (80px) and cooldown period (400ms)
-      const canToggle = now - lastToggleTime > 400
+      const canToggle = now - lastToggleTime > 300
 
-      if (canToggle && scrollAccumulator > 80) {
+      if (canToggle && scrollAccumulator > 60) {
         if (scrollDirection === 'down' && showMobileSearch.value) {
           showMobileSearch.value = false
           lastToggleTime = now
@@ -371,22 +424,18 @@ const handleScroll = () => {
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isAdmin = computed(() => authStore.isAdmin)
 const user = computed(() => authStore.user)
-
-// Popular cities from store
 const popularCities = computed(() => appStore.popularCities?.slice(0, 12) || [])
 
-// Current location display
 const currentLocationName = computed(() => {
   const loc = selectedLocation.value || appStore.currentLocation
   if (loc?.city) return loc.city
-  // If we have coordinates but no city name, show "Near Me"
   if (loc?.latitude && loc?.longitude) return 'Near Me'
   return 'All India'
 })
 
 const shortLocationName = computed(() => {
   const name = currentLocationName.value
-  return name.length > 12 ? name.substring(0, 12) + '...' : name
+  return name.length > 10 ? name.substring(0, 10) + '...' : name
 })
 
 const fetchUnreadCounts = async () => {
@@ -411,7 +460,6 @@ const handleSearch = () => {
 const clearSearch = () => {
   searchQuery.value = ''
   suggestions.value = []
-  // If on search page, clear the query param
   if (route.path === '/search' && route.query.q) {
     const newQuery = { ...route.query }
     delete newQuery.q
@@ -458,12 +506,12 @@ const handleLogout = async () => {
 }
 
 const closeMenu = (e) => {
-  if (showUserMenu.value && !e.target.closest('.user-menu')) {
+  if (showUserMenu.value && !e.target.closest('.desktop-user-menu') && !e.target.closest('.mobile-avatar-btn')) {
     showUserMenu.value = false
   }
 }
 
-// Location picker functions
+// Location functions
 const searchCities = debounce(async () => {
   if (citySearch.value.length < 2) {
     cityResults.value = []
@@ -484,13 +532,11 @@ const selectCity = (city) => {
     latitude: city.latitude,
     longitude: city.longitude,
   }
-  // Save to localStorage for persistence
   localStorage.setItem('selectedCity', JSON.stringify(selectedLocation.value))
   appStore.setLocation(selectedLocation.value)
   showLocationPicker.value = false
   citySearch.value = ''
   cityResults.value = []
-  // Navigate to search with city filter
   router.push({ path: '/search', query: { city: city.name } })
 }
 
@@ -511,13 +557,11 @@ const useCurrentLocation = async () => {
     if (appStore.currentLocation?.city) {
       router.push({ path: '/search', query: { city: appStore.currentLocation.city } })
     } else {
-      // No city found but we have coordinates - enable Near Me mode
       localStorage.setItem('nearMeActive', 'true')
       router.push({ path: '/search' })
     }
   } catch (e) {
     console.error('Location detection failed:', e)
-    // Show error to user
     import('vue3-toastify').then(({ toast }) => {
       toast.error('Could not detect location. Please try again.')
     })
@@ -526,7 +570,6 @@ const useCurrentLocation = async () => {
   }
 }
 
-// Load saved city on init
 const loadSavedCity = () => {
   const saved = localStorage.getItem('selectedCity')
   if (saved) {
@@ -566,7 +609,6 @@ watch(isAuthenticated, (val) => {
   }
 })
 
-// Sync search query with URL
 watch(() => route.query.q, (newQ) => {
   if (route.path === '/search') {
     searchQuery.value = newQ || ''
@@ -575,150 +617,323 @@ watch(() => route.query.q, (newQ) => {
 </script>
 
 <style scoped>
+/* ========================================
+   BASE HEADER
+   ======================================== */
 .app-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-  transition: box-shadow 0.3s ease;
-  /* Safe area for notch/status bar on mobile */
-  padding-top: env(safe-area-inset-top, 0);
-}
-
-@media (min-width: 768px) {
-  .app-header {
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    padding-top: 0; /* No safe area needed on desktop */
-  }
+  background: white;
+  transition: box-shadow 0.2s ease;
 }
 
 .app-header.header-scrolled {
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ========================================
+   MOBILE HEADER (< 768px)
+   ======================================== */
+.mobile-header {
+  display: block;
+  padding-top: env(safe-area-inset-top, 0);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
 }
 
 @media (min-width: 768px) {
-  .app-header.header-scrolled {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  .mobile-header {
+    display: none;
   }
 }
 
-.header-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 8px 12px;
+/* Mobile Top Bar */
+.mobile-top-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
   gap: 12px;
 }
 
-@media (min-width: 768px) {
-  .header-inner {
-    padding: 12px 24px;
-    gap: 20px;
-    min-height: 70px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .header-inner {
-    padding: 12px 32px;
-  }
-}
-
-/* Desktop only elements */
-.desktop-only {
-  display: none !important;
-}
-
-@media (min-width: 768px) {
-  .desktop-only {
-    display: flex !important;
-  }
-}
-
-/* Logo */
-.logo-link {
+.mobile-logo {
   display: flex;
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  flex-shrink: 0;
 }
 
-.logo-icon {
+.mobile-logo-icon {
   width: 32px;
   height: 32px;
 }
 
-@media (min-width: 768px) {
-  .logo-icon {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-.logo-icon svg {
+.mobile-logo-icon svg {
   width: 100%;
   height: 100%;
 }
 
-.logo-name-mobile {
-  font-size: 18px;
+.mobile-logo-text {
+  font-size: 20px;
   font-weight: 800;
   color: white;
   letter-spacing: -0.5px;
 }
 
-@media (min-width: 768px) {
-  .logo-name-mobile {
-    color: #1f2937;
-  }
+.mobile-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.logo-text {
+.mobile-icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-icon-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mobile-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: #fbbf24;
+  color: #1f2937;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-login-btn {
+  padding: 8px 16px;
+  background: white;
+  color: #6366f1;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-avatar-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-avatar {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Mobile Search Bar */
+.mobile-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  max-height: 60px;
+  opacity: 1;
+}
+
+.mobile-search-bar.search-collapsed {
+  max-height: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mobile-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-location span {
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-search-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 10px;
+  min-width: 0;
+}
+
+.mobile-search-field .search-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.mobile-search-field input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: #1f2937;
+  outline: none;
+  min-width: 0;
+}
+
+.mobile-search-field input::placeholder {
+  color: #9ca3af;
+}
+
+.clear-search {
+  padding: 4px;
+  color: #9ca3af;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile Dropdown */
+.mobile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 12px;
+  width: 280px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1000;
+  margin-top: 8px;
+}
+
+/* ========================================
+   DESKTOP HEADER (>= 768px)
+   ======================================== */
+.desktop-header {
   display: none;
 }
 
 @media (min-width: 768px) {
-  .logo-text {
-    display: flex;
-    flex-direction: column;
+  .desktop-header {
+    display: block;
+    border-bottom: 1px solid #e5e7eb;
   }
 }
 
-.logo-name {
-  font-size: 20px;
+.desktop-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (min-width: 1024px) {
+  .desktop-inner {
+    padding: 12px 32px;
+  }
+}
+
+.desktop-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.desktop-logo-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.desktop-logo-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.desktop-logo-text {
+  font-size: 22px;
   font-weight: 800;
   color: #1f2937;
   letter-spacing: -0.5px;
 }
 
-.logo-accent {
+.desktop-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.desktop-location:hover {
+  border-color: #6366f1;
   color: #6366f1;
 }
 
-.logo-tagline {
-  font-size: 11px;
-  color: #6b7280;
-  font-weight: 500;
-  margin-top: -2px;
+.desktop-location svg:first-child {
+  color: #6366f1;
+  flex-shrink: 0;
 }
 
-/* Search */
-.search-container {
+.desktop-location span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Desktop Search */
+.desktop-search {
   flex: 1;
-  max-width: 700px;
+  max-width: 600px;
   position: relative;
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .search-container {
-    display: block;
-  }
 }
 
 .search-box {
@@ -728,7 +943,7 @@ watch(() => route.query.q, (newQ) => {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 0 6px 0 14px;
-  transition: all 0.25s ease;
+  transition: all 0.2s;
   height: 46px;
 }
 
@@ -740,15 +955,14 @@ watch(() => route.query.q, (newQ) => {
 .search-box.focused {
   background: white;
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), 0 4px 12px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.search-icon {
+.search-box .search-icon {
   width: 20px;
   height: 20px;
   color: #94a3b8;
   flex-shrink: 0;
-  transition: color 0.2s;
 }
 
 .search-box.focused .search-icon {
@@ -774,7 +988,6 @@ watch(() => route.query.q, (newQ) => {
   padding: 6px;
   color: #94a3b8;
   border-radius: 6px;
-  transition: all 0.2s;
 }
 
 .clear-btn:hover {
@@ -783,24 +996,21 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .search-submit {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
   border-radius: 10px;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+  transition: all 0.2s;
 }
 
 .search-submit:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  transform: scale(1.05);
 }
 
-/* Suggestions */
 .suggestions {
   position: absolute;
   top: 100%;
@@ -828,63 +1038,40 @@ watch(() => route.query.q, (newQ) => {
   background: #f3f4f6;
 }
 
-/* Right Actions */
-.header-right {
+/* Desktop Actions */
+.desktop-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   margin-left: auto;
-  position: relative;
-  z-index: 50;
 }
 
-@media (min-width: 768px) {
-  .header-right {
-    gap: 8px;
-  }
-}
-
-.icon-btn {
+.desktop-icon-btn {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.9);
+  color: #4b5563;
   border-radius: 10px;
   transition: all 0.2s;
-  -webkit-tap-highlight-color: transparent;
 }
 
-@media (min-width: 768px) {
-  .icon-btn {
-    width: 40px;
-    height: 40px;
-    color: #4b5563;
-  }
+.desktop-icon-btn:hover {
+  background: #f3f4f6;
+  color: #6366f1;
 }
 
-.icon-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-@media (min-width: 768px) {
-  .icon-btn:hover {
-    background: #f3f4f6;
-    color: #6366f1;
-  }
-}
-
-.notif-badge {
+.desktop-badge {
   position: absolute;
   top: 2px;
   right: 2px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  background: #fbbf24;
-  color: #1f2937;
+  background: #ef4444;
+  color: white;
   font-size: 10px;
   font-weight: 700;
   border-radius: 8px;
@@ -893,97 +1080,44 @@ watch(() => route.query.q, (newQ) => {
   justify-content: center;
 }
 
-@media (min-width: 768px) {
-  .notif-badge {
-    background: #ef4444;
-    color: white;
-  }
-}
-
-/* User Menu */
-.user-menu {
+.desktop-user-menu {
   position: relative;
-  z-index: 100;
 }
 
-.user-btn {
+.desktop-user-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid #e5e7eb;
+  background: white;
   border-radius: 24px;
-  transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
-  border: none;
-  background: transparent;
-  position: relative;
-  z-index: 101;
-  pointer-events: auto;
+  transition: all 0.2s;
 }
 
-@media (min-width: 768px) {
-  .user-btn {
-    padding: 4px 10px 4px 4px;
-    border: 1px solid #e5e7eb;
-    background: white;
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  .user-btn:hover {
-    border-color: #6366f1;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
-  }
+.desktop-user-btn:hover {
+  border-color: #6366f1;
 }
 
-.user-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-@media (min-width: 768px) {
-  .user-btn:hover {
-    background: #f9fafb;
-  }
-}
-
-.avatar {
+.desktop-avatar {
   width: 32px;
   height: 32px;
-  background: rgba(255, 255, 255, 0.25);
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 700;
-  font-size: 13px;
-  flex-shrink: 0;
+  font-size: 14px;
 }
 
-@media (min-width: 768px) {
-  .avatar {
-    width: 34px;
-    height: 34px;
-    font-size: 14px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    border: 2px solid white;
-    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
-  }
-}
-
-.chevron {
+.desktop-user-btn svg {
   color: #6b7280;
-  transition: transform 0.2s;
 }
 
-.user-btn:hover .chevron {
-  color: #6366f1;
-}
-
-/* Dropdown */
-.dropdown {
+.desktop-dropdown {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
@@ -995,18 +1129,45 @@ watch(() => route.query.q, (newQ) => {
   z-index: 100;
 }
 
-.menu-enter-active,
-.menu-leave-active {
-  transition: all 0.2s ease;
+.desktop-login {
+  padding: 8px 16px;
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s;
 }
 
-.menu-enter-from,
-.menu-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
+.desktop-login:hover {
+  background: #f3f4f6;
+  color: #6366f1;
 }
 
-.dropdown-user {
+.desktop-post-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.desktop-post-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+/* ========================================
+   SHARED DROPDOWN STYLES
+   ======================================== */
+.dropdown-header {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1026,25 +1187,36 @@ watch(() => route.query.q, (newQ) => {
   color: white;
   font-weight: 700;
   font-size: 16px;
+  flex-shrink: 0;
+}
+
+.dropdown-info {
+  min-width: 0;
 }
 
 .dropdown-name {
   font-weight: 600;
   color: #1f2937;
   font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dropdown-email {
   font-size: 12px;
   color: #6b7280;
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.dropdown-body {
+.dropdown-links {
   padding: 6px;
 }
 
-.dropdown-item {
+.dropdown-link {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1056,349 +1228,112 @@ watch(() => route.query.q, (newQ) => {
   transition: all 0.15s;
 }
 
-.dropdown-item:hover {
+.dropdown-link:hover {
   background: #f3f4f6;
   color: #6366f1;
 }
 
-.dropdown-item.admin {
+.dropdown-link.admin {
   color: #6366f1;
   background: #eef2ff;
 }
 
-.dropdown-item.admin:hover {
+.dropdown-link.admin:hover {
   background: #e0e7ff;
 }
 
-.dropdown-foot {
-  padding: 6px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.logout-btn {
+.dropdown-logout {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 18px;
   color: #dc2626;
   font-size: 14px;
-  border-radius: 8px;
+  border-top: 1px solid #f3f4f6;
   transition: background 0.15s;
 }
 
-.logout-btn:hover {
+.dropdown-logout:hover {
   background: #fef2f2;
 }
 
-/* Login */
-.login-link {
-  padding: 8px 16px;
-  color: #374151;
-  font-weight: 600;
-  font-size: 14px;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: all 0.2s;
-  display: none;
-}
-
-@media (min-width: 480px) {
-  .login-link {
-    display: block;
-  }
-}
-
-.login-link:hover {
-  background: #f3f4f6;
-  color: #6366f1;
-}
-
-/* Post Ad Button */
-.post-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.95);
-  color: #667eea;
-  font-weight: 700;
-  font-size: 12px;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-@media (min-width: 768px) {
-  .post-btn {
-    gap: 6px;
-    padding: 8px 14px;
-    font-size: 13px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-  }
-}
-
-.post-btn:hover {
-  background: white;
-  transform: scale(1.02);
-}
-
-@media (min-width: 768px) {
-  .post-btn:hover {
-    background: linear-gradient(135deg, #5558e8 0%, #7c4daf 100%);
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-    transform: translateY(-1px);
-  }
-}
-
-.post-text {
-  display: none;
-}
-
-@media (min-width: 400px) {
-  .post-text {
-    display: inline;
-  }
-}
-
-/* Mobile Search - smooth slide animation with GPU acceleration */
-.mobile-search {
-  padding: 0 12px 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-height: 60px;
-  opacity: 1;
-  overflow: hidden;
-  transform: translateY(0);
-  will-change: max-height, opacity, transform;
-  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.mobile-search:not(.search-visible) {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-10px);
-  padding-top: 0;
-  padding-bottom: 0;
-  pointer-events: none;
-}
-
-@media (min-width: 768px) {
-  .mobile-search {
-    display: none !important;
-  }
-}
-
-.mobile-location-btn {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: white;
-  flex-shrink: 0;
-  backdrop-filter: blur(4px);
-}
-
-.mobile-location-btn span {
-  max-width: 70px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mobile-search-inner {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  backdrop-filter: blur(4px);
-  min-width: 0;
-  overflow: hidden;
-}
-
-.mobile-search-inner input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 16px; /* Must be 16px+ to prevent iOS zoom */
-  color: white;
-  outline: none;
-  min-width: 0;
-}
-
-.mobile-search-inner input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.mobile-clear-btn {
-  padding: 4px;
-  color: rgba(255, 255, 255, 0.7);
-  flex-shrink: 0;
-}
-
-.mobile-clear-btn:hover {
-  color: white;
-}
-
-.mobile-search-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  color: #667eea;
-  border-radius: 8px;
-  flex-shrink: 0;
-  transition: all 0.2s;
-}
-
-.mobile-search-btn:active {
-  transform: scale(0.95);
-}
-
-/* Location Button (Desktop) */
-.location-btn {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #475569;
-  cursor: pointer;
+/* Menu transition */
+.menu-enter-active,
+.menu-leave-active {
   transition: all 0.2s ease;
-  white-space: nowrap;
-  max-width: 200px;
-  height: 46px;
 }
 
-@media (min-width: 768px) {
-  .location-btn {
-    display: flex;
-  }
+.menu-enter-from,
+.menu-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
-.location-btn:hover {
-  border-color: #6366f1;
-  color: #6366f1;
-  background: #f8fafc;
-}
-
-.location-btn svg:first-child {
-  color: #6366f1;
-}
-
-.location-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 120px;
-}
-
-/* Mobile Location Button */
-.mobile-location-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: #f3f4f6;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 8px;
-}
-
-.mobile-location-btn span {
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Location Picker Modal */
-.location-picker-modal {
+/* ========================================
+   LOCATION PICKER MODAL
+   ======================================== */
+.location-modal {
   position: fixed;
   inset: 0;
-  z-index: 10001; /* Above mobile nav (9999) and chat modal (10000) */
+  z-index: 10001;
   display: flex;
   align-items: flex-end;
   justify-content: center;
 }
 
 @media (min-width: 640px) {
-  .location-picker-modal {
+  .location-modal {
     align-items: center;
   }
 }
 
-.location-picker-backdrop {
+.location-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
 }
 
-.location-picker-sheet {
+.location-sheet {
   position: relative;
   background: white;
   width: 100%;
-  max-height: 70vh;
-  border-radius: 1rem 1rem 0 0;
+  max-height: 80vh;
+  border-radius: 20px 20px 0 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slide-up 0.3s ease-out;
-  /* Position above mobile nav - but at bottom of viewport */
-  margin-bottom: 0;
-  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0));
+  animation: slideUp 0.3s ease;
 }
 
 @media (min-width: 640px) {
-  .location-picker-sheet {
-    max-width: 28rem;
+  .location-sheet {
+    max-width: 420px;
     max-height: 70vh;
-    border-radius: 1rem;
-    margin-bottom: 0;
-    padding-bottom: 0;
+    border-radius: 20px;
   }
 }
 
-.location-picker-header {
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.location-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 16px 20px;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.location-picker-header h3 {
-  font-size: 1.125rem;
+.location-header h3 {
+  font-size: 18px;
   font-weight: 600;
   color: #111827;
 }
 
-.location-picker-header button {
+.location-close {
   padding: 4px;
   color: #6b7280;
 }
@@ -1406,11 +1341,16 @@ watch(() => route.query.q, (newQ) => {
 .location-search {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 1rem;
-  padding: 10px 12px;
+  gap: 10px;
+  margin: 16px;
+  padding: 12px 14px;
   background: #f3f4f6;
-  border-radius: 8px;
+  border-radius: 12px;
+}
+
+.location-search svg {
+  color: #9ca3af;
+  flex-shrink: 0;
 }
 
 .location-search input {
@@ -1419,65 +1359,73 @@ watch(() => route.query.q, (newQ) => {
   border: none;
   outline: none;
   font-size: 15px;
+  color: #1f2937;
 }
 
-.use-location-btn {
+.location-search input::placeholder {
+  color: #9ca3af;
+}
+
+.location-current {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 0 1rem;
-  padding: 12px;
+  gap: 14px;
+  margin: 0 16px 16px;
+  padding: 14px;
   background: #f0fdf4;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: left;
   transition: background 0.2s;
 }
 
-.use-location-btn:hover:not(:disabled) {
+.location-current:hover:not(:disabled) {
   background: #dcfce7;
 }
 
-.use-location-btn:disabled {
+.location-current:disabled {
   opacity: 0.7;
 }
 
-.use-location-icon {
-  width: 40px;
-  height: 40px;
+.location-current-icon {
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #22c55e;
   color: white;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.use-location-title {
+.location-current-title {
   display: block;
   font-weight: 600;
   color: #166534;
   font-size: 14px;
 }
 
-.use-location-subtitle {
+.location-current-sub {
   display: block;
   color: #6b7280;
   font-size: 12px;
+  margin-top: 2px;
 }
 
 .location-list {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 16px));
+  padding: 0 16px 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
 }
 
-.location-section-title {
+.location-section {
   font-size: 12px;
   font-weight: 600;
   color: #6b7280;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
 }
 
 .location-item {
@@ -1487,7 +1435,7 @@ watch(() => route.query.q, (newQ) => {
   width: 100%;
   padding: 12px;
   text-align: left;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: background 0.2s;
 }
 
@@ -1495,7 +1443,12 @@ watch(() => route.query.q, (newQ) => {
   background: #f3f4f6;
 }
 
-.location-name {
+.location-item svg {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.location-city {
   display: block;
   font-weight: 500;
   color: #111827;
@@ -1507,17 +1460,17 @@ watch(() => route.query.q, (newQ) => {
   color: #6b7280;
 }
 
-.popular-cities-grid {
+.location-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-bottom: 16px;
 }
 
-.popular-city-btn {
-  padding: 10px 8px;
+.location-city-btn {
+  padding: 12px 8px;
   background: #f3f4f6;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 500;
   color: #374151;
@@ -1525,31 +1478,26 @@ watch(() => route.query.q, (newQ) => {
   transition: all 0.2s;
 }
 
-.popular-city-btn:hover {
+.location-city-btn:hover {
   background: #6366f1;
   color: white;
 }
 
-.all-india-btn {
+.location-all {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background: #f3f4f6;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 500;
   color: #374151;
   transition: all 0.2s;
 }
 
-.all-india-btn:hover {
+.location-all:hover {
   background: #e5e7eb;
-}
-
-@keyframes slide-up {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
 }
 </style>
