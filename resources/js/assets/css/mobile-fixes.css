@@ -203,7 +203,8 @@ img:not([src]) {
    PAGE CONTAINER FIXES
    ============================================ */
 
-/* Ensure all pages have proper padding for mobile nav */
+/* Ensure pages have proper padding for mobile nav */
+/* Exclude chat-page as it has fixed positioning with its own input area */
 .home-page,
 .search-page,
 .listing-page,
@@ -217,19 +218,38 @@ img:not([src]) {
 .notifications-page,
 .create-listing-page,
 .my-listings-page,
-.conversation-page,
-.chat-page,
 .auth-page,
 .categories-page {
   padding-bottom: 80px !important; /* Space for mobile nav */
 }
 
-/* Fallback: Any page-like container should have bottom padding on mobile */
-@media (max-width: 767px) {
-  .container-app,
-  .min-h-screen {
-    padding-bottom: 80px;
-  }
+/* Chat page is fullscreen fixed - NO extra padding needed */
+.chat-page,
+.conversation-page {
+  padding-bottom: 0 !important;
+}
+
+/* ============================================
+   FLOATING ELEMENTS POSITIONING
+   ============================================ */
+
+/* Ensure floating action buttons, chat popups, etc. are above the mobile nav */
+.floating-btn,
+.fab,
+.chat-fab,
+.chat-popup,
+.floating-action-button,
+[class*="float"],
+.fixed-bottom-btn {
+  bottom: calc(80px + env(safe-area-inset-bottom, 0)) !important;
+  z-index: 9998 !important; /* Below mobile nav (9999) but above content */
+}
+
+/* Toast notifications should be above everything */
+.Toastify__toast-container,
+.toast-container,
+[class*="toast"] {
+  bottom: calc(90px + env(safe-area-inset-bottom, 0)) !important;
 }
 
 /* ============================================

@@ -942,3 +942,262 @@ const handleNavClick = (e, targetPath) => {
 - Font weight increased to 600
 - "Sell" renamed to "Post Ad"
 - Post Ad button increased from 48px to 52px with gradient
+
+---
+
+## Android Capacitor Blank Screen Fix (2026-01-03)
+
+### Problem Description
+After building the APK, the app shows a blank screen instead of rendering the Vue.js application.
+
+### Root Cause Analysis
+
+**CRITICAL BUG #1: 401 Redirect Uses Wrong URL Pattern**
+
+In `resources/js/services/api.js`, the 401 error handler:
+```javascript
+case 401:
+  localStorage.removeItem('token')
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login'  // ← BUG!
+  }
+  break;
+```
+
+This is broken for two reasons:
+1. **Hash routing mismatch**: In Capacitor, we use `createWebHashHistory()`. Routes are in `window.location.hash` (e.g., `#/login`), NOT `window.location.pathname` (which is always `/` or the file path).
+2. **No server in Capacitor**: In native apps, `window.location.href = '/login'` tries to load a local file `/login` which doesn't exist, causing a blank screen.
+
+**How it causes blank screen:**
+1. User has old/invalid token in localStorage
+2. App loads and tries to fetch user via API
+3. API returns 401 Unauthorized
+4. api.js interceptor does `window.location.href = '/login'`
+5. Capacitor webview tries to load non-existent file `/login`
+6. **Blank screen!**
+
+### Fix Applied
+
+**api.js - Use Vue Router instead of window.location:**
+```javascript
+import { Capacitor } from '@capacitor/core'
+
+// In 401 handler:
+case 401:
+  localStorage.removeItem('token')
+  // For Capacitor/hash routing, use hash navigation
+  if (Capacitor.isNativePlatform()) {
+    if (window.location.hash !== '#/login') {
+      window.location.hash = '#/login'
+    }
+  } else {
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login'
+    }
+  }
+  break;
+```
+
+### Code Architecture Summary
+
+#### Entry Point Flow
+```
+index.html → main.js → createApp(App.vue) → mount('#app')
+                     ↓
+              router/index.js (determines hash vs history mode)
+                     ↓
+              App.vue onMounted → appStore.initialize() → API calls
+```
+
+#### Key Files Reviewed
+
+| File | Purpose | Capacitor Considerations |
+|------|---------|--------------------------|
+| `main.js` | App entry, plugin setup | Splash screen hide timing |
+| `router/index.js` | Vue Router config | Uses `createWebHashHistory()` for native |
+| `api.js` | Axios config, interceptors | **BUGFIX NEEDED**: 401 redirect |
+| `App.vue` | Root component, layout | Makes API calls on mount |
+| `Home.vue` | Homepage with listings | API-dependent, shows error state |
+| `capacitor.config.json` | Capacitor settings | webDir, splash screen config |
+
+#### Stores
+
+| Store | State | Key Actions |
+|-------|-------|-------------|
+| `app.js` | categories, cities, loading, location | `initialize()`, `fetchCategories()`, `detectLocation()` |
+| `auth.js` | user, token, loading | `login()`, `register()`, `fetchUser()`, `logout()` |
+| `listings.js` | listings, filters, pagination | `fetchListings()`, `createListing()`, `toggleFavorite()` |
+| `messages.js` | conversations, messages, unreadCount | `fetchConversations()`, `sendMessage()` |
+
+#### Components
+
+| Component | Purpose | Notes |
+|-----------|---------|-------|
+| `AppHeader.vue` | Header with search, location | Desktop: white bg; Mobile: gradient |
+| `MobileNav.vue` | Bottom nav for mobile | z-index 9999, 64px height |
+| `ListingCard.vue` | Listing display card | 1:1 aspect ratio, lazy loading |
+| `LocationPicker.vue` | Map-based location selection | Leaflet integration |
+
+### Capacitor Configuration
+
+**capacitor.config.json:**
+```json
+{
+  "appId": "com.lentlo.ads",
+  "appName": "Lentlo Ads",
+  "webDir": "public/build",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": false
+    }
+  }
+}
+```
+
+**API Base URL Selection (api.js):**
+```javascript
+const getBaseURL = () => {
+  if (Capacitor.isNativePlatform()) {
+    return 'https://phplaravel-1016958-6108537.cloudwaysapps.com/api/v1'
+  }
+  return '/api/v1'
+}
+```
+
+### Build Process
+
+```bash
+# 1. Build web assets
+npm run build
+# - Runs: vite build && node scripts/generate-capacitor-index.js
+# - Output: public/build/
+
+# 2. Sync to Android project
+npm run cap:sync
+# - Copies public/build/ to android/app/src/main/assets/public/
+
+# 3. Build APK
+cd android
+./gradlew assembleDebug
+# - APK at: android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Testing Checklist for Native App
+
+```
+□ App loads without blank screen
+□ Homepage shows listings (API working)
+□ Categories load correctly
+□ Navigation between pages works
+□ Login/logout works
+□ Splash screen shows and hides
+□ Links are clickable immediately
+□ Back button works properly
+□ 401 errors redirect to login properly
+```
+
+### Network Security (Android)
+
+**network_security_config.xml:**
+```xml
+<network-security-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">phplaravel-1016958-6108537.cloudwaysapps.com</domain>
+    <domain includeSubdomains="true">lentloads.com</domain>
+  </domain-config>
+</network-security-config>
+```
+
+### CORS Configuration (Laravel)
+
+**config/cors.php:**
+```php
+'allowed_origins' => ['*'],  // Allow Capacitor app
+'supports_credentials' => false,  // Must be false with '*' origin
+```
+
+---
+
+## Complete Frontend File List
+
+### Views (resources/js/views/)
+- `Home.vue` - Homepage with featured/recent listings
+- `Search.vue` - Search with filters, sort, pagination
+- `Categories.vue` - All categories list
+- `CategoryListings.vue` - Listings in a category
+- `ListingDetail.vue` - Single listing detail page
+- `UserProfile.vue` - Public user profile
+- `StaticPage.vue` - CMS static pages
+- `NotFound.vue` - 404 page
+
+### Auth Views (resources/js/views/auth/)
+- `Login.vue` - Login form
+- `Register.vue` - Registration form
+- `ForgotPassword.vue` - Password reset request
+- `ResetPassword.vue` - Password reset form
+
+### Dashboard Views (resources/js/views/dashboard/)
+- `Dashboard.vue` - User dashboard overview
+- `MyListings.vue` - User's listings management
+- `CreateListing.vue` - New listing form
+- `EditListing.vue` - Edit listing form
+- `Favorites.vue` - Saved listings
+- `Messages.vue` - Conversations list
+- `Conversation.vue` - Single chat thread
+- `Settings.vue` - Account settings
+- `MyReviews.vue` - Reviews received
+- `SavedSearches.vue` - Saved search alerts
+- `Notifications.vue` - Notification center
+
+### Admin Views (resources/js/views/admin/)
+- `Dashboard.vue` - Admin stats
+- `Users.vue` - User management
+- `Listings.vue` - Listing moderation
+- `Categories.vue` - Category management
+- `Reports.vue` - User reports
+- `Settings.vue` - Site settings
+- `Conversations.vue` - Message moderation
+- `ContactViews.vue` - Contact tracking
+
+### Components (resources/js/components/)
+
+**Layout:**
+- `AppHeader.vue` - Main header
+- `AppFooter.vue` - Footer
+- `AdminHeader.vue` - Admin header
+- `MobileNav.vue` - Bottom mobile nav
+
+**Common:**
+- `ListingCard.vue` - Listing display card
+- `LoadingSpinner.vue` - Loading indicator
+- `LoadingOverlay.vue` - Full page loader
+- `LocationPicker.vue` - Map location picker
+- `LocationDisplay.vue` - Location text display
+- `PWAInstallPrompt.vue` - PWA install prompt
+- `SearchBar.vue` - Search input
+- `AuthPromptModal.vue` - Login prompt modal
+
+**Modals:**
+- `ChatModal.vue` - Quick chat modal
+- `ConfirmModal.vue` - Confirmation dialog
+- `LocationModal.vue` - Location selection modal
+- `ReportModal.vue` - Report abuse modal
+
+### Layouts (resources/js/layouts/)
+- `DefaultLayout.vue` - Main layout wrapper
+- `AuthLayout.vue` - Auth pages layout
+- `AdminLayout.vue` - Admin panel layout
+
+### Services (resources/js/services/)
+- `api.js` - Axios instance with interceptors
+
+### Stores (resources/js/stores/)
+- `app.js` - App state (categories, location)
+- `auth.js` - Authentication state
+- `listings.js` - Listings state and filters
+- `messages.js` - Messages/conversations state
