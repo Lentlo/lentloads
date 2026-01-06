@@ -1,6 +1,6 @@
 <template>
   <!-- Mobile: full screen from bottom, Desktop: centered modal -->
-  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+  <div class="chat-modal-overlay">
     <div class="absolute inset-0 bg-black/50" @click="$emit('close')"></div>
     <div class="relative bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl animate-slide-up max-h-[90vh] overflow-y-auto">
       <!-- Header -->
@@ -170,6 +170,22 @@ const sendMessage = async () => {
 </script>
 
 <style scoped>
+/* Modal overlay - must be above mobile nav (z-index: 9999) */
+.chat-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .chat-modal-overlay {
+    align-items: center;
+  }
+}
+
 @keyframes slide-up {
   from {
     transform: translateY(20px);
@@ -189,9 +205,10 @@ const sendMessage = async () => {
   padding-bottom: max(env(safe-area-inset-bottom, 0), 16px);
 }
 
+/* On mobile, add extra padding for safe area only (no nav when modal is open) */
 @media (max-width: 640px) {
   .safe-area-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0), 80px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0), 20px);
   }
 }
 </style>

@@ -891,21 +891,24 @@ onMounted(load)
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #6366f1;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
   border-radius: 12px;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  transition: all 0.2s ease;
 }
 
-.send-trigger:active {
+.send-trigger:active:not(:disabled) {
   transform: scale(0.95);
 }
 
 .send-trigger:disabled {
-  opacity: 0.5;
+  background: #d1d5db;
+  color: #9ca3af;
   box-shadow: none;
+  cursor: not-allowed;
 }
 
 .send-spinner {

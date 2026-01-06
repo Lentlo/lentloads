@@ -315,7 +315,7 @@ const handleScroll = () => {
       }
 
       // Always show search at top of page
-      if (currentScrollY < 60) {
+      if (currentScrollY < 50) {
         if (!showMobileSearch.value) showMobileSearch.value = true
         scrollAccumulator = 0
         lastScrollY = currentScrollY
@@ -347,10 +347,10 @@ const handleScroll = () => {
       // Accumulate scroll distance in current direction
       scrollAccumulator += Math.abs(scrollDelta)
 
-      // Only toggle after accumulating enough scroll (120px) and cooldown period (900ms)
-      const canToggle = now - lastToggleTime > 900
+      // Toggle after accumulating enough scroll (80px) and cooldown period (400ms)
+      const canToggle = now - lastToggleTime > 400
 
-      if (canToggle && scrollAccumulator > 120) {
+      if (canToggle && scrollAccumulator > 80) {
         if (scrollDirection === 'down' && showMobileSearch.value) {
           showMobileSearch.value = false
           lastToggleTime = now
@@ -578,10 +578,12 @@ watch(() => route.query.q, (newQ) => {
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 100;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
   transition: box-shadow 0.3s ease;
+  /* Safe area for notch/status bar on mobile */
+  padding-top: env(safe-area-inset-top, 0);
 }
 
 @media (min-width: 768px) {
@@ -589,6 +591,7 @@ watch(() => route.query.q, (newQ) => {
     background: white;
     border-bottom: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding-top: 0; /* No safe area needed on desktop */
   }
 }
 
@@ -1338,7 +1341,7 @@ watch(() => route.query.q, (newQ) => {
 .location-picker-modal {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 10001; /* Above mobile nav (9999) and chat modal (10000) */
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1366,8 +1369,9 @@ watch(() => route.query.q, (newQ) => {
   flex-direction: column;
   overflow: hidden;
   animation: slide-up 0.3s ease-out;
-  /* Position above mobile nav */
-  margin-bottom: calc(60px + env(safe-area-inset-bottom, 8px));
+  /* Position above mobile nav - but at bottom of viewport */
+  margin-bottom: 0;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0));
 }
 
 @media (min-width: 640px) {
@@ -1376,6 +1380,7 @@ watch(() => route.query.q, (newQ) => {
     max-height: 70vh;
     border-radius: 1rem;
     margin-bottom: 0;
+    padding-bottom: 0;
   }
 }
 
