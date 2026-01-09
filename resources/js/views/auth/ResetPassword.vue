@@ -71,6 +71,7 @@
                   placeholder="Minimum 8 characters"
                   required
                   minlength="8"
+                  @focus="scrollIntoView($event.target)"
                 />
                 <button
                   type="button"
@@ -93,6 +94,7 @@
                   class="input pl-10 pr-10"
                   placeholder="Confirm your password"
                   required
+                  @focus="scrollIntoView($event.target)"
                 />
                 <button
                   type="button"
@@ -191,6 +193,14 @@ const isValid = computed(() => {
     form.password === form.password_confirmation
   )
 })
+
+// Scroll input into view when focused (for mobile keyboard)
+const scrollIntoView = (element) => {
+  if (!element) return
+  setTimeout(() => {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, 300)
+}
 
 const resetPassword = async () => {
   if (!isValid.value) {

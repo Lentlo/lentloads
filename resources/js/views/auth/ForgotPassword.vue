@@ -56,6 +56,7 @@
                   placeholder="you@example.com"
                   required
                   autofocus
+                  @focus="scrollIntoView($event.target)"
                 />
               </div>
               <p v-if="error" class="text-sm text-red-600 mt-1">{{ error }}</p>
@@ -125,6 +126,14 @@ const submitting = ref(false)
 const resending = ref(false)
 const emailSent = ref(false)
 const error = ref('')
+
+// Scroll input into view when focused (for mobile keyboard)
+const scrollIntoView = (element) => {
+  if (!element) return
+  setTimeout(() => {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, 300)
+}
 
 const submitRequest = async () => {
   error.value = ''

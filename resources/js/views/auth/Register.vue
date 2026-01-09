@@ -64,6 +64,7 @@
                 class="input"
                 :class="{ 'input-error': checkError }"
                 placeholder="Enter phone or email"
+                @focus="scrollIntoView($event.target)"
               />
               <p v-if="checkError" class="mt-1 text-sm text-red-600">{{ checkError }}</p>
             </div>
@@ -100,6 +101,7 @@
                 class="input"
                 :class="{ 'input-error': errors.name }"
                 placeholder="Enter your full name"
+                @focus="scrollIntoView($event.target)"
               />
               <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
             </div>
@@ -136,6 +138,7 @@
                 class="input"
                 :class="{ 'input-error': errors.email }"
                 placeholder="you@example.com"
+                @focus="scrollIntoView($event.target)"
               />
               <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
             </div>
@@ -153,6 +156,7 @@
                 class="input"
                 :class="{ 'input-error': errors.phone }"
                 placeholder="Enter your phone number"
+                @focus="scrollIntoView($event.target)"
               />
               <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone }}</p>
               <p class="mt-1 text-xs text-gray-500">With or without country code (e.g., 8122116594 or +91 8122116594)</p>
@@ -190,6 +194,7 @@
                   class="input pr-10"
                   :class="{ 'input-error': errors.password }"
                   placeholder="At least 8 characters"
+                  @focus="scrollIntoView($event.target)"
                 />
                 <button
                   type="button"
@@ -214,6 +219,7 @@
                 class="input"
                 :class="{ 'input-error': errors.password_confirmation }"
                 placeholder="Re-enter your password"
+                @focus="scrollIntoView($event.target)"
               />
               <p v-if="errors.password_confirmation" class="mt-1 text-sm text-red-600">
                 {{ errors.password_confirmation }}
@@ -334,6 +340,14 @@ const errors = reactive({
   password: '',
   password_confirmation: '',
 })
+
+// Scroll input into view when focused (for mobile keyboard)
+const scrollIntoView = (element) => {
+  if (!element) return
+  setTimeout(() => {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, 300)
+}
 
 // Check if user exists
 const checkUser = async () => {
