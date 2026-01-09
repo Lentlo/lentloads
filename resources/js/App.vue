@@ -52,9 +52,8 @@ const isAdmin = computed(() => authStore.isAdmin)
 const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 const isConversationPage = computed(() => route.name === 'conversation')
 const isCreateListingPage = computed(() => route.name === 'create-listing')
-const isAuthPage = computed(() => ['login', 'register', 'forgot-password', 'reset-password'].includes(route.name))
 const isLoading = computed(() => appStore.isLoading)
-const showMobileNav = computed(() => !isAdminRoute.value && isMobile.value && !isConversationPage.value && !isCreateListingPage.value && !isAuthPage.value)
+const showMobileNav = computed(() => !isAdminRoute.value && isMobile.value && !isConversationPage.value && !isCreateListingPage.value)
 
 // Check mobile
 const checkMobile = () => {

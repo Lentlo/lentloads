@@ -28,6 +28,7 @@
                 class="input"
                 :class="{ 'input-error': errors.login }"
                 placeholder="Enter phone or email"
+                @focus="scrollIntoView($event.target)"
               />
               <p class="mt-1 text-xs text-gray-500">Example: 8122116594 or you@example.com</p>
               <p v-if="errors.login" class="mt-1 text-sm text-red-600">{{ errors.login }}</p>
@@ -92,6 +93,7 @@
                   class="input pr-10"
                   :class="{ 'input-error': errors.password }"
                   placeholder="Enter your password"
+                  @focus="scrollIntoView($event.target)"
                 />
                 <button
                   type="button"
@@ -174,6 +176,7 @@
                 class="input"
                 :class="{ 'input-error': errors.name }"
                 placeholder="Enter your full name"
+                @focus="scrollIntoView($event.target)"
               />
               <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
             </div>
@@ -227,6 +230,7 @@
                 class="input"
                 :class="{ 'input-error': errors.email }"
                 placeholder="you@example.com"
+                @focus="scrollIntoView($event.target)"
               />
               <p class="mt-1 text-xs text-gray-500">We'll send important updates here</p>
               <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
@@ -245,6 +249,7 @@
                 class="input"
                 :class="{ 'input-error': errors.phone }"
                 placeholder="Enter your phone number"
+                @focus="scrollIntoView($event.target)"
               />
               <p class="mt-1 text-xs text-gray-500">Buyers will contact you on this number</p>
               <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone }}</p>
@@ -301,6 +306,7 @@
                   class="input pr-10"
                   :class="{ 'input-error': errors.password }"
                   placeholder="Min 8 characters"
+                  @focus="scrollIntoView($event.target)"
                 />
                 <button
                   type="button"
@@ -325,6 +331,7 @@
                 class="input"
                 :class="{ 'input-error': errors.password_confirmation }"
                 placeholder="Re-enter your password"
+                @focus="scrollIntoView($event.target)"
               />
               <p v-if="errors.password_confirmation" class="mt-1 text-sm text-red-600">{{ errors.password_confirmation }}</p>
             </div>
@@ -441,6 +448,15 @@ const pageSubtitle = computed(() => {
 
 const clearErrors = () => {
   Object.keys(errors).forEach(key => errors[key] = '')
+}
+
+// Scroll input into view when focused (for mobile keyboard)
+const scrollIntoView = (element) => {
+  if (!element) return
+  // Delay to allow keyboard to open
+  setTimeout(() => {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, 300)
 }
 
 const checkUser = async () => {
