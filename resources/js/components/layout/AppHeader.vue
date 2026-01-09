@@ -5,7 +5,7 @@
       <!-- Safe area spacer for Android status bar -->
       <div class="mobile-safe-area"></div>
 
-      <!-- Top Bar: Logo + Search + Actions -->
+      <!-- Top Bar: Logo + Name + Actions -->
       <div class="mobile-top-bar">
         <router-link to="/" class="mobile-logo">
           <div class="mobile-logo-icon">
@@ -21,31 +21,15 @@
               <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
             </svg>
           </div>
+          <span class="mobile-logo-text">Lentlo</span>
         </router-link>
 
-        <!-- Integrated Search Bar -->
-        <div class="mobile-search-wrapper">
-          <button @click="showLocationPicker = true" class="mobile-location-btn">
-            <MapPinIcon class="w-4 h-4" />
-            <span>{{ shortLocationName }}</span>
-          </button>
-          <div class="mobile-search-input">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search..."
-              @keyup.enter="handleSearch"
-            />
-            <button v-if="searchQuery" @click="clearSearch" class="mobile-clear-btn">
-              <XMarkIcon class="w-4 h-4" />
-            </button>
-            <button @click="handleSearch" class="mobile-search-btn">
-              <MagnifyingGlassIcon class="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
         <div class="mobile-actions">
+          <!-- Search Icon - navigates to search page -->
+          <router-link to="/search" class="mobile-icon-btn">
+            <MagnifyingGlassIcon class="w-5 h-5" />
+          </router-link>
+
           <router-link v-if="isAuthenticated" to="/notifications" class="mobile-icon-btn">
             <BellIcon class="w-5 h-5" />
             <span v-if="unreadNotifications > 0" class="mobile-badge">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</span>
@@ -591,7 +575,7 @@ watch(() => route.query.q, (newQ) => {
 }
 
 /* ========================================
-   MOBILE HEADER (< 768px) - Single Row Design
+   MOBILE HEADER (< 768px) - Clean Minimal Design
    ======================================== */
 .mobile-header {
   display: block;
@@ -610,24 +594,24 @@ watch(() => route.query.q, (newQ) => {
   background: transparent;
 }
 
-/* Mobile Top Bar - Single row with everything */
+/* Mobile Top Bar */
 .mobile-top-bar {
   display: flex;
   align-items: center;
-  padding: 10px 12px 12px;
-  gap: 10px;
+  justify-content: space-between;
+  padding: 12px 16px 14px;
 }
 
 .mobile-logo {
   display: flex;
   align-items: center;
+  gap: 10px;
   text-decoration: none;
-  flex-shrink: 0;
 }
 
 .mobile-logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
 }
 
 .mobile-logo-icon svg {
@@ -635,139 +619,72 @@ watch(() => route.query.q, (newQ) => {
   height: 100%;
 }
 
-/* Search wrapper - takes remaining space */
-.mobile-search-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 10px;
-  min-width: 0;
-  height: 40px;
-}
-
-.mobile-location-btn {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0 10px;
-  height: 100%;
-  color: #6366f1;
-  font-size: 11px;
-  font-weight: 600;
-  border-right: 1px solid #e5e7eb;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.mobile-location-btn span {
-  max-width: 50px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mobile-search-input {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  min-width: 0;
-}
-
-.mobile-search-input input {
-  flex: 1;
-  height: 100%;
-  padding: 0 8px;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  color: #1e293b;
-  outline: none;
-  min-width: 0;
-}
-
-.mobile-search-input input::placeholder {
-  color: #94a3b8;
-}
-
-.mobile-clear-btn {
-  padding: 8px 4px;
-  color: #94a3b8;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.mobile-search-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 32px;
-  margin-right: 4px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+.mobile-logo-text {
+  font-size: 22px;
+  font-weight: 700;
   color: white;
-  border-radius: 8px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.mobile-search-btn:active {
-  transform: scale(0.95);
+  letter-spacing: -0.5px;
 }
 
 /* Mobile actions */
 .mobile-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
+  gap: 4px;
 }
 
 .mobile-icon-btn {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
 }
 
 .mobile-icon-btn:active {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .mobile-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   background: #fbbf24;
   color: #1f2937;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  border-radius: 8px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .mobile-login-btn {
-  padding: 7px 12px;
+  padding: 8px 16px;
   background: white;
   color: #6366f1;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
+  margin-left: 4px;
+}
+
+.mobile-login-btn:active {
+  opacity: 0.9;
 }
 
 .mobile-avatar-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -775,17 +692,17 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-avatar {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   background: rgba(255, 255, 255, 0.25);
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.7);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Mobile Dropdown */
