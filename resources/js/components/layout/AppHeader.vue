@@ -620,7 +620,7 @@ watch(() => route.query.q, (newQ) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 12px 4px;
+  padding: 4px 10px 2px;
 }
 
 .mobile-logo {
@@ -689,13 +689,13 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-login-btn {
-  height: 28px;
-  padding: 0 12px;
+  height: 24px;
+  padding: 0 10px;
   background: white;
   color: #6366f1;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 5px;
   -webkit-tap-highlight-color: transparent;
   margin-left: 2px;
   display: flex;
@@ -736,7 +736,7 @@ watch(() => route.query.q, (newQ) => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 12px 8px;
+  padding: 0 10px 6px;
 }
 
 .mobile-location-btn {

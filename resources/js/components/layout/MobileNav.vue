@@ -1,15 +1,15 @@
 <template>
   <nav class="mobile-nav">
     <div class="nav-container">
-      <!-- Home / My Ads -->
+      <!-- All Ads -->
       <router-link
-        :to="isAuthenticated ? '/my-listings' : '/'"
+        to="/all-ads"
         class="nav-item"
-        :class="{ active: isAuthenticated ? isActive('/my-listings') : isActive('/') }"
-        @click="handleNavClick($event, isAuthenticated ? '/my-listings' : '/')"
+        :class="{ active: isActive('/all-ads') }"
+        @click="handleNavClick($event, '/all-ads')"
       >
-        <component :is="isAuthenticated ? ClipboardDocumentListIcon : HomeIcon" class="nav-icon" />
-        <span class="nav-label">{{ isAuthenticated ? 'My Ads' : 'Home' }}</span>
+        <Squares2X2Icon class="nav-icon" />
+        <span class="nav-label">All Ads</span>
       </router-link>
 
       <!-- Search -->
@@ -35,18 +35,15 @@
         <span class="nav-label">Post Ad</span>
       </router-link>
 
-      <!-- Messages -->
+      <!-- My Ads (replaces Chat) -->
       <router-link
-        to="/messages"
+        to="/my-listings"
         class="nav-item"
-        :class="{ active: isActive('/messages') }"
-        @click="handleNavClick($event, '/messages')"
+        :class="{ active: isActive('/my-listings') }"
+        @click="handleNavClick($event, '/my-listings')"
       >
-        <div class="icon-with-badge">
-          <ChatBubbleLeftRightIcon class="nav-icon" />
-          <span v-if="unreadMessages > 0" class="badge">{{ unreadMessages > 9 ? '9+' : unreadMessages }}</span>
-        </div>
-        <span class="nav-label">Chat</span>
+        <ClipboardDocumentListIcon class="nav-icon" />
+        <span class="nav-label">My Ads</span>
       </router-link>
 
       <!-- Account -->
@@ -64,15 +61,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import api from '@/services/api'
 import {
-  HomeIcon,
+  Squares2X2Icon,
   MagnifyingGlassIcon,
   PlusIcon,
-  ChatBubbleLeftRightIcon,
   UserCircleIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/vue/24/outline'
@@ -82,19 +77,10 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const unreadMessages = ref(0)
 
 const isActive = (path) => {
   if (path === '/') return route.path === '/'
   return route.path.startsWith(path)
-}
-
-const fetchUnreadMessages = async () => {
-  if (!isAuthenticated.value) return
-  try {
-    const response = await api.get('/conversations/unread-count')
-    unreadMessages.value = response.data.data?.count || 0
-  } catch (e) {}
 }
 
 // Fallback navigation handler - if router-link fails, force navigation
@@ -114,29 +100,6 @@ const handleNavClick = (e, targetPath) => {
     }
   }, 300)
 }
-
-let interval = null
-
-onMounted(() => {
-  if (isAuthenticated.value) {
-    fetchUnreadMessages()
-    interval = setInterval(fetchUnreadMessages, 30000)
-  }
-})
-
-onUnmounted(() => {
-  if (interval) clearInterval(interval)
-})
-
-watch(isAuthenticated, (val) => {
-  if (val) {
-    fetchUnreadMessages()
-    interval = setInterval(fetchUnreadMessages, 30000)
-  } else {
-    unreadMessages.value = 0
-    if (interval) clearInterval(interval)
-  }
-})
 </script>
 
 <style scoped>
@@ -247,28 +210,6 @@ watch(isAuthenticated, (val) => {
   color: #7c3aed;
   font-weight: 700;
   font-size: 10px;
-}
-
-/* Badge */
-.icon-with-badge {
-  position: relative;
-}
-
-.badge {
-  position: absolute;
-  top: -4px;
-  right: -8px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  background: #ef4444;
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Hide on desktop */
