@@ -620,19 +620,19 @@ watch(() => route.query.q, (newQ) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px 8px;
+  padding: 6px 12px 4px;
 }
 
 .mobile-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-decoration: none;
 }
 
 .mobile-logo-icon {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
 }
 
 .mobile-logo-icon svg {
@@ -641,7 +641,7 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-logo-text {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: white;
   letter-spacing: -0.3px;
@@ -656,13 +656,13 @@ watch(() => route.query.q, (newQ) => {
 
 .mobile-icon-btn {
   position: relative;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: rgba(255, 255, 255, 0.95);
-  border-radius: 10px;
+  border-radius: 8px;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s ease;
 }
@@ -673,30 +673,35 @@ watch(() => route.query.q, (newQ) => {
 
 .mobile-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  top: 2px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
   background: #fbbf24;
   color: #1f2937;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  border-radius: 8px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .mobile-login-btn {
-  padding: 7px 14px;
+  height: 28px;
+  padding: 0 12px;
   background: white;
   color: #6366f1;
   font-size: 13px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 6px;
   -webkit-tap-highlight-color: transparent;
   margin-left: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .mobile-login-btn:active {
@@ -704,8 +709,8 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-avatar-btn {
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -713,8 +718,8 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-avatar {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   background: rgba(255, 255, 255, 0.25);
   border: 2px solid rgba(255, 255, 255, 0.7);
   border-radius: 50%;
@@ -723,26 +728,26 @@ watch(() => route.query.q, (newQ) => {
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 /* Row 2: Location + Search */
 .mobile-row-2 {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 14px 12px;
+  gap: 6px;
+  padding: 0 12px 8px;
 }
 
 .mobile-location-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 8px 10px;
+  gap: 3px;
+  padding: 6px 8px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 6px;
   color: white;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
@@ -762,25 +767,25 @@ watch(() => route.query.q, (newQ) => {
   display: flex;
   align-items: center;
   background: white;
-  border-radius: 10px;
-  padding: 0 4px 0 10px;
-  height: 40px;
+  border-radius: 8px;
+  padding: 0 6px 0 10px;
+  height: 34px;
   min-width: 0;
 }
 
 .mobile-search-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   color: #9ca3af;
   flex-shrink: 0;
 }
 
 .mobile-search-box input {
   flex: 1;
-  padding: 8px;
+  padding: 6px;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 13px;
   color: #1f2937;
   outline: none;
   min-width: 0;
@@ -791,9 +796,9 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-clear-btn {
-  padding: 6px;
+  padding: 4px;
   color: #9ca3af;
-  border-radius: 6px;
+  border-radius: 4px;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -802,20 +807,18 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-search-submit {
-  width: 32px;
-  height: 32px;
+  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  border-radius: 8px;
+  background: transparent;
+  color: #6366f1;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
 
 .mobile-search-submit:active {
-  opacity: 0.9;
+  opacity: 0.7;
 }
 
 /* Mobile Dropdown */
