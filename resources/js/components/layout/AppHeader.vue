@@ -5,31 +5,26 @@
       <!-- Safe area spacer for Android status bar -->
       <div class="mobile-safe-area"></div>
 
-      <!-- Top Bar: Logo + Name + Actions -->
-      <div class="mobile-top-bar">
+      <!-- Row 1: Logo + Name + Actions -->
+      <div class="mobile-row-1">
         <router-link to="/" class="mobile-logo">
           <div class="mobile-logo-icon">
             <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="mobileLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#6366f1" />
-                  <stop offset="100%" stop-color="#8b5cf6" />
+                  <stop offset="0%" stop-color="#ffffff" />
+                  <stop offset="100%" stop-color="#e0e7ff" />
                 </linearGradient>
               </defs>
               <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#mobileLogoGrad)"/>
-              <path d="M14 12V28H28V24H18V12H14Z" fill="white"/>
+              <path d="M14 12V28H28V24H18V12H14Z" fill="#6366f1"/>
               <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
             </svg>
           </div>
-          <span class="mobile-logo-text">Lentlo</span>
+          <span class="mobile-logo-text">Lentlo Ads</span>
         </router-link>
 
         <div class="mobile-actions">
-          <!-- Search Icon - navigates to search page -->
-          <router-link to="/search" class="mobile-icon-btn">
-            <MagnifyingGlassIcon class="w-5 h-5" />
-          </router-link>
-
           <router-link v-if="isAuthenticated" to="/notifications" class="mobile-icon-btn">
             <BellIcon class="w-5 h-5" />
             <span v-if="unreadNotifications > 0" class="mobile-badge">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</span>
@@ -46,6 +41,31 @@
 
           <button v-if="isAuthenticated" @click="showUserMenu = !showUserMenu" class="mobile-avatar-btn">
             <span class="mobile-avatar">{{ user?.name?.charAt(0) || 'U' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 2: Location + Search Bar -->
+      <div class="mobile-row-2">
+        <button @click="showLocationPicker = true" class="mobile-location-btn">
+          <MapPinIcon class="w-4 h-4" />
+          <span>{{ shortLocationName }}</span>
+          <ChevronDownIcon class="w-3 h-3" />
+        </button>
+
+        <div class="mobile-search-box">
+          <MagnifyingGlassIcon class="mobile-search-icon" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search cars, mobiles, jobs..."
+            @keyup.enter="handleSearch"
+          />
+          <button v-if="searchQuery" @click="clearSearch" class="mobile-clear-btn">
+            <XMarkIcon class="w-4 h-4" />
+          </button>
+          <button @click="handleSearch" class="mobile-search-submit">
+            <MagnifyingGlassIcon class="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -575,11 +595,12 @@ watch(() => route.query.q, (newQ) => {
 }
 
 /* ========================================
-   MOBILE HEADER (< 768px) - Clean Minimal Design
+   MOBILE HEADER (< 768px) - Two Row Design
    ======================================== */
 .mobile-header {
   display: block;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  position: relative;
 }
 
 @media (min-width: 768px) {
@@ -594,12 +615,12 @@ watch(() => route.query.q, (newQ) => {
   background: transparent;
 }
 
-/* Mobile Top Bar */
-.mobile-top-bar {
+/* Row 1: Logo + Actions */
+.mobile-row-1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px 14px;
+  padding: 10px 14px 8px;
 }
 
 .mobile-logo {
@@ -610,8 +631,8 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-logo-icon {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
 }
 
 .mobile-logo-icon svg {
@@ -620,23 +641,23 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-logo-text {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: white;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 /* Mobile actions */
 .mobile-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .mobile-icon-btn {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -654,28 +675,28 @@ watch(() => route.query.q, (newQ) => {
   position: absolute;
   top: 4px;
   right: 4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   background: #fbbf24;
   color: #1f2937;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  border-radius: 9px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .mobile-login-btn {
-  padding: 8px 16px;
+  padding: 7px 14px;
   background: white;
   color: #6366f1;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: 8px;
   -webkit-tap-highlight-color: transparent;
-  margin-left: 4px;
+  margin-left: 2px;
 }
 
 .mobile-login-btn:active {
@@ -683,8 +704,8 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-avatar-btn {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -692,8 +713,8 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-avatar {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   background: rgba(255, 255, 255, 0.25);
   border: 2px solid rgba(255, 255, 255, 0.7);
   border-radius: 50%;
@@ -702,7 +723,99 @@ watch(() => route.query.q, (newQ) => {
   justify-content: center;
   color: white;
   font-weight: 600;
+  font-size: 13px;
+}
+
+/* Row 2: Location + Search */
+.mobile-row-2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.mobile-location-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.mobile-location-btn:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.mobile-location-btn svg:first-child {
+  color: #fbbf24;
+}
+
+.mobile-search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 10px;
+  padding: 0 4px 0 10px;
+  height: 40px;
+  min-width: 0;
+}
+
+.mobile-search-icon {
+  width: 18px;
+  height: 18px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.mobile-search-box input {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: transparent;
   font-size: 14px;
+  color: #1f2937;
+  outline: none;
+  min-width: 0;
+}
+
+.mobile-search-box input::placeholder {
+  color: #9ca3af;
+}
+
+.mobile-clear-btn {
+  padding: 6px;
+  color: #9ca3af;
+  border-radius: 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-clear-btn:active {
+  background: #f3f4f6;
+}
+
+.mobile-search-submit {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-radius: 8px;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-search-submit:active {
+  opacity: 0.9;
 }
 
 /* Mobile Dropdown */
