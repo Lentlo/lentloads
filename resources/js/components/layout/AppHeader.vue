@@ -359,13 +359,14 @@ const cityResults = ref([])
 const detectingLocation = ref(false)
 const selectedLocation = ref(null)
 
-// Handle scroll
+// Handle scroll - works on both web and Capacitor WebView
 const handleScroll = () => {
   if (ticking) return
 
   ticking = true
   requestAnimationFrame(() => {
-    const currentScrollY = window.scrollY
+    // Get scroll position from multiple sources for compatibility
+    const currentScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0
     const now = Date.now()
     const scrollDelta = currentScrollY - lastScrollY
 
@@ -384,17 +385,26 @@ const handleScroll = () => {
       }
 
       // Don't toggle near bottom
-      const nearBottom = currentScrollY + window.innerHeight >= document.documentElement.scrollHeight - 100
+      const docHeight = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight
+      )
+      const nearBottom = currentScrollY + window.innerHeight >= docHeight - 100
       if (nearBottom) {
         lastScrollY = currentScrollY
         ticking = false
         return
       }
 
-      // Determine direction
-      const currentDirection = scrollDelta > 0 ? 'down' : scrollDelta < 0 ? 'up' : null
+      // Determine direction - need minimum delta to register
+      if (Math.abs(scrollDelta) < 2) {
+        ticking = false
+        return
+      }
 
-      if (currentDirection && currentDirection !== scrollDirection) {
+      const currentDirection = scrollDelta > 0 ? 'down' : 'up'
+
+      if (currentDirection !== scrollDirection) {
         scrollDirection = currentDirection
         scrollAccumulator = 0
       }
@@ -403,7 +413,7 @@ const handleScroll = () => {
 
       const canToggle = now - lastToggleTime > 300
 
-      if (canToggle && scrollAccumulator > 60) {
+      if (canToggle && scrollAccumulator > 50) {
         if (scrollDirection === 'down' && showMobileSearch.value) {
           showMobileSearch.value = false
           lastToggleTime = now
@@ -584,7 +594,9 @@ let countInterval = null
 onMounted(() => {
   loadSavedCity()
   document.addEventListener('click', closeMenu)
+  // Add scroll listeners to both window and document for better compatibility
   window.addEventListener('scroll', handleScroll, { passive: true })
+  document.addEventListener('scroll', handleScroll, { passive: true })
   if (isAuthenticated.value) {
     fetchUnreadCounts()
     countInterval = setInterval(fetchUnreadCounts, 30000)
@@ -594,6 +606,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', closeMenu)
   window.removeEventListener('scroll', handleScroll)
+  document.removeEventListener('scroll', handleScroll)
   if (countInterval) clearInterval(countInterval)
   if (searchTimeout) clearTimeout(searchTimeout)
 })
@@ -637,8 +650,8 @@ watch(() => route.query.q, (newQ) => {
    ======================================== */
 .mobile-header {
   display: block;
-  padding-top: env(safe-area-inset-top, 0);
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  /* Safe area handled by Capacitor StatusBar on native, only needed for iOS Safari */
 }
 
 @media (min-width: 768px) {

@@ -11,21 +11,41 @@ import 'vue3-toastify/dist/index.css'
 // Capacitor
 import { Capacitor } from '@capacitor/core'
 
-// Hide splash screen as early as possible for native apps
-// This ensures the app is visible even if there are errors later
+// Hide splash screen - called when app is ready
 const hideSplashScreen = async () => {
   if (Capacitor.isNativePlatform()) {
     try {
       const { SplashScreen } = await import('@capacitor/splash-screen')
-      await SplashScreen.hide({ fadeOutDuration: 300 })
+      await SplashScreen.hide({ fadeOutDuration: 500 })
     } catch (e) {
       // Splash screen plugin might not be available
+      console.log('SplashScreen hide error:', e)
     }
   }
 }
 
-// Hide splash after 2 seconds no matter what (failsafe)
-setTimeout(hideSplashScreen, 2000)
+// Configure status bar for native app
+const configureStatusBar = async () => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { StatusBar, Style } = await import('@capacitor/status-bar')
+      // Set status bar style - LIGHT means white icons (for dark backgrounds)
+      await StatusBar.setStyle({ style: Style.Light })
+      // Set background color to match header gradient
+      await StatusBar.setBackgroundColor({ color: '#6366f1' })
+    } catch (e) {
+      console.log('StatusBar config error:', e)
+    }
+  }
+}
+
+// Initialize native features
+const initNative = async () => {
+  await configureStatusBar()
+}
+
+// Hide splash after 3 seconds no matter what (failsafe)
+setTimeout(hideSplashScreen, 3000)
 
 try {
   // Create app
@@ -52,9 +72,11 @@ try {
   // Mount the app
   app.mount('#app')
 
-  // Hide splash screen after router is ready
-  router.isReady().then(() => {
-    hideSplashScreen()
+  // Initialize native features and hide splash screen after router is ready
+  router.isReady().then(async () => {
+    await initNative()
+    // Small delay to ensure UI is rendered
+    setTimeout(hideSplashScreen, 500)
   })
 
 } catch (error) {

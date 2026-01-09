@@ -7,6 +7,13 @@
 
 ## Recent Changes (Changelog)
 
+### 2026-01-09 - Android App Fixes (v1.2)
+- **Fixed extra space on top**: Removed `env(safe-area-inset-top)` from mobile header (handled by StatusBar plugin)
+- **Fixed scroll collapse**: Improved scroll detection with multiple scroll sources for WebView compatibility
+- **Fixed splash screen**: Updated styles.xml to use splash drawable, configured launchAutoHide: false
+- **StatusBar configuration**: Added runtime StatusBar style and background color setup
+- **Capacitor config updates**: Better splash screen and status bar settings
+
 ### 2026-01-09 - Mobile Header Redesign (v1.1)
 - **Separate mobile/desktop headers**: Completely different layouts for mobile (< 768px) and desktop
 - **Mobile header features**:
@@ -808,14 +815,15 @@ Testing:
 ## APK Versioning
 
 ### Current Version
-- **Version Name:** 1.1
-- **Version Code:** 2
-- **APK Filename:** `LentloAds-v1.1-debug.apk`
+- **Version Name:** 1.2
+- **Version Code:** 3
+- **APK Filename:** `LentloAds-v1.2-debug.apk`
 
 ### Version History
 
 | Version | Code | Date | Changes |
 |---------|------|------|---------|
+| 1.2 | 3 | 2026-01-09 | Fixed header space, splash screen, scroll collapse |
 | 1.1 | 2 | 2026-01-09 | Mobile header redesign, separate mobile/desktop layouts |
 | 1.0 | 1 | 2026-01-03 | Initial Capacitor build |
 
