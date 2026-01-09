@@ -5,6 +5,28 @@
 - **App Name**: Lentlo Ads (OLX-like classifieds marketplace)
 - **Region**: India
 
+## Recent Changes (Changelog)
+
+### 2026-01-09 - Mobile Header Redesign (v1.1)
+- **Separate mobile/desktop headers**: Completely different layouts for mobile (< 768px) and desktop
+- **Mobile header features**:
+  - Gradient purple background (#6366f1 to #8b5cf6)
+  - Two-row layout: Top bar (logo + actions) + Search bar (collapsible)
+  - Removed "Post Ad" button (available in bottom nav)
+  - Safe area padding for notched devices
+- **Improved scroll behavior**: 60px threshold, 300ms cooldown (faster response)
+- **Fixed chat modal z-index**: Modal now appears above mobile nav (z-index: 10000)
+- **Fixed send button styling**: Clear visual difference between enabled/disabled states
+- **Web manifest fix**: Proper `manifest.json` for production deployment
+
+### 2026-01-03 - Capacitor Mobile App (v1.0)
+- Initial Capacitor setup for Android
+- Hash-based routing for native app
+- API base URL detection for native vs web
+- Splash screen and status bar configuration
+
+---
+
 ## ⚠️ INCIDENT LOG - Learn From Past Mistakes
 
 ### 2025-01-02: Image Data Loss
@@ -309,41 +331,75 @@ Staging (staging.lentloads.com) → Test data, separate database
 
 ## Mobile Header Design
 
-### Features
-- **Gradient background**: Purple gradient (`#667eea` to `#764ba2`) on mobile for visual appeal
-- **Compact design**: Reduced height on mobile to save space
-- **Collapsible search**: Search bar shows on scroll up, hides on scroll down
-- **White text/icons**: Mobile header uses white text to contrast with gradient
+### Architecture (Updated 2026-01-09)
+The header now uses **completely separate layouts** for mobile and desktop:
 
-### Scroll Behavior (Updated 2026-01-03)
+```vue
+<!-- Mobile header (< 768px) -->
+<div class="mobile-header">
+  <div class="mobile-top-bar">Logo + Actions</div>
+  <div class="mobile-search-bar">Location + Search</div>
+</div>
+
+<!-- Desktop header (>= 768px) -->
+<div class="desktop-header">
+  Logo + Location + Search + Actions + Post Ad
+</div>
+```
+
+### Mobile Header Features
+- **Gradient background**: Purple gradient (`#6366f1` to `#8b5cf6`)
+- **Two-row layout**:
+  - Top bar: Logo + action icons (notifications, messages, login/avatar)
+  - Search bar: Location selector + search input (collapsible)
+- **No "Post Ad" button**: Available in bottom navigation instead
+- **Safe area support**: `padding-top: env(safe-area-inset-top)` for notched devices
+
+### Desktop Header Features
+- **White background**: Clean design
+- **Single row**: Logo + Location + Search + Actions + Post Ad button
+- **Full functionality**: All features visible at once
+
+### Scroll Behavior (Updated 2026-01-09)
 - Search bar visible by default at top of page
-- Scrolling **down**: Search bar collapses (hidden) after 120px scroll
-- Scrolling **up**: Search bar expands (visible) after 120px scroll
+- Scrolling **down**: Search bar collapses after 60px accumulated scroll
+- Scrolling **up**: Search bar expands after 60px accumulated scroll
+- **Cooldown period**: 300ms between toggles (faster response)
 - **Scroll accumulator pattern**: Prevents flicker from small/bouncy scrolls
-- **Cooldown period**: 900ms between toggles to prevent rapid flickering
-- **Near-bottom detection**: Ignores scroll within 100px of page bottom (prevents bounce flicker)
-- **Smooth transitions**: 0.5s cubic-bezier animation with GPU acceleration
 
 ### Key Parameters (AppHeader.vue)
 ```javascript
 // Scroll threshold - pixels needed to toggle
-scrollAccumulator > 120
+scrollAccumulator > 60
 
 // Cooldown between toggles (milliseconds)
-now - lastToggleTime > 900
+now - lastToggleTime > 300
 
-// Near-bottom threshold (pixels from bottom)
-scrollY + windowHeight >= documentHeight - 100
+// CSS transition for smooth animation
+.mobile-search-bar {
+  transition: all 0.3s ease;
+  max-height: 60px;
+}
+.mobile-search-bar.search-collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
 ```
 
-### Overflow Fix (2026-01-03)
-- `.app-header`: `overflow-x: hidden; max-width: 100vw;`
-- `.mobile-search`: `max-width: 100%; box-sizing: border-box;`
-- `.mobile-search-inner`: `min-width: 0; overflow: hidden;`
+### Z-Index Hierarchy
+| Element | Z-Index |
+|---------|---------|
+| Mobile Nav | 9999 |
+| Chat Modal | 10000 |
+| Location Picker Modal | 10001 |
+| App Header | 100 |
 
-### Desktop vs Mobile
-- Mobile: Gradient background, compact layout, collapsible search
-- Desktop (768px+): White background, full layout
+### CSS Classes
+- `.mobile-header`: Visible only on mobile (< 768px)
+- `.desktop-header`: Visible only on desktop (>= 768px)
+- `.mobile-search-bar`: The collapsible search section
+- `.search-collapsed`: Applied when search bar is hidden
 
 ## PWA & Service Worker
 
@@ -746,6 +802,37 @@ Testing:
 | ✅ FIXED | `Kernel.php` | Added middleware |
 | ✅ FIXED | Vue components | Removed console.log |
 | ✅ FIXED | `2024_01_01_000020_*` | Created - performance indexes |
+
+---
+
+## APK Versioning
+
+### Current Version
+- **Version Name:** 1.1
+- **Version Code:** 2
+- **APK Filename:** `LentloAds-v1.1-debug.apk`
+
+### Version History
+
+| Version | Code | Date | Changes |
+|---------|------|------|---------|
+| 1.1 | 2 | 2026-01-09 | Mobile header redesign, separate mobile/desktop layouts |
+| 1.0 | 1 | 2026-01-03 | Initial Capacitor build |
+
+### Versioning Guidelines
+- **versionCode**: Integer that increments with each release (used by Play Store)
+- **versionName**: User-facing version string (e.g., "1.1", "2.0")
+- **APK naming**: `LentloAds-v{versionName}-debug.apk`
+
+### How to Update Version
+1. Edit `android/app/build.gradle`:
+   ```gradle
+   versionCode 3  // Increment this
+   versionName "1.2"  // Update this
+   ```
+2. Rebuild: `node scripts/build-capacitor.js`
+3. Build APK: `./gradlew assembleDebug`
+4. Copy with version: `cp app-debug.apk ~/Desktop/LentloAds-v1.2-debug.apk`
 
 ---
 
