@@ -1,15 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- White background -->
-    <item android:drawable="@color/splash_background"/>
-
-    <!-- Centered logo container -->
-    <item
-        android:gravity="center"
-        android:width="120dp"
-        android:height="120dp">
+    <!-- Gradient background -->
+    <item>
         <shape android:shape="rectangle">
-            <corners android:radius="28dp"/>
             <gradient
                 android:type="linear"
                 android:angle="135"
@@ -18,32 +11,43 @@
         </shape>
     </item>
 
-    <!-- "L" letter shape -->
+    <!-- White rounded logo background -->
     <item
         android:gravity="center"
-        android:width="120dp"
-        android:height="120dp">
+        android:width="100dp"
+        android:height="100dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="24dp"/>
+            <solid android:color="#FFFFFF"/>
+        </shape>
+    </item>
+
+    <!-- "L" letter shape in purple -->
+    <item
+        android:gravity="center"
+        android:width="100dp"
+        android:height="100dp">
         <layer-list>
             <!-- Vertical bar of L -->
             <item
-                android:left="36dp"
-                android:top="28dp"
-                android:right="60dp"
-                android:bottom="28dp">
+                android:left="30dp"
+                android:top="24dp"
+                android:right="50dp"
+                android:bottom="24dp">
                 <shape android:shape="rectangle">
-                    <corners android:radius="4dp"/>
-                    <solid android:color="#FFFFFF"/>
+                    <corners android:radius="3dp"/>
+                    <solid android:color="#6366f1"/>
                 </shape>
             </item>
             <!-- Horizontal bar of L -->
             <item
-                android:left="36dp"
-                android:top="68dp"
-                android:right="28dp"
-                android:bottom="28dp">
+                android:left="30dp"
+                android:top="56dp"
+                android:right="24dp"
+                android:bottom="24dp">
                 <shape android:shape="rectangle">
-                    <corners android:radius="4dp"/>
-                    <solid android:color="#FFFFFF"/>
+                    <corners android:radius="3dp"/>
+                    <solid android:color="#6366f1"/>
                 </shape>
             </item>
         </layer-list>
@@ -52,14 +56,14 @@
     <!-- Accent dot -->
     <item
         android:gravity="center"
-        android:width="120dp"
-        android:height="120dp">
+        android:width="100dp"
+        android:height="100dp">
         <layer-list>
             <item
-                android:left="72dp"
-                android:top="24dp"
-                android:right="28dp"
-                android:bottom="76dp">
+                android:left="60dp"
+                android:top="20dp"
+                android:right="24dp"
+                android:bottom="64dp">
                 <shape android:shape="oval">
                     <solid android:color="#fbbf24"/>
                 </shape>

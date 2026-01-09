@@ -29,10 +29,10 @@ const configureStatusBar = async () => {
   if (Capacitor.isNativePlatform()) {
     try {
       const { StatusBar, Style } = await import('@capacitor/status-bar')
-      // Set status bar style - DARK means dark icons (for light backgrounds)
-      await StatusBar.setStyle({ style: Style.Dark })
-      // Set background color to match white header
-      await StatusBar.setBackgroundColor({ color: '#ffffff' })
+      // Set status bar style - LIGHT means white icons (for dark/gradient backgrounds)
+      await StatusBar.setStyle({ style: Style.Light })
+      // Set background color to match header gradient
+      await StatusBar.setBackgroundColor({ color: '#6366f1' })
     } catch (e) {
       console.log('StatusBar config error:', e)
     }

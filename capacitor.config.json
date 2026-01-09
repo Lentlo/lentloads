@@ -12,15 +12,15 @@
       "launchShowDuration": 2000,
       "launchAutoHide": false,
       "launchFadeOutDuration": 300,
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "#6366f1",
       "showSpinner": false,
       "splashFullScreen": true,
       "splashImmersive": true,
-      "androidScaleType": "CENTER_INSIDE"
+      "androidScaleType": "CENTER_CROP"
     },
     "StatusBar": {
-      "style": "DARK",
-      "backgroundColor": "#ffffff",
+      "style": "LIGHT",
+      "backgroundColor": "#6366f1",
       "overlaysWebView": false
     },
     "Keyboard": {
