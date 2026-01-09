@@ -7,8 +7,14 @@
         <router-link to="/" class="mobile-logo">
           <div class="mobile-logo-icon">
             <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="40" height="40" rx="10" fill="white"/>
-              <path d="M14 12V28H28V24H18V12H14Z" fill="#6366f1"/>
+              <defs>
+                <linearGradient id="mobileLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1" />
+                  <stop offset="100%" stop-color="#8b5cf6" />
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#mobileLogoGrad)"/>
+              <path d="M14 12V28H28V24H18V12H14Z" fill="white"/>
               <circle cx="30" cy="14" r="4" fill="#fbbf24"/>
             </svg>
           </div>
@@ -646,12 +652,12 @@ watch(() => route.query.q, (newQ) => {
 }
 
 /* ========================================
-   MOBILE HEADER (< 768px)
+   MOBILE HEADER (< 768px) - Compact & Clean
    ======================================== */
 .mobile-header {
   display: block;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  /* Safe area handled by Capacitor StatusBar on native, only needed for iOS Safari */
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 @media (min-width: 768px) {
@@ -660,25 +666,25 @@ watch(() => route.query.q, (newQ) => {
   }
 }
 
-/* Mobile Top Bar */
+/* Mobile Top Bar - More compact */
 .mobile-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  gap: 12px;
+  padding: 8px 12px;
+  gap: 8px;
 }
 
 .mobile-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   text-decoration: none;
 }
 
 .mobile-logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
 }
 
 .mobile-logo-icon svg {
@@ -687,43 +693,45 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-logo-text {
-  font-size: 20px;
-  font-weight: 800;
-  color: white;
-  letter-spacing: -0.5px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #6366f1;
+  letter-spacing: -0.3px;
 }
 
 .mobile-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .mobile-icon-btn {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.9);
+  color: #64748b;
   border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
 }
 
 .mobile-icon-btn:active {
-  background: rgba(255, 255, 255, 0.15);
+  background: #f1f5f9;
+  transform: scale(0.95);
 }
 
 .mobile-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 2px;
+  right: 2px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  background: #fbbf24;
-  color: #1f2937;
+  background: #ef4444;
+  color: white;
   font-size: 10px;
   font-weight: 700;
   border-radius: 8px;
@@ -733,18 +741,18 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-login-btn {
-  padding: 8px 16px;
-  background: white;
-  color: #6366f1;
-  font-size: 14px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-size: 13px;
   font-weight: 600;
   border-radius: 8px;
   -webkit-tap-highlight-color: transparent;
 }
 
 .mobile-avatar-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -752,28 +760,27 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-avatar {
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.25);
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13px;
 }
 
-/* Mobile Search Bar */
+/* Mobile Search Bar - Compact design */
 .mobile-search-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px 12px;
-  transition: all 0.3s ease;
+  gap: 6px;
+  padding: 0 12px 10px;
+  transition: all 0.25s ease;
   overflow: hidden;
-  max-height: 60px;
+  max-height: 52px;
   opacity: 1;
 }
 
@@ -787,19 +794,24 @@ watch(() => route.query.q, (newQ) => {
 .mobile-location {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  color: white;
+  gap: 3px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #475569;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
 
+.mobile-location svg:first-child {
+  color: #6366f1;
+}
+
 .mobile-location span {
-  max-width: 60px;
+  max-width: 55px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -809,35 +821,45 @@ watch(() => route.query.q, (newQ) => {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: white;
-  border-radius: 10px;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   min-width: 0;
+  transition: all 0.15s ease;
+}
+
+.mobile-search-field:focus-within {
+  border-color: #6366f1;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
 .mobile-search-field .search-icon {
-  color: #9ca3af;
+  color: #94a3b8;
   flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
 .mobile-search-field input {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 15px;
-  color: #1f2937;
+  font-size: 14px;
+  color: #1e293b;
   outline: none;
   min-width: 0;
 }
 
 .mobile-search-field input::placeholder {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 .clear-search {
-  padding: 4px;
-  color: #9ca3af;
+  padding: 2px;
+  color: #94a3b8;
   -webkit-tap-highlight-color: transparent;
 }
 

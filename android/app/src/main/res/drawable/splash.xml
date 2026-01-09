@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- White background -->
+    <item android:drawable="@color/splash_background"/>
+
+    <!-- Centered logo container -->
+    <item
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="28dp"/>
+            <gradient
+                android:type="linear"
+                android:angle="135"
+                android:startColor="#6366f1"
+                android:endColor="#8b5cf6"/>
+        </shape>
+    </item>
+
+    <!-- "L" letter shape -->
+    <item
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp">
+        <layer-list>
+            <!-- Vertical bar of L -->
+            <item
+                android:left="36dp"
+                android:top="28dp"
+                android:right="60dp"
+                android:bottom="28dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="4dp"/>
+                    <solid android:color="#FFFFFF"/>
+                </shape>
+            </item>
+            <!-- Horizontal bar of L -->
+            <item
+                android:left="36dp"
+                android:top="68dp"
+                android:right="28dp"
+                android:bottom="28dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="4dp"/>
+                    <solid android:color="#FFFFFF"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Accent dot -->
+    <item
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp">
+        <layer-list>
+            <item
+                android:left="72dp"
+                android:top="24dp"
+                android:right="28dp"
+                android:bottom="76dp">
+                <shape android:shape="oval">
+                    <solid android:color="#fbbf24"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</layer-list>

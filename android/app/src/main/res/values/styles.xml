@@ -14,7 +14,7 @@
         <item name="android:background">@null</item>
     </style>
 
-    <!-- Splash screen theme -->
+    <!-- Splash screen theme - Modern minimal white background -->
     <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
         <item name="android:background">@drawable/splash</item>
         <item name="android:windowBackground">@drawable/splash</item>
