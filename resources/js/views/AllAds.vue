@@ -27,14 +27,8 @@
             :to="`/category/${category.slug}`"
             class="category-card"
           >
-            <div class="category-icon">
-              <img
-                v-if="category.icon_url"
-                :src="category.icon_url"
-                :alt="category.name"
-                class="w-6 h-6"
-              />
-              <Squares2X2Icon v-else class="w-6 h-6 text-primary-600" />
+            <div class="category-icon" :class="getCategoryColor(category.slug)">
+              <component :is="getCategoryIcon(category.slug)" class="w-6 h-6" />
             </div>
             <span class="category-name">{{ category.name }}</span>
           </router-link>
@@ -112,7 +106,52 @@ import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import api from '@/services/api'
 import ListingCard from '@/components/common/ListingCard.vue'
-import { Squares2X2Icon } from '@heroicons/vue/24/outline'
+import {
+  DevicePhoneMobileIcon,
+  TruckIcon,
+  HomeModernIcon,
+  BriefcaseIcon,
+  ComputerDesktopIcon,
+  ShoppingBagIcon,
+  WrenchScrewdriverIcon,
+  MusicalNoteIcon,
+  HeartIcon,
+  Squares2X2Icon,
+} from '@heroicons/vue/24/outline'
+
+// Category icon mapping (same as Home.vue)
+const getCategoryIcon = (slug) => {
+  const icons = {
+    'mobiles': DevicePhoneMobileIcon,
+    'vehicles': TruckIcon,
+    'property': HomeModernIcon,
+    'jobs': BriefcaseIcon,
+    'electronics': ComputerDesktopIcon,
+    'fashion': ShoppingBagIcon,
+    'furniture': HomeModernIcon,
+    'services': WrenchScrewdriverIcon,
+    'bikes': TruckIcon,
+    'books': ShoppingBagIcon,
+    'sports': HeartIcon,
+    'music': MusicalNoteIcon,
+  }
+  return icons[slug] || Squares2X2Icon
+}
+
+// Category color mapping
+const getCategoryColor = (slug) => {
+  const colors = {
+    'mobiles': 'icon-purple',
+    'vehicles': 'icon-blue',
+    'property': 'icon-green',
+    'jobs': 'icon-orange',
+    'electronics': 'icon-indigo',
+    'fashion': 'icon-pink',
+    'furniture': 'icon-teal',
+    'services': 'icon-amber',
+  }
+  return colors[slug] || 'icon-gray'
+}
 
 const appStore = useAppStore()
 
@@ -237,10 +276,20 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eef2ff;
   border-radius: 10px;
   margin-bottom: 6px;
 }
+
+/* Icon color variants */
+.icon-purple { background: #ede9fe; color: #7c3aed; }
+.icon-blue { background: #dbeafe; color: #2563eb; }
+.icon-green { background: #d1fae5; color: #059669; }
+.icon-orange { background: #ffedd5; color: #ea580c; }
+.icon-indigo { background: #e0e7ff; color: #4f46e5; }
+.icon-pink { background: #fce7f3; color: #db2777; }
+.icon-teal { background: #ccfbf1; color: #0d9488; }
+.icon-amber { background: #fef3c7; color: #d97706; }
+.icon-gray { background: #f1f5f9; color: #64748b; }
 
 .category-name {
   font-size: 12px;
