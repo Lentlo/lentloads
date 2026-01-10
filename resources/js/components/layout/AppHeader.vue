@@ -58,7 +58,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search cars, mobiles, jobs..."
+            placeholder="Search anything..."
             @keyup.enter="handleSearch"
           />
           <button v-if="searchQuery" @click="clearSearch" class="mobile-clear-btn">
@@ -145,7 +145,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search for cars, mobiles, jobs..."
+              placeholder="Search anything..."
               @focus="searchFocused = true"
               @blur="handleSearchBlur"
               @keyup.enter="handleSearch"
@@ -785,7 +785,7 @@ watch(() => route.query.q, (newQ) => {
   padding: 6px;
   border: none;
   background: transparent;
-  font-size: 13px;
+  font-size: 16px; /* 16px prevents iOS zoom on focus */
   color: #1f2937;
   outline: none;
   min-width: 0;

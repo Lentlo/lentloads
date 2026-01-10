@@ -22,7 +22,7 @@
         <!-- Categories Grid -->
         <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
           <router-link
-            v-for="category in categoriesWithAds"
+            v-for="category in mainCategories"
             :key="category.id"
             :to="`/category/${category.slug}`"
             class="category-card"
@@ -37,13 +37,12 @@
               <Squares2X2Icon v-else class="w-6 h-6 text-primary-600" />
             </div>
             <span class="category-name">{{ category.name }}</span>
-            <span class="category-count">{{ category.listings_count }} ads</span>
           </router-link>
         </div>
 
-        <!-- No categories with ads -->
-        <div v-if="!loadingCategories && categoriesWithAds.length === 0" class="text-center py-4 text-gray-500 text-sm">
-          No categories with listings found
+        <!-- No categories -->
+        <div v-if="!loadingCategories && mainCategories.length === 0" class="text-center py-4 text-gray-500 text-sm">
+          No categories found
         </div>
       </div>
 
@@ -130,9 +129,9 @@ const currentPage = ref(1)
 const lastPage = ref(1)
 const total = ref(0)
 
-// Filter categories that have listings
-const categoriesWithAds = computed(() => {
-  return categories.value.filter(cat => cat.listings_count > 0)
+// Get main categories (parent_id is null or 0)
+const mainCategories = computed(() => {
+  return categories.value.filter(cat => !cat.parent_id)
 })
 
 const hasMore = computed(() => currentPage.value < lastPage.value)
@@ -253,12 +252,6 @@ onMounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.category-count {
-  font-size: 10px;
-  color: #6b7280;
-  margin-top: 2px;
 }
 
 .category-skeleton {
