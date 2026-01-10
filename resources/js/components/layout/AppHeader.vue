@@ -621,6 +621,9 @@ watch(() => route.query.q, (newQ) => {
   align-items: center;
   justify-content: space-between;
   padding: 4px 10px 2px;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
 }
 
 .mobile-logo {
@@ -689,19 +692,26 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .mobile-login-btn {
-  height: 24px;
-  padding: 0 10px;
-  background: white;
-  color: #6366f1;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 5px;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  padding: 0 10px !important;
+  margin: 0 !important;
+  border: none !important;
+  background: white !important;
+  color: #6366f1 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
   -webkit-tap-highlight-color: transparent;
-  margin-left: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  vertical-align: middle;
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
 
 .mobile-login-btn:active {
@@ -737,21 +747,34 @@ watch(() => route.query.q, (newQ) => {
   align-items: center;
   gap: 6px;
   padding: 0 10px 6px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
 }
 
 .mobile-location-btn {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  color: white;
-  font-size: 11px;
-  font-weight: 500;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  padding: 0 8px !important;
+  margin: 0 !important;
+  border: none !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
 
 .mobile-location-btn:active {
@@ -764,13 +787,16 @@ watch(() => route.query.q, (newQ) => {
 
 .mobile-search-box {
   flex: 1;
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 8px;
-  padding: 0 6px 0 10px;
-  height: 34px;
+  display: flex !important;
+  align-items: center !important;
+  background: white !important;
+  border-radius: 8px !important;
+  padding: 0 6px 0 10px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
   min-width: 0;
+  box-sizing: border-box !important;
 }
 
 .mobile-search-icon {
@@ -782,13 +808,19 @@ watch(() => route.query.q, (newQ) => {
 
 .mobile-search-box input {
   flex: 1;
-  padding: 6px;
-  border: none;
-  background: transparent;
-  font-size: 16px; /* 16px prevents iOS zoom on focus */
-  color: #1f2937;
-  outline: none;
+  height: 100% !important;
+  padding: 0 6px !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 16px !important; /* 16px prevents iOS zoom on focus */
+  color: #1f2937 !important;
+  outline: none !important;
   min-width: 0;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
 
 .mobile-search-box input::placeholder {

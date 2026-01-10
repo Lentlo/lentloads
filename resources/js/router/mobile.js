@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 // Public Pages
 const Home = () => import('@/views/Home.vue')
 const Search = () => import('@/views/Search.vue')
+const AllAds = () => import('@/views/AllAds.vue')
 const Categories = () => import('@/views/Categories.vue')
 const CategoryListings = () => import('@/views/CategoryListings.vue')
 const ListingDetail = () => import('@/views/ListingDetail.vue')
@@ -48,6 +49,12 @@ const routes = [
     name: 'search',
     component: Search,
     meta: { title: 'Search' }
+  },
+  {
+    path: '/all-ads',
+    name: 'all-ads',
+    component: AllAds,
+    meta: { title: 'All Ads' }
   },
   {
     path: '/categories',
