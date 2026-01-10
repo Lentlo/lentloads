@@ -31,7 +31,7 @@
       @authenticated="onAuthenticated"
     />
 
-    <div class="container-app py-4 pb-20 max-w-2xl">
+    <div class="container-app py-4 pb-32 max-w-2xl">
       <!-- Step 1: Category -->
       <div v-if="currentStep === 1" class="space-y-4">
         <div class="text-center mb-6">
@@ -204,7 +204,7 @@
               <span class="text-xs text-gray-500">Add Photo</span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                 multiple
                 class="hidden"
                 @change="handleImageUpload"
@@ -212,7 +212,10 @@
             </label>
           </div>
 
-          <p v-if="previewImages.length === 0" class="text-center text-sm text-gray-500 mt-4">
+          <p class="text-center text-xs text-gray-400 mt-4">
+            Supported: JPG, PNG, WebP (max 5MB each)
+          </p>
+          <p v-if="previewImages.length === 0" class="text-center text-sm text-gray-500 mt-2">
             Add at least 1 photo to continue
           </p>
         </div>
@@ -378,15 +381,31 @@ const selectCategory = (id) => {
 const handleImageUpload = (event) => {
   const files = Array.from(event.target.files)
   const remaining = 10 - images.value.length
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
+  const maxSize = 5 * 1024 * 1024 // 5MB
 
+  let skipped = 0
   files.slice(0, remaining).forEach(file => {
-    if (file.type.startsWith('image/')) {
-      images.value.push(file)
-      const reader = new FileReader()
-      reader.onload = (e) => previewImages.value.push(e.target.result)
-      reader.readAsDataURL(file)
+    // Check file type
+    if (!allowedTypes.includes(file.type)) {
+      skipped++
+      return
     }
+    // Check file size
+    if (file.size > maxSize) {
+      toast.warning(`${file.name} is too large (max 5MB)`)
+      return
+    }
+
+    images.value.push(file)
+    const reader = new FileReader()
+    reader.onload = (e) => previewImages.value.push(e.target.result)
+    reader.readAsDataURL(file)
   })
+
+  if (skipped > 0) {
+    toast.warning(`${skipped} file(s) skipped - only JPG, PNG, WebP allowed`)
+  }
 }
 
 const removeImage = (index) => {

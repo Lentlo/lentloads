@@ -401,6 +401,13 @@ onMounted(() => {
   margin-bottom: 20px;
   overflow-x: auto;
   padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.filters-row::-webkit-scrollbar {
+  display: none;
 }
 
 .filter-btn {
@@ -414,6 +421,7 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 500;
   color: #64748b;
+  flex-shrink: 0;
   white-space: nowrap;
   transition: all 0.2s;
 }

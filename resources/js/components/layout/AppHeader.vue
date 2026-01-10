@@ -609,10 +609,9 @@ watch(() => route.query.q, (newQ) => {
   }
 }
 
-/* Safe area for Android status bar */
+/* Safe area spacer - disabled since StatusBar plugin handles it */
 .mobile-safe-area {
-  height: env(safe-area-inset-top, 0);
-  background: transparent;
+  display: none;
 }
 
 /* Row 1: Logo + Actions */
